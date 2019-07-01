@@ -48,8 +48,8 @@ class LoginPage extends React.Component {
                 }>
               <h3><b>Login</b></h3>
               {
-                this.state.isError &&
-                <p className="error">Login ou mot de passe incorrect</p>
+                this.props.error !== null &&
+                <p className="error">{this.props.error}</p>
               }
               <FormControl type="text" placeholder="login" value={this.state.login}
                 onChange={e => this.setState({ login: e.target.value })} />
@@ -59,15 +59,25 @@ class LoginPage extends React.Component {
                 onChange={e => this.setState({ password: e.target.value })} />
               <br />
               {/*<button>Login</button>*/}
+              {this.props.loading  &&
+                  <div style={{ marginTop: 5, marginBottom: 5 }}>
+                        <div className="loader"></div>
+                  </div>
+              }
               <div>
-                <span>
-                  <button className="button" disabled={!this.validateForm()}><FaCheck /> Login</button>
-                </span>
+                <table>
+                  <tr>
+                    <td><button className="button" disabled={this.validateForm()}><FaCheck /> Login</button></td>
+                    <td>
+                      <a href="#">Forgot password?</a>
+                    </td>
+                  </tr>
+                </table>
               </div>
             </form>
             </div>   
         </div>
-        <div className="languages-div">
+        {/*<div className="languages-div">
               <div>
                 <a href="#">
                   <Flag
@@ -95,7 +105,7 @@ class LoginPage extends React.Component {
                 </a>
                 
               </div>
-        </div>       
+        </div>*/}       
       </div>
     );
   }

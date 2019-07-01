@@ -40,33 +40,34 @@ let getUserByLogin = async login => {
                 login ="${login}";`
 
     let results = await new Promise((resolve, reject) => db.query(sql, function (error, results) {
-                    if (error) {
-                        reject(error)
-                    } else {
-                        resolve(results);
-                    }
-                }));
+            if (error) {
+                reject(error)
+            } else {
+                resolve(results);
+            }
+    }));
 
     return results[0];
 }
-router.post('/login', async function(req, res){
+router.post('/login', async function(req, res, next){
 
-    let login=req.body.login;
+    let login = req.body.login;
 
     let password=req.body.password;
 
     let user = await getUserByLogin(login);
 
     if(!user){
-        res.status(401).send('Wrong login!');
-        return;
+        console.log("USER NOT FOUND!");
+        const error = new Error('A user with this login could not be found.');
+        error.statusCode = 401;
+        throw error;
     }
 
     bcrypt.compare(password, user.password, function(err, isEqual) {              
 
         if(!isEqual){
-            res.status(401).send('Wrong password!');
-            return;
+            res.status(401).json('Wrong password!');
         }
 
         const token = jwt.sign(
@@ -89,7 +90,6 @@ router.post('/login', async function(req, res){
             role: user.role,
             language:user.language
         });
- 
     })
 });
 

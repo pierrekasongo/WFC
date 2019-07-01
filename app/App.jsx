@@ -26,7 +26,8 @@ class App extends React.Component {
         this.state = {
             isAuth: false,
             authLoading: false,
-            error: null,
+            error: '',
+            loading:false
           };
           this.loginHandler = this.loginHandler.bind(this);
           this.logoutHandler = this.logoutHandler.bind(this);
@@ -69,6 +70,8 @@ class App extends React.Component {
     loginHandler(event, authData) {
 
         event.preventDefault();
+
+        this.setState({loading:true});
     
         let login = authData.login;
     
@@ -130,17 +133,19 @@ class App extends React.Component {
           this.setState({
             isAuth: true,
             authLoading: false,
+            loading:false
           });
     
         }).catch(err => {
-          console.log(err);
+
           this.setState({
               isAuth: false,
               authLoading: false,
+              loading:false,
               error: err
           });
         });
-      }
+    }
 
     render() {
         let routes = (
@@ -155,6 +160,8 @@ class App extends React.Component {
                                     {...props}
                                     onLogin={this.loginHandler}
                                     onLogout={this.logoutHandler}
+                                    loading ={this.state.loading}
+                                    error={this.state.error}
                                         /*loading={this.state.authLoading}*/
                                 />
                                 )}

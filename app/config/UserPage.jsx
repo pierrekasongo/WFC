@@ -190,23 +190,6 @@ export default class UserPage extends React.Component {
                         </Col>
                         <hr/>
                     </FormGroup>
-
-                    {/*{(localStorage.getItem('role') == 'super_user') &&
-                    <Col sm={20}>
-                        <FormControl
-                                    componentClass="select"
-                                    onChange={e => this.filterUsersByCountry(e.target.value)}>
-                                    <option value="0" key="000">Filter by country</option>
-                                    {this.state.countries.map(ct =>
-                                        <option
-                                            key={ct.id}
-                                            value={ct.id}>
-                                            {ct.name_en}
-                                        </option>
-                                    )}
-                        </FormControl>
-                    </Col>
-                    }*/}
                     <table>
                         <tr>
                             <td>
