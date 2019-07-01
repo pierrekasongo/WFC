@@ -38,7 +38,7 @@ export default class ResultComponent extends React.Component {
                                 </thead>
                                 <tbody>
                                     {Object.keys(this.state.results[id].workersNeeded).map(cadreId =>
-                                        <tr>
+                                        <tr key={cadreId}>
                                             <td>
                                                 <h4 key={cadreId + 'cadre'}>{this.state.cadreDict[cadreId]}</h4>
                                             </td>

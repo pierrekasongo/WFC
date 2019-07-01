@@ -26,7 +26,6 @@ export default class MetadataComponent extends React.Component {
         this.state = {
             cadres: [],
             treatments: [],
-            facilityTypes:[],
             cadreCode: '',
             progress: '',
             cadreToDelete: '',
@@ -34,18 +33,18 @@ export default class MetadataComponent extends React.Component {
             showingNewCadre: false,
             showingNewTreatment: false,
             selectedCadre: {},
-            isEditCadre: false
+            isEditCadre: false,
         };
         this.handleUploadCadre = this.handleUploadCadre.bind(this);
         this.handleUploadTreatment = this.handleUploadTreatment.bind(this);
         this.deleteCadre = this.deleteCadre.bind(this);
         this.deleteTreatment = this.deleteTreatment.bind(this);
 
-        axios.get('/metadata/facilityTypes').then(res => {
-            this.setState({ facilityTypes: res.data });
-        }).catch(err => console.log(err));
-
-        axios.get('/metadata/cadres').then(res => {
+        axios.get('/metadata/cadres',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({ cadres: res.data });
         }).catch(err => {
             console.log(err);
@@ -56,7 +55,11 @@ export default class MetadataComponent extends React.Component {
             }
         });
 
-        axios.get('/metadata/treatments').then(res => {
+        axios.get('/metadata/treatments',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({ treatments: res.data });
         }).catch(err => {
             if (err.response.status === 401) {
@@ -66,18 +69,14 @@ export default class MetadataComponent extends React.Component {
             }
         });
 
-        axios.get('/metadata/countries').then(res => {
-            this.setState({ countries: res.data });
-        }).catch(err => {
-            console.log(err);
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
+        axios.get('/metadata/countries',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
             }
-        });
+        }).then(res => {
+            this.setState({ countries: res.data });
+        }).catch(err => console.log(err)); 
     }
-
     deleteCadre(code) {
 
         this.setState({
@@ -94,14 +93,25 @@ export default class MetadataComponent extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.delete(`/metadata/deleteCadre/${this.state.cadreToDelete}`)
-                                    .then((res) => {
+                                axios.delete(`/metadata/deleteCadre/${this.state.cadreToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then((res) => {
                                         //Update cadres
-                                        axios.get('/metadata/cadres').then(res => {
+                                        axios.get('/metadata/cadres',{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
                                             this.setState({ cadres: res.data });
                                         }).catch(err => console.log(err));
                                         //Update treatments 
-                                        axios.get('/metadata/treatments').then(res => {
+                                        axios.get('/metadata/treatments',{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
                                             this.setState({ treatments: res.data });
                                         }).catch(err => console.log(err));
 
@@ -137,10 +147,17 @@ export default class MetadataComponent extends React.Component {
                   <button
                             onClick={() => {
 
-                                axios.delete(`/metadata/deleteTreatment/${this.state.treatmentToDelete}`)
-                                    .then((res) => {
+                                axios.delete(`/metadata/deleteTreatment/${this.state.treatmentToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then((res) => {
                                         //Update cadres
-                                        axios.get('/metadata/treatments').then(res => {
+                                        axios.get('/metadata/treatments',{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
                                             this.setState({ treatments: res.data });
                                         }).catch(err => console.log(err));
                                     }).catch(err => {
@@ -190,10 +207,18 @@ export default class MetadataComponent extends React.Component {
                     this.setState({ progress: pg });
                     //console.log(pg+"%");
                 }
+            },{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
             })
             .then((result) => {
                 this.setState({ progress: result.data });
-                axios.get('/metadata/treatments').then(res => {
+                axios.get('/metadata/treatments',{
+                    headers :{
+                        Authorization : 'Bearer '+localStorage.getItem('token')
+                    }
+                }).then(res => {
                     this.setState({ treatments: res.data });
                 }).catch(err => console.log(err));
 
@@ -227,10 +252,18 @@ export default class MetadataComponent extends React.Component {
                     this.setState({ progress: pg });
                     //console.log(pg+"%");
                 }
+            },{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
             })
             .then((result) => {
                 this.setState({ progress: result.data });
-                axios.get('/metadata/cadres').then(res => {
+                axios.get('/metadata/cadres',{
+                    headers :{
+                        Authorization : 'Bearer '+localStorage.getItem('token')
+                    }
+                }).then(res => {
                     this.setState({ cadres: res.data });
                 }).catch(err => console.log(err));
 
@@ -247,7 +280,11 @@ export default class MetadataComponent extends React.Component {
 
         this.setState({ showingNewTreatment: false });
 
-        axios.get(`/metadata/treatments/${cadreCode}`).then(res => {
+        axios.get(`/metadata/treatments/${cadreCode}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({ treatments: res.data });
         }).catch(err => {
             console.log(err);
@@ -282,7 +319,11 @@ export default class MetadataComponent extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/metadata/editCadre', data).then(res => {
+        axios.patch('/metadata/editCadre', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -310,7 +351,11 @@ export default class MetadataComponent extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/metadata/editTreatment', data).then(res => {
+        axios.patch('/metadata/editTreatment', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -339,9 +384,17 @@ export default class MetadataComponent extends React.Component {
             admin_task: admin_task
         };
         //Insert cadre in the database
-        axios.post('/metadata/insertCadre', data).then(res => {
+        axios.post('/metadata/insertCadre', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             //Update the cadres list
-            axios.get('/metadata/cadres').then(res => {
+            axios.get('/metadata/cadres',{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
                 this.setState({
                     cadres: res.data,
                     showingNewCadre: false
@@ -359,7 +412,11 @@ export default class MetadataComponent extends React.Component {
 
     clickCadreEdit(cadreCode) {
 
-        axios.get(`/metadata/getCadre/${cadreCode}`).then(res => {
+        axios.get(`/metadata/getCadre/${cadreCode}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let cadre = res.data[0];
 
@@ -407,9 +464,17 @@ export default class MetadataComponent extends React.Component {
         };
 
         //Insert cadre in the database
-        axios.post('/metadata/insertTreatment', data).then(res => {
+        axios.post('/metadata/insertTreatment', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             //Update the cadres list
-            axios.get('/metadata/treatments').then(res => {
+            axios.get('/metadata/treatments',{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
                 this.setState({
                     treatments: res.data,
                     showingNewTreatment: false
@@ -452,14 +517,14 @@ export default class MetadataComponent extends React.Component {
                                 <table className="table-list">
                                     <thead>
                                         <tr>
-                                            <th>Code | </th>
-                                            <th>Name (fr) | </th>
-                                            <th>Name (en) | </th>
-                                            <th>Days per week | </th>
-                                            <th>Hours per day | </th>
-                                            <th>Annual leave | </th>
-                                            <th>Sick leave | </th>
-                                            <th>Other leave | </th>
+                                            <th>Code</th>
+                                            <th>Name (fr)</th>
+                                            <th>Name (en)</th>
+                                            <th>Days per week</th>
+                                            <th>Hours per day</th>
+                                            <th>Annual leave</th>
+                                            <th>Sick leave</th>
+                                            <th>Other leave</th>
                                             <th>Admin task (%)</th>
                                             <th colSpan="2"></th>
                                         </tr>
@@ -708,7 +773,7 @@ export default class MetadataComponent extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <FacilityTypeComponent />
+                        <FacilityTypeComponent token={localStorage.getItem('token')}/>
                     </TabPanel>
 
                     <TabPanel>
@@ -885,7 +950,7 @@ export default class MetadataComponent extends React.Component {
                         </div>
                     </TabPanel>
                     <TabPanel>
-                        <CountryComponent countries={this.state.countries} />
+                        <CountryComponent token={localStorage.getItem('token')} countries={this.state.countries} />
                     </TabPanel>
                 </Tabs>
                 <br />

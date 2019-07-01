@@ -18,13 +18,21 @@ export default class CadreImportPanel extends React.Component {
             cadreToDelete: '',
             cadreMap: new Map(),
         };
-        axios.get('/metadata/cadres').then(res => {
+        axios.get('/metadata/cadres',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             this.setState({ stdCadres: res.data });
 
         }).catch(err => console.log(err));
 
-        axios.get('/countrycadre/cadres').then(res => {
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let cadreMap = new Map();
 
@@ -53,6 +61,11 @@ export default class CadreImportPanel extends React.Component {
 
     deleteCadre(code) {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         this.setState({
             cadreToDelete: code
         });
@@ -66,9 +79,17 @@ export default class CadreImportPanel extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.delete(`/countrycadre/deleteCadre/${this.state.cadreToDelete}`)
+                                axios.delete(`/countrycadre/deleteCadre/${this.state.cadreToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+this.props.token
+                                    }
+                                })
                                     .then((res) => {
-                                        axios.get('/countrycadre/cadres').then(res => {
+                                        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+                                            headers :{
+                                                Authorization : 'Bearer '+this.props.token
+                                            }
+                                        }).then(res => {
                                             let cadreMap = new Map();
                                             res.data.forEach(cd => {
                                                 cadreMap.set(cd.std_code, "");
@@ -111,7 +132,11 @@ export default class CadreImportPanel extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/countrycadre/editCadre', data).then(res => {
+        axios.patch('/countrycadre/editCadre', data,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -126,7 +151,16 @@ export default class CadreImportPanel extends React.Component {
 
     useStdCadre(code) {
 
-        axios.get(`/metadata/getCadre/${code}`).then(res => {
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
+        axios.get(`/metadata/getCadre/${code}`,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
 
             let stdCadre = res.data[0];
 
@@ -154,9 +188,17 @@ export default class CadreImportPanel extends React.Component {
                 adminTask: adminTask
             }
 
-            axios.post(`/countrycadre/insertCadre`, data).then(res => {
+            axios.post(`/countrycadre/insertCadre`, data,{
+                headers :{
+                    Authorization : 'Bearer '+this.props.token
+                }
+            }).then(res => {
 
-                axios.get('/countrycadre/cadres').then(res => {
+                axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+                    headers :{
+                        Authorization : 'Bearer '+this.props.token
+                    }
+                }).then(res => {
 
                     let cadreMap = new Map();
 
@@ -202,8 +244,6 @@ export default class CadreImportPanel extends React.Component {
                                             <th>Code</th>
                                             <th>Name (fr)</th>
                                             <th>Name (en)</th>
-                                            {/*<th>Hours per week</th>
-                                                <th>Admin task (%)</th>*/}
                                             <th colSpan="2"></th>
                                         </tr>
                                     </thead>
@@ -242,85 +282,16 @@ export default class CadreImportPanel extends React.Component {
                                 <table className="table-list" cellSpacing="50">
                                     <thead>
                                         <tr>
-                                            {/*<th>Hris code </th>*/}
                                             <th>Name</th>
-                                            {/*<th>Hours per week</th>
-                                                    <th>Admin task (%)</th>*/}
                                             <th></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {this.state.countryCadres.map(cadre =>
                                             <tr key={cadre.std_code} >
-                                                {/*<td>
-                                                            <div>
-                                                                <a href="#">
-                                                                    <InlineEdit
-                                                                        validate={this.validateTextValue}
-                                                                        activeClassName="editing"
-                                                                        text={(cadre.hris_code.length == 0?'match hris code':cadre.hris_code)}
-                                                                        paramName={cadre.std_code+'-hris_code'}
-                                                                        change={this.handleCadreChange}
-                                                                        style={{
-                                                                            minWidth: 150,
-                                                                            display: 'inline-block',
-                                                                            margin: 0,
-                                                                            padding: 0,
-                                                                            fontSize: 11,
-                                                                            outline: 0,
-                                                                            border: 0
-                                                                        }}
-                                                                    />
-                                                                </a>
-                                                            </div>
-                                                        </td>*/}
                                                 <td>
-                                                    {cadre.name_fr + '/' + cadre.name_en}
+                                                    {cadre.name}
                                                 </td>
-                                                {/*<td align="center">
-                                                            <div>
-                                                                    <a href="#">
-                                                                        <InlineEdit
-                                                                            validate={this.validateTextValue}
-                                                                            activeClassName="editing"
-                                                                            text={""+cadre.worktime}
-                                                                            paramName={cadre.std_code+'-worktime'}
-                                                                            change={this.handleCadreChange}
-                                                                            style={{
-                                                                                minWidth: 150,
-                                                                                display: 'inline-block',
-                                                                                margin: 0,
-                                                                                padding: 0,
-                                                                                fontSize: 11,
-                                                                                outline: 0,
-                                                                                border: 0
-                                                                            }}
-                                                                        />
-                                                                    </a>
-                                                            </div>
-                                                        </td>
-                                                        <td align="center">
-                                                            <div>
-                                                                <a href="#">
-                                                                    <InlineEdit
-                                                                        validate={this.validateTextValue}
-                                                                        activeClassName="editing"
-                                                                        text={""+cadre.admin_task}
-                                                                        paramName={cadre.std_code+'-admin_task'}
-                                                                        change={this.handleCadreChange}
-                                                                        style={{
-                                                                            minWidth: 150,
-                                                                            display: 'inline-block',
-                                                                            margin: 0,
-                                                                            padding: 0,
-                                                                            fontSize: 11,
-                                                                            outline: 0,
-                                                                            border: 0
-                                                                        }}
-                                                                    />
-                                                                </a>
-                                                            </div>
-                                                        </td>*/}
                                                 <td>
                                                     <a href="#" onClick={() => this.deleteCadre(cadre.std_code)}>
                                                         <FaTrash />

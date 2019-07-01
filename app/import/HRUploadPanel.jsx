@@ -7,6 +7,7 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { FaTrash, FaCloudUploadAlt, FaCheck, FaFileCsv, FaFolderOpen } from 'react-icons/fa';
+import Multiselect from 'react-multiselect-checkboxes';
 //import TreeView from 'react-pretty-treeview';
 
 export default class HRUploadPanel extends React.Component {
@@ -17,46 +18,38 @@ export default class HRUploadPanel extends React.Component {
         this.state = {
             progress: '',
             staffs: [],
-            regions: [],
-            districts: [],
-            facilities: [],
-            cadres: [],
-            staffToDelete: ''
+            
+            staffToDelete: '',
+
+            selectedFacilities: [],
+            selectedCadres: [],
+
+            facilitiesCombo: [],
+            cadresCombo: [],
         };
 
         this.handleUploadHR = this.handleUploadHR.bind(this);
+        this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
+        this.selectMultipleCadres = this.selectMultipleCadres.bind(this);
 
-        axios.get('/hris/workforce').then(res => {
+        axios.get(`/hris/workforce/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({ staffs: res.data });
         }).catch(err => console.log(err));
-
-        axios.get('/countrycadre/cadres').then(res => {
-
-            this.setState({ cadres: res.data });
-
-        }).catch(err => console.log(err));
+        
     }
 
-    filterWorkforce(cadreCode) {
+    componentDidMount(){
 
-        if (cadreCode == "0") {
-            axios.get('/hris/workforce').then(res => {
-                this.setState({ staffs: res.data });
-            }).catch(err => console.log(err));
-        } else {
-            axios.get(`/hris/workforce/${cadreCode}`).then(res => {
-                this.setState({ staffs: res.data });
-            }).catch(err => {
-                console.log(err);
-                if (err.response.status === 401) {
-                    this.props.history.push(`/login`);
-                } else {
-                    console.log(err);
-                }
-            });
-        }
-
+        this.setState({
+            facilitiesCombo : this.props.facilitiesCombo, 
+            cadresCombo : this.props.cadresCombo,
+        })
     }
+
     launchToastr(msg) {
         toastr.options = {
             positionClass: 'toast-top-full-width',
@@ -103,54 +96,34 @@ export default class HRUploadPanel extends React.Component {
             });
     }
 
-    loadDistrictsByRegion(regionCode) {
+    selectMultipleCadres(values) {
 
-        let url = (regionCode == "000") ? '/hris/districts' : '/hris/districtsByRegion/' + regionCode;
+        let selectedCadres = [];
 
-        axios.get(url).then(res => {
-            let districts = res.data;
-            this.setState({
-                districts: districts,
-            });
-        }).catch(err => console.log(err));
+        values.forEach(val => {
+            let code = val.value;
+            selectedCadres.push(code);
+        })
+        this.setState({ selectedCadres: selectedCadres });
     }
 
-    loadFacilitiesByDistrict(districtCode) {
+    selectMultipleFacilities(values) {
 
-        let url = (districtCode == "000") ? '/hris/facilities' : '/hris/facilitiesByDistrict/' + districtCode;
+        let selectedFacilities = [];
 
-        axios.get(url).then(res => {
-
-            let facilities = res.data;
-
-            let facilityInputs = {};
-            let facilityDict = {};
-
-            let facilitiesCombo = [];
-
-            facilities.forEach(fa => {
-                facilityInputs[fa.id] = {
-                    name: fa.name,
-                    code: fa.code
-                }
-                facilityDict[fa.id] = fa.name;
-
-                let id = fa.id + '|' + fa.code;
-
-                facilitiesCombo.push({ label: fa.name, value: id });
-            });
-
-            this.setState({
-                facilities: facilities,
-                facilityDict: facilityDict,
-                facilityInputs: facilityInputs,
-                facilitiesCombo: facilitiesCombo
-            });
+        values.forEach(val => {
+            let code = val.value
+            selectedFacilities.push(code);
         })
-            .catch(err => console.log(err));
+        this.setState({ selectedFacilities: selectedFacilities });
     }
 
     handleStaffChange(obj) {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
 
         const ident = Object.keys(obj)[0].split("-");
 
@@ -165,8 +138,16 @@ export default class HRUploadPanel extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/hris/editHR', data).then(res => {
-            axios.get('/hris/workforce').then(res => {
+        axios.patch('/hris/editHR', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            axios.get(`/hris/workforce/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
                 this.setState({ staffs: res.data });
             }).catch(err => console.log(err));
         }).catch(err => {
@@ -178,7 +159,41 @@ export default class HRUploadPanel extends React.Component {
         });
     }
 
+    async loadStaffFromiHRIS(){
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
+        let data = {
+            facilities: this.state.selectedFacilities,
+            cadres: this.state.selectedCadres,
+            countryId: localStorage.getItem('countryId'),
+        };
+
+        let staffs = await axios.post('/hris/getiHRIS_staffs',data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res =>{
+
+            axios.get(`/hris/workforce/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({ staffs: res.data });
+            }).catch(err => console.log(err));
+        });
+    }
+
     deleteStaff(id) {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
 
         this.setState({
             staffToDelete: id
@@ -192,9 +207,16 @@ export default class HRUploadPanel extends React.Component {
                         <button onClick={onClose}>No</button> &nbsp;&nbsp;
                         <button
                             onClick={() => {
-                                axios.delete(`/hris/deleteWorkforce/${this.state.staffToDelete}`)
-                                    .then((res) => {
-                                        axios.get('/hris/workforce').then(res => {
+                                axios.delete(`/hris/deleteWorkforce/${this.state.staffToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then((res) => {
+                                        axios.get(`/hris/workforce/${localStorage.getItem('countryId')}`,{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
                                             this.setState({ staffs: res.data });
                                         }).catch(err => console.log(err));
 
@@ -222,7 +244,7 @@ export default class HRUploadPanel extends React.Component {
                     <div>
                         <div className="cadres-container">
                             <div className="div-flex-table-left">
-                                <FormGroup>
+                                {/*<FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
                                             <b>Uploading workforce data</b>
@@ -253,7 +275,7 @@ export default class HRUploadPanel extends React.Component {
                                         </FormGroup>
                                     </Col>
                                 </FormGroup>
-                                <hr />
+                                <hr />*/}
                                 <div style={{ textAlign: "left", paddingTop: 10 }}>
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={20}>
@@ -263,7 +285,34 @@ export default class HRUploadPanel extends React.Component {
                                             <hr />
                                         </Col>
                                     </FormGroup>
-                                    <Button bsStyle="warning" bsSize="small" onClick={() => this.getFromAPI()}>Upload from iHRIS</Button>
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Facilities({(this.state.facilitiesCombo.length)})</b>
+                                        </Col>
+                                        <Col sm={15}>
+                                            <div className="div-multiselect">
+                                                <Multiselect
+                                                    options={this.state.facilitiesCombo}
+                                                    onChange={this.selectMultipleFacilities} />
+                                            </div>
+
+                                        </Col>
+                                    </FormGroup>
+                                    <br/>
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Cadres({(this.state.cadresCombo.length)})</b>
+                                        </Col>
+                                        <Col sm={15}>
+                                            <div className="div-multiselect">
+                                                <Multiselect
+                                                    options={this.state.cadresCombo}
+                                                    onChange={this.selectMultipleCadres} />
+                                            </div>
+                                        </Col>
+                                    </FormGroup>
+                                    <hr/>
+                                    <Button bsStyle="warning" bsSize="small" onClick={() => this.loadStaffFromiHRIS()}>Upload from iHRIS</Button>
                                 </div>
                             </div>
                             <br/><br/>
@@ -274,22 +323,7 @@ export default class HRUploadPanel extends React.Component {
                                         <b>Workforce</b>
                                     </div>
                                     <hr />
-                                    <Col sm={10}>
-                                        <FormControl
-                                            componentClass="select"
-                                            onChange={e => this.filterWorkforce(e.target.value)}>
-                                            <option value="0" key="000">Filter by cadre</option>
-                                            {this.state.cadres.map(cadre =>
-                                                <option
-                                                    key={cadre.std_code}
-                                                    value={cadre.std_code}>
-                                                    {cadre.name_fr + '/' + cadre.name_en}
-                                                </option>
-                                            )}
-                                        </FormControl>
-                                    </Col>
                                 </FormGroup>
-                                <hr />
                                 <table className="table-list">
                                     <thead>
                                         <tr>

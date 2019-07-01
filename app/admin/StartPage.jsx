@@ -8,10 +8,9 @@ import Steps, { Step } from 'rc-steps';
 
 
 import ImportPage from '../import/ImportPage';
-import AdminPage from '../admin/AdminPage';
 import CadreTimePage from '../user/CadreTimePage';
 import StatisticsPage from '../admin/StatisticsPage';
-import UserPage from '../user/UserPage';
+import CalculationPage from '../user/CalculationPanel';
 import MatchingPage from '../admin/MatchingPage';
 
 const importData_desc = 'Import all required metadata into the system.';
@@ -93,9 +92,6 @@ export default class StartPage extends React.Component {
                             {(this.state.currentStep == 0) && 
                                 <ImportPage />
                             }
-                            {/*(this.state.currentStep == 1) && 
-                                <AdminPage />
-                            */}
                             {(this.state.currentStep == 1) && 
                                 <CadreTimePage />
                             }
@@ -106,7 +102,7 @@ export default class StartPage extends React.Component {
                                 <StatisticsPage />
                             }
                             {(this.state.currentStep == 4) && 
-                                <UserPage />
+                                <CalculationPage />
                             }
                         </div>
                     </div>                        

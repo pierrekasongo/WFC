@@ -1,10 +1,9 @@
 import * as React from 'react';
 import Collapsible from 'react-collapsible';
-import { Panel, Form, FormGroup, ControlLabel, FormControl, Col, Checkbox, PanelGroup, Accordion } from 'react-bootstrap';
-import FacilityPanel from './FacilityPanel';
-import HRUploadPanel from './HRUploadPanel';
-import ServiceUploadPanel from './ServiceUploadPanel';
-import CadreUploadPanel from './CadreImportPanel';
+import { Panel} from 'react-bootstrap';
+import FacilityImportPanel from './FacilityImportPanel';
+import ServiceImportPanel from './ServiceImportPanel';
+import CadreImportPanel from './CadreImportPanel';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import { FaUserMd, FaClinicMedical, FaCapsules, FaUserNurse } from 'react-icons/fa';
 
@@ -12,6 +11,8 @@ export default class ImportPage extends React.Component {
 
         constructor(props) {
                 super(props);
+
+                console.log("PROPS ",this.props);
         }
 
         render() {
@@ -27,15 +28,15 @@ export default class ImportPage extends React.Component {
                                                 </TabList>
 
                                                 <TabPanel>
-                                                        <CadreUploadPanel />
+                                                        <CadreImportPanel />
                                                 </TabPanel>
 
                                                 <TabPanel>
-                                                        <ServiceUploadPanel />
+                                                        <ServiceImportPanel />
                                                 </TabPanel>
 
                                                 <TabPanel>
-                                                        <FacilityPanel />
+                                                        <FacilityImportPanel />
                                                 </TabPanel>
 
                                                 {/*<TabPanel>

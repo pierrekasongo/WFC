@@ -23,39 +23,63 @@ class HomePage extends React.Component {
             .then(res => this.setState({ count: res.nb }))
             .catch(err => console.log(err));*/
 
-        axios.get('/admin/count_activities').then(res => {
+        axios.get('/admin/count_activities',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
                 this.setState({
                     activitiesCount: res.data[0].nb
                 });
                 
         }).catch(err => console.log(err));
 
-        axios.get('/user/count_facilities').then(res => {
+        axios.get('/user/count_facilities',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({
                 facilitiesCount: res.data[0].nb
             });           
         }).catch(err => console.log(err));
 
-        axios.get('/user/count_staffs').then(res => {
+        axios.get('/user/count_staffs',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({
                 staffCount: res.data[0].nb
             });           
         }).catch(err => console.log(err));
 
-        axios.get('/user/staff_per_cadre').then(res => {
+        axios.get('/user/staff_per_cadre',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({
                 staffs:res.data
             });
 
         }).catch(err => console.log(err));
 
-        axios.get('/user/count_cadres').then(res => {
+        axios.get('/user/count_cadres',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({
                 cadreCount: res.data[0].nb
             });           
         }).catch(err => console.log(err));
 
-        axios.get('/user/cadres').then(res => {
+        axios.get('/user/cadres',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({
                 cadres:res.data
             });
@@ -66,8 +90,11 @@ class HomePage extends React.Component {
     renderDashboard() {
         return (
             <div className="intro-screen">
+                <div className="welcome-box">
+                    <p>Welcome <b>{localStorage.getItem('username')}</b>, logedin as <b>{localStorage.getItem('role')}</b></p>
+                </div>
                 <Panel bsStyle="primary" header="Home">
-                <br />
+                <br/>
                 <div class="container">
                     <div class="row">
                         <div class="col-md-4 col-xl-3">

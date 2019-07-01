@@ -6,22 +6,25 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const csv = require('csv');
 
-const countryId = 52;
+const withAuth = require('../middleware/is-auth');
+
 
 router.use(fileUpload(/*limits: { fileSize: 50 * 1024 * 1024 },*/));
 
-router.get('/treatments', function (req, res) {
+router.get('/treatments/:countryId',withAuth,function (req, res) {
+
+    let countryId = req.params.countryId;
 
     db.query(`SELECT t.std_code AS code, dhis2_code AS dhis2_code,c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
             FROM  country_treatment t, std_treatment st, std_cadre c 
-            WHERE t.std_code=st.code AND st.cadre_code=c.code;`, function (error, results, fields) {
+            WHERE t.std_code=st.code AND st.cadre_code=c.code AND countryId=${countryId};`, function (error, results, fields) {
             if (error) throw error;
             res.json(results);
         });
 });
 
-router.post('/generateStatTemplate', function (req, res) {
+router.post('/generateStatTemplate',withAuth, function (req, res) {
 
     let cadre = req.body.selectedCadre;
 
@@ -29,13 +32,15 @@ router.post('/generateStatTemplate', function (req, res) {
 
     let facility = req.body.selectedFacility;
 
+    let countryId = req.body.countryId
+
     let statistics = [];
 
     let sql=``;
     
     let count=0;
 
-    db.query(`SELECT * FROM country_treatment WHERE cadre_code="${cadre}"`, function (error, results, fields) {
+    db.query(`SELECT * FROM country_treatment WHERE cadre_code="${cadre}" WHERE countryId=${countryId}`, function (error, results, fields) {
         if (error) throw error;
         results.forEach(rs =>{
 
@@ -53,7 +58,7 @@ router.post('/generateStatTemplate', function (req, res) {
     });
 })
 
-router.patch('/editPatientsCount', (req, res) => {
+router.patch('/editPatientsCount',withAuth, (req, res) => {
 
     let id = req.body.id;
 
@@ -69,12 +74,29 @@ router.patch('/editPatientsCount', (req, res) => {
 
 });
 
-router.get('/statistics', (req, res) => {
+router.delete('/deleteStatistics/:facility/:cadre/:source',withAuth, function (req, res) {
+
+    let facilityId = req.params.facility;
+
+    let cadreId = req.params.cadreId;
+
+    let source = req.params.source;
+
+    db.query(`DELETE FROM  activity_stats WHERE id=${id}`, function (error, results, fields) {
+        if (error) throw error;
+        res.status(200).send("Deleted successfully");
+    });
+});
+
+
+router.get('/statistics/:countryId',withAuth, (req, res) => {
+    
+    let countryId = req.params.countryId;
 
     let sql = `SELECT act_st.id as id, fa.name as facility,act_st.cadreCode AS cadre_code, CONCAT(cd.name_fr,'/',cd.name_en) as cadre,
                  ct.name_std as treatment, act_st.caseCount as patients FROM facility fa, activity_stats act_st,
                  country_treatment ct, std_cadre cd WHERE act_st.facilityCode=fa.code AND 
-                 act_st.activityCode=ct.std_code AND cd.code=act_st.cadreCode`;
+                 act_st.activityCode=ct.std_code AND cd.code=act_st.cadreCode AND fa.countryId=${countryId}`;
 
     db.query(sql, function (error, results, fields) {
         if (error) throw error;
@@ -82,7 +104,7 @@ router.get('/statistics', (req, res) => {
     });
 });
 
-router.patch('/editPatientsCount', (req, res) => {
+router.patch('/editPatientsCount',withAuth, (req, res) => {
 
     let id = req.body.id;
 

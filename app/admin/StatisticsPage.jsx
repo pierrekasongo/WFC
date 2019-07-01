@@ -5,6 +5,7 @@ import axios from 'axios';
 import InlineEdit from 'react-edit-inline2';
 import Multiselect from 'react-multiselect-checkboxes';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { FaTrash, FaCheck, FaCheckSquare } from 'react-icons/fa';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 
@@ -30,34 +31,85 @@ export default class StatisticsPage extends React.Component {
             statistics: [],
             filteredStats: [],
             state: 'done',
+
+            facilitiesCombo: [],
+
+            cadresCombo: [],
         };
+
         this.importStatisticsFromDhis2 = this.importStatisticsFromDhis2.bind(this);
-        axios.get('/countrystatistics/statistics').then(res => {
+
+        axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({
                 statistics: res.data,
                 filteredStats: res.data
             })
         }).catch(err => console.log(err));
 
-        axios.get('/configuration/getYears').then(res => {
+        axios.get('/configuration/getYears',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             let years = res.data;
             this.setState({
                 years: years
             })
         }).catch(err => console.log(err));
 
-        axios.get('/hris/cadres').then(res => {
-            this.setState({ cadres: res.data });
+        axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            let facilities = res.data;
+
+            let facilitiesCombo = [];
+
+            facilities.forEach(fa => {
+
+                let code = fa.ihrisCode;
+
+                facilitiesCombo.push({ label: fa.name, value: code });
+            });
+            this.setState({
+                facilities: facilities,
+                facilitiesCombo: facilitiesCombo
+            });
         }).catch(err => console.log(err));
 
-        axios.get('/dhis2/facilities').then(res => {
-            this.setState({ facilities: res.data });
-        })
-            .catch(err => console.log(err));
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            let cadresCombo = [];
+
+            res.data.forEach(cadre => {
+
+                cadresCombo.push({ label: cadre.name, value: cadre.hris_code });
+            });
+            this.setState({
+                cadresCombo: cadresCombo,
+                cadres:res.data
+            });
+
+        }).catch(err => console.log(err));
 
     }
 
     handlePatientsChange(obj) {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
 
         const ident = Object.keys(obj)[0].split("-");
 
@@ -72,9 +124,17 @@ export default class StatisticsPage extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/countrystatistics/editPatientsCount', data).then(res => {
+        axios.patch('/countrystatistics/editPatientsCount', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
-            axios.get('/countrystatistics/statistics').then(res => {
+            axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
                 this.setState({
                     statistics: res.data,
                     filteredStats: res.data
@@ -120,30 +180,99 @@ export default class StatisticsPage extends React.Component {
 
     importStatisticsFromDhis2() {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         if (this.state.selectedPeriod.length == 0) {
             this.launchToastr("Please, select a year first before calculating.");
             return;
         }
-        if (typeof (this.state.selectedFacility) == 'undefined') {
+        if (typeof (this.state.selectedFacilities) == 'undefined') {
             this.launchToastr("No facility selected.");
             return;
         }
-        if (typeof (this.state.selectedCadre) == 'undefined') {
+        if (typeof (this.state.selectedCadres) == 'undefined') {
             this.launchToastr("No cadre selected.");
             return;
         }
 
         let data = {
             selectedPeriod: this.state.selectedPeriod,
-            selectedFacilities: this.state.selectedFacility,
-            selectedCadres: this.state.selectedCadre
+            selectedFacilities: this.state.selectedFacilities,
+            selectedCadres: this.state.selectedCadres,
+            countryId : localStorage.getItem('countryId')
         };
 
         this.setState({ state: 'loading' });
 
-        axios.post(`/dhis2/import_statistics`, data).then(res => {
-            //Code goes here
-            this.setState({ state: 'done' });
+        axios.post(`/dhis2/import_statistics`, data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({
+                    statistics: res.data,
+                    filteredStats: res.data,
+                    state:'done'
+                })
+
+            }).catch(err => console.log(err));
+        }).catch(err => console.log(err));
+
+    }
+
+    useStatistics(){
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
+        if (this.state.selectedPeriod.length == 0) {
+            this.launchToastr("Please, select a year before calculating.");
+            return;
+        }
+        if (typeof (this.state.selectedFacilities) == 'undefined') {
+            this.launchToastr("No facility selected.");
+            return;
+        }
+        if (typeof (this.state.selectedCadres) == 'undefined') {
+            this.launchToastr("No cadre selected.");
+            return;
+        }
+
+        let data = {
+            selectedPeriod: this.state.selectedPeriod,
+            selectedFacilities: this.state.selectedFacilities,
+            selectedCadres: this.state.selectedCadres,
+            countryId: localStorage.getItem('countryId')
+        };
+
+        axios.post(`/dhis2/import_statistics`, data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({
+                    statistics: res.data,
+                    filteredStats: res.data,
+                })
+
+            }).catch(err => console.log(err));
         }).catch(err => console.log(err));
 
     }
@@ -165,8 +294,8 @@ export default class StatisticsPage extends React.Component {
                                     </div>
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={10}>
-                                            Year
-                                </Col>
+                                            <b>Year</b>
+                                        </Col>
 
                                         <Col sm={15}>
                                             <FormControl componentClass="select"
@@ -183,11 +312,11 @@ export default class StatisticsPage extends React.Component {
                                         <Col sm={15}>
                                             <FormGroup>
                                                 <Col componentClass={ControlLabel} sm={10}>
-                                                    Facilities ({(this.state.facilities.length)})
-                                        </Col>
+                                                    <b>Facilities ({(this.state.facilities.length)})</b>
+                                                </Col>
                                                 <Col sm={15}>
                                                     <FormControl componentClass="select"
-                                                        onChange={e => this.setState({ selectedFacility: e.target.value })}>
+                                                        onChange={e => this.setState({ selectedFacilities: e.target.value })}>
                                                         <option key="000" value="000">Select value</option>
                                                         {(this.state.facilities.map(fa =>
                                                             <option key={fa.code} value={fa.code}>{fa.name}</option>
@@ -202,11 +331,11 @@ export default class StatisticsPage extends React.Component {
                                         <Col sm={15}>
                                             <FormGroup>
                                                 <Col componentClass={ControlLabel} sm={10}>
-                                                    Cadres ({(this.state.cadres.length)})
-                                        </Col>
+                                                    <b>Cadres ({(this.state.cadres.length)})</b>
+                                                </Col>
                                                 <Col sm={15}>
                                                     <FormControl componentClass="select"
-                                                        onChange={e => this.setState({ selectedCadre: e.target.value })}>
+                                                        onChange={e => this.setState({ selectedCadres: e.target.value })}>
                                                         <option key="000" value="000">Select value</option>
                                                         {(this.state.cadres.map(cd =>
                                                             <option key={cd.code} value={cd.code}>{cd.name}</option>
@@ -218,7 +347,7 @@ export default class StatisticsPage extends React.Component {
                                     </FormGroup>
                                     <hr />
                                     <div style={{ textAlign: "right", paddingTop: 10 }}>
-                                        <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>Import statisticsfrom DHIS2</Button>
+                                        <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>Import statistics from DHIS2</Button>
                                     </div>
                                 </Form>
                             </div>
@@ -226,33 +355,35 @@ export default class StatisticsPage extends React.Component {
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
-                                            <b>Annual treatment statistics</b>({this.state.filteredStats.length})
-                                </div>
+                                            <b>Annual treatment statistics - </b>({this.state.filteredStats.length})
+                                        </div>
                                     </Col>
-                                    <div className="filter-container">
-                                        <div>
-                                            <FormGroup>
-                                                <Col sm={15}>
-                                                    <FormControl componentClass="select"
-                                                        onChange={e => this.filterStatByCadre(e.target.value)}>
-                                                        <option key="000" value="000">Filter by cadre</option>
-                                                        {(this.state.cadres.map(cd =>
-                                                            <option key={cd.code} value={cd.code}>{cd.name}</option>
-                                                        ))}
-                                                    </FormControl>
-                                                </Col>
-                                            </FormGroup>
-                                        </div>
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <FormControl componentClass="select"
+                                                            onChange={e => this.filterStatByCadre(e.target.value)}>
+                                                            <option key="000" value="000">Filter by cadre</option>
+                                                            {this.state.cadres.map(cd =>
+                                                                <option key={cd.code} value={cd.code}>{cd.name}</option>
+                                                            )}
+                                                        </FormControl>
+                                                    </Col>
+                                                </FormGroup>
+                                            </td>
 
-                                        <div>
-                                            <FormGroup>
-                                                <Col sm={15}>
-                                                    <input typye="text" className="form-control"
-                                                        placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
-                                                </Col>
-                                            </FormGroup>
-                                        </div>
-                                    </div>
+                                            <td>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <input typye="text" className="form-control"
+                                                            placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
+                                                    </Col>
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </FormGroup>
                                 <hr />
                                 {this.state.state == 'loading' &&
@@ -275,7 +406,6 @@ export default class StatisticsPage extends React.Component {
                                                 <td>{st.facility}</td>
                                                 <td>{st.cadre}</td>
                                                 <td>{st.treatment}</td>
-                                                {/*<td>{tr.patients}</td>*/}
                                                 <td>
                                                     <div>
                                                         <a href="#">
@@ -302,6 +432,9 @@ export default class StatisticsPage extends React.Component {
                                         )}
                                     </tbody>
                                 </table>
+                                
+                                <br/>
+                                <button className="button" onClick={this.useStatistics}><FaCheck /> Use this</button>
                             </div>
                             <br />
                         </div>
@@ -309,7 +442,9 @@ export default class StatisticsPage extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <HRUploadPanel />
+                        <HRUploadPanel 
+                            cadresCombo ={this.state.cadresCombo}
+                            facilitiesCombo={this.state.facilitiesCombo} />
                     </TabPanel>
                 </Tabs>
             </Panel>

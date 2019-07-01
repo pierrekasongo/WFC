@@ -12,7 +12,6 @@ export default class NewTreatmentComponent extends React.Component {
             facilityTypeId: Object.keys(props.facilityTypes)[0],
             duration:0
         }
-        //console.log(props.treatments);
     }
     render() {
         return (

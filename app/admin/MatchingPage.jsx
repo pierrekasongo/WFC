@@ -31,6 +31,7 @@ export default class MatchingPage extends React.Component {
             countryFacilities: [],
             ihrisFacilityCombo: [],
             ihrisFacilities: [],
+            ihrisCadres: [],
 
             dhis2CodeToDelete: '',
 
@@ -39,19 +40,37 @@ export default class MatchingPage extends React.Component {
             countryCadres: [],
 
             showButtons: false,
+            stateDhis2Treatment : 'loading',
         };
         this.selectMultipleDHIS2Treatments = this.selectMultipleDHIS2Treatments.bind(this);
         this.matchTreatments = this.matchTreatments.bind(this);
         this.matchFacilities = this.matchFacilities.bind(this);
+        this.matchCadres = this.matchCadres.bind(this);
 
-        axios.get('/countrycadre/cadres')
-            .then(res => this.setState({ countryCadres: res.data }))
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => this.setState({ countryCadres: res.data }))
             .catch(err => console.log(err));
-        axios.get('/dhis2/facilities')
-            .then(res => this.setState({ countryFacilities: res.data }))
+        axios.get(`/hris/getiHRIS_cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => this.setState({ ihrisCadres: res.data }))
+            .catch(err => console.log(err));
+        axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => this.setState({ countryFacilities: res.data }))
             .catch(err => console.log(err));
 
-        axios.get('/hris/getiHRIS_facilities').then(res => {
+        axios.get(`/hris/getiHRIS_facilities/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             this.setState({ ihrisFacilities: res.data });
 
@@ -59,7 +78,11 @@ export default class MatchingPage extends React.Component {
             console.log(err);
         });
 
-        axios.get('/hris/getiHRIS_PractitionerRoles').then(res => {
+        axios.get(`/hris/getiHRIS_PractitionerRoles/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let rolesCombo = [];
 
@@ -74,7 +97,11 @@ export default class MatchingPage extends React.Component {
             console.log(err);
         });
 
-        axios.get('/dhis2/getDhis2_treatments').then(res => {
+        axios.get(`/dhis2/getDhis2_treatments/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let dhis2TreatmentCombo = [];
 
@@ -92,21 +119,30 @@ export default class MatchingPage extends React.Component {
             })
             this.setState({
                 dhis2TreatmentCombo: dhis2TreatmentCombo,
-                dhis2TreatmentInput: dhis2TreatmentInput
+                dhis2TreatmentInput: dhis2TreatmentInput,
+                stateDhis2Treatment:'done'
             });
 
         }).catch(err => {
             console.log(err);
         });
 
-        axios.get('/countrytreatment/treatments').then(res => {
+        axios.get(`/countrytreatment/treatments/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             this.setState({
                 countryTreatments: res.data,
                 filteredCountryTreatments: res.data,
             });
         }).catch(err => console.log(err));
 
-        axios.get('/countrycadre/cadres').then(res => {
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             this.setState({ countryCadres: res.data });
 
@@ -128,7 +164,11 @@ export default class MatchingPage extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/countrycadre/editCadre', data).then(res => {
+        axios.patch('/countrycadre/editCadre', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -167,9 +207,17 @@ export default class MatchingPage extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.delete(`/dhis2/deleteDhis2Code/${id}`).then(res => {
+                                axios.delete(`/dhis2/deleteDhis2Code/${id}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then(res => {
 
-                                    axios.get('/countrytreatment/treatments').then(res => {
+                                    axios.get(`/countrytreatment/treatments/${localStorage.getItem('countryId')}`,{
+                                        headers :{
+                                            Authorization : 'Bearer '+localStorage.getItem('token')
+                                        }
+                                    }).then(res => {
                                         this.setState({
                                             countryTreatments: res.data,
                                             filteredCountryTreatments: res.data,
@@ -189,20 +237,16 @@ export default class MatchingPage extends React.Component {
 
     filterCountryTreatement(cadreCode) {
 
-        this.setState({ selectedCountryCadre: cadreCode })
-        axios.get(`/countrytreatment/treatments/${cadreCode}`).then(res => {
-            this.setState({
-                countryTreatments: res.data,
-                filteredTreatments: res.data,
-            });
-        }).catch(err => {
-            console.log(err);
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
+        let treats = [];
+
+        treats = this.state.countryTreatments;
+
+        if(cadreCode === "0"){
+            
+            this.setState({filteredCountryTreatments : treats});
+            return;
+        }
+        this.setState({ filteredCountryTreatments: treats.filter(tr => tr.cadre_code.includes(cadreCode)) });
     }
 
     filterDHIS2Treatment() {
@@ -230,13 +274,27 @@ export default class MatchingPage extends React.Component {
     }
 
     matchTreatments() {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         let data = {
             treatmentCode: this.state.checkedTreatment,
-            selectedDhis2Treatments: this.state.selectedDhis2Treatments
+            selectedDhis2Treatments: this.state.selectedDhis2Treatments,            
         }
-        axios.post(`/countrytreatment/match_dhis2_codes`, data).then(res => {
+        axios.post(`/countrytreatment/match_dhis2_codes`, data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
-            axios.get('/countrytreatment/treatments').then(res => {
+            axios.get(`/countrytreatment/treatments/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
                 this.setState({
                     countryTreatments: res.data,
                     filteredCountryTreatments: res.data,
@@ -254,6 +312,11 @@ export default class MatchingPage extends React.Component {
 
     matchFacilities(code, ihrisCode) {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         let data = {
             facilityCode: code,
             ihrisCode: ihrisCode
@@ -268,9 +331,60 @@ export default class MatchingPage extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.post(`/dhis2/match_facility`, data).then(res => {
-                                    axios.get('/dhis2/facilities')
-                                        .then(res => this.setState({ countryFacilities: res.data }))
+                                axios.post(`/dhis2/match_facility`,data,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then(res => {
+                                    axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
+                                        headers :{
+                                            Authorization : 'Bearer '+localStorage.getItem('token')
+                                        }
+                                    }).then(res => this.setState({ countryFacilities: res.data }))
+                                        .catch(err => console.log(err));
+                                }).catch(err => console.log(err));
+
+                                onClose();
+                            }}>
+                            Yes
+                        </button>
+                    </div>
+                );
+            }
+        });
+    }
+
+    matchCadres(stdCode, ihrisCode) {
+        
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+        let data = {
+            ihrisCode: ihrisCode,
+            stdCode: stdCode
+        }
+        confirmAlert({
+            customUI: ({ onClose }) => {
+                return (
+                    <div className='custom-ui'>
+                        <h3>Confirmation</h3>
+                        <p>Are you sure you want to match this?</p>
+                        <button onClick={onClose}>No</button> &nbsp;&nbsp;
+                        <button
+                            onClick={() => {
+
+                                axios.post(`/hris/match_cadre`, data,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then(res => {
+                                    axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+                                        headers :{
+                                            Authorization : 'Bearer '+localStorage.getItem('token')
+                                        }
+                                    })
+                                        .then(res => this.setState({ countryCadres: res.data }))
                                         .catch(err => console.log(err));
                                 }).catch(err => console.log(err));
 
@@ -319,18 +433,30 @@ export default class MatchingPage extends React.Component {
                                 </Col>
                             </FormGroup>
 
-                            <FormControl
-                                componentClass="select"
-                                onChange={e => this.filterCountryTreatement(e.target.value)}>
-                                <option value="0" key="000">Filter by cadre</option>
-                                {this.state.countryCadres.map(cadre =>
-                                    <option
-                                        key={cadre.std_code}
-                                        value={cadre.std_code}>
-                                        {cadre.name_fr + '/' + cadre.name_en}
-                                    </option>
-                                )}
-                            </FormControl>
+                            <FormGroup>
+                                    <table className="tbl-multiselect">
+                                            <tr>
+                                                <td>
+                                                    <FormGroup>
+                                                        <Col sm={15}>
+                                                        <FormControl
+                                                                componentClass="select"
+                                                                onChange={e => this.filterCountryTreatement(e.target.value)}>
+                                                                <option value="0" key="000">Filter by cadre</option>
+                                                                {this.state.countryCadres.map(cadre =>
+                                                                    <option
+                                                                        key={cadre.std_code}
+                                                                        value={cadre.std_code}>
+                                                                        {cadre.name}
+                                                                    </option>
+                                                                )}
+                                                            </FormControl>
+                                                        </Col>
+                                                    </FormGroup>
+                                                </td>
+                                            </tr>
+                                        </table>
+                            </FormGroup>
                             <hr />
                             {this.state.checked &&
                                 <div>
@@ -349,6 +475,11 @@ export default class MatchingPage extends React.Component {
                                                         options={this.state.dhis2TreatmentCombo}
                                                         onChange={this.selectMultipleDHIS2Treatments} />
                                                 </div>
+                                            </td>
+                                            <td>
+                                                {this.state.stateDhis2Treatment == 'loading' &&
+                                                    <span className="loader-text">Loading...</span>
+                                                }
                                             </td>
                                             {this.state.showButtons &&
                                                 <td>
@@ -466,25 +597,24 @@ export default class MatchingPage extends React.Component {
                                 <tr>
                                     <th>Name</th>
                                     <th>Hris code</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {this.state.countryCadres.map(cadre =>
                                     <tr key={cadre.std_code} >
                                         <td>
-                                            {cadre.name_fr + '/' + cadre.name_en}
+                                            {cadre.name}
                                         </td>
                                         <td>
-                                            <div>
-                                                <a href="#">
-                                                    <InlineEdit
-                                                        validate={this.validateTextValue}
-                                                        activeClassName="editing"
-                                                        text={(cadre.hris_code.length == 0 ? 'match hris code' : cadre.hris_code)}
-                                                        paramName={cadre.std_code + '-hris_code'}
-                                                        change={this.handleCadreChange}
-                                                        style={{
-                                                            minWidth: 50,
+                                            <InlineEdit
+                                                    validate={this.validateTextValue}
+                                                    activeClassName="editing"
+                                                    text={(cadre.hris_code.length == 0 ? 'match hris code' : cadre.hris_code)}
+                                                    paramName={cadre.std_code + '-hris_code'}
+                                                    change={this.handleCadreChange}
+                                                    style={{
+                                                       minWidth: 50,
                                                             display: 'inline-block',
                                                             margin: 0,
                                                             padding: 0,
@@ -492,9 +622,19 @@ export default class MatchingPage extends React.Component {
                                                             outline: 0,
                                                             border: 0
                                                         }}
-                                                    />
-                                                </a>
-                                            </div>
+                                            />
+                                        </td>
+
+                                        <td>
+                                            <Col sm={10}>
+                                                <FormControl componentClass="select"
+                                                    onChange={e => this.matchCadres(cadre.std_code, e.target.value)}>
+                                                    <option key="000" value="000">Select value</option>
+                                                    {(this.state.ihrisCadres.map(c =>
+                                                        <option key={c.id} value={c.id} selected={(cadre.hris_code == c.id) ? true : false}>{c.name}</option>
+                                                    ))}
+                                                </FormControl>
+                                            </Col>
                                         </td>
                                     </tr>
                                 )}

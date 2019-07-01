@@ -1,59 +1,24 @@
 const sql = require('mysql');
-const db = require('../dbconn')
+const db = require('../dbconn');
+const dbiHRIS = require('../dbconn_ihris');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const csv = require('csv');
 const mkfhir = require("fhir.js");
 
-const workforceRoute = require('./user/workforce');
-const predictiveRoute = require('./user/predictive');
-const utilizationRoute = require('./user/utilization');
-
 let config = require('./configuration.js');
+
+let countryCadre = require('./country_cadres.js');
+
+let dhis2 = require('./dhis2.js');
 
 let router = require('express').Router();
 
+const withAuth = require('../middleware/is-auth');
+
+const calculationRoute = require('./pressure_calculation');
+
 router.use(fileUpload(/*limits: { fileSize: 50 * 1024 * 1024 },*/));
-
-let countryCode = 'CD';
-let countryId = 52;
-
-router.get('/loadHR', function (req, res) {
-
-    let fhirClient = mkfhir({
-        baseUrl: 'http://192.168.1.100/iHRIS/ihris-manage-site-demo/FHIR',
-        auth: { user: 'i2ce_admin', pass: 'capuccino@' }
-    });
-
-    fhirClient
-        .search({ type: 'PractitionerRole' })
-        .then(function (res) {
-
-            let bundle = res.data;
-
-            let person_id = bundle.identifier[0].value;
-
-            let is_active = bundle.active;
-
-            let cadre = bundle.code[0].text;
-
-            let facility = bundle.location[0].reference;
-
-            let count = (bundle.entry && bundle.entry.length) || 0;
-
-            console.log(person_id, is_active, cadre, facility);
-
-            //res.json(bundle);
-
-        }).catch(function (res) {
-            if (res.status) {
-                console.log('Error', res.status);
-            }
-            if (res.message) {
-                console.log('Error', res.message);
-            }
-        })
-})
 
 let getParent = async (url) => {
 
@@ -90,7 +55,118 @@ let getParent = async (url) => {
         })
 }
 
-router.get('/getiHRIS_facilities', async function (req, res) {
+let makeInsertSql = async (results) => {
+
+    let staffs = [];
+
+    let sql = ``;
+
+    for(const r of results){
+
+        let cadre = await countryCadre.getCadreByihrisCode(r.cadre);
+    
+        let facility = await dhis2.getFacilityByihrisCode(r.facility);
+
+        let staffCount = r.count;
+
+        sql+= `DELETE FROM staff WHERE facilityCode="${facility.code}" AND cadreCode="${cadre.code}";`
+
+        sql+= `INSERT INTO staff (facilityCode, cadreCode,staffCount) 
+                VALUES("${facility.code}", "${cadre.code}", ${staffCount});`;
+
+        /*staffs.push({
+            cadreCode : cadre.code,
+            cadre : cadre.name,
+            facilityCode : facility.code,
+            facility : facility.name,
+            staffCount : staffCount
+        });*/
+    }
+    return sql;
+}
+
+router.post('/match_cadre', withAuth, function (req, res) {
+
+    let code = req.body.stdCode;
+
+    let ihrisCode = req.body.ihrisCode;
+ 
+    db.query(`UPDATE country_cadre SET hris_code="${ihrisCode}" WHERE std_code="${code}"`, 
+    function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
+router.get('/getiHRIS_cadres/:countryId',withAuth,async function(req,res){
+
+    let countryId = req.params.countryId;
+
+    let cn = await dbiHRIS.connect(countryId);
+    
+    cn.query(`SELECT * FROM hippo_cadre`, function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+})
+
+router.post('/getiHRIS_staffs',withAuth,async function(req,res){
+
+    let countryId = req.body.countryId;
+
+    let facilities = req.body.facilities;
+
+    let cadres = req.body.cadres;
+
+    let cn = await dbiHRIS.connect(countryId);
+
+    let sql = `SELECT COUNT(pers_pos.id) AS count,jb.cadre, pos.facility  FROM hippo_person_position pers_pos, 
+                hippo_position pos, hippo_job jb WHERE pers_pos.position=pos.id AND 
+                pos.job=jb.id AND pos.status="position_status|closed" 
+                AND jb.cadre IN(?) AND pos.facility IN(?) GROUP BY (jb.cadre)`;
+    
+    let results = await new Promise((resolve, reject) => cn.query(sql,[cadres,facilities], 
+        function (error, results, fields) {
+
+        if (error) {
+            reject(error)
+        } else {
+
+            resolve(results);
+        }
+    }));
+    let request = await makeInsertSql(results);
+
+    if(request.length > 0){
+        
+        db.query(request, function (error, results, fields) {
+            if (error) throw error;
+            res.json(results);
+        });
+    }
+})
+
+router.get('/getiHRIS_facilities/:countryId',withAuth, async function (req, res) {
+
+    let countryId = req.params.countryId;
+
+    let cn = await dbiHRIS.connect(countryId);
+
+    let sql = `SELECT id as code,code as uuid,name FROM hippo_facility`;
+
+    cn.query(sql, function(error, results, fields){
+        if(error) throw error;
+        res.json(results);
+    });
+})
+
+router.get('/getiHRIS_facilities_FHIR/:countryId',withAuth, async function (req, res) {
+
+    //url = http://localhost/iHRIS/ihris-manage-site-demo/FHIR
+    //user=i2ce_admin
+    //pwd = ...
+
+    let countryId = req.params.countryId;
 
     let params = await config.ihrisCredentials(countryId);
 
@@ -136,7 +212,9 @@ router.get('/getiHRIS_facilities', async function (req, res) {
     res.json(facilities);
 })
 
-router.get('/getiHRIS_FacilityTypes', async function (req, res) {
+router.get('/getiHRIS_FacilityTypes/:countryId',withAuth, async function (req, res) {
+
+    let countryId = req.params.countryId;
 
     let params = await config.ihrisCredentials(countryId);
 
@@ -185,7 +263,9 @@ router.get('/getiHRIS_FacilityTypes', async function (req, res) {
     res.json(facilities);
 })
 
-router.get('/getiHRIS_PractitionerRoles', async function (req, res) {
+router.get('/getiHRIS_PractitionerRoles/:countryId',withAuth, async function (req, res) {
+
+    let countryId = req.params.countryId;
 
     let params = await config.ihrisCredentials(countryId);
 
@@ -234,87 +314,8 @@ router.get('/getiHRIS_PractitionerRoles', async function (req, res) {
 })
 
 
-
-router.post('/login', function (req, res) {
-
-    var login = req.body.login.toString();
-    var password = req.body.password.toString();
-
-    db.query(`SELECT * FROM users WHERE login ="` + login + `"  AND password ="` + password + `";`, function (error, results, fields) {
-        if (error) throw error;
-        let user = {};
-        results.forEach(row => {
-
-            user[row['id']] = {
-                id: row['id'],
-                login: row['login'],
-                name: row['name'],
-                country_id: row['country_id'],
-                last_login: row['last_login']
-            };
-
-        });
-        res.json(user);
-    });
-});
-
-router.get('/facility_tree', function (req, res) {
-
-    db.query(`SELECT DISTINCT(regionName) AS region FROM facilities WHERE selected=1;`, function (error, results, fields) {
-        if (error) throw error;
-        let tree = {};
-        let region = "";
-        let district = "";
-        results.forEach(row => {
-
-            region = row['region'];
-
-            db.query(`SELECT DISTINCT(districtName) AS district FROM facilities 
-                            WHERE regionName='`+ row['region'] + `' AND selected=1;`, function (err, res, fld) {
-                    if (err) throw err;
-
-                    res.forEach(r => {
-
-                        district = r['district'];
-
-                        db.query(`SELECT id,facilityCode,facilityName FROM facilities 
-                                    WHERE districtName='`+ r['district'] + `' AND selected=1;`, function (er, rs, fd) {
-                                if (er) throw er;
-                                rs.forEach(rec => {
-
-                                    facilityName = rec['facilityName'];
-
-                                    //console.log(facilityName);
-                                });
-                            });
-
-                    });
-                });
-
-
-
-            /*treatments[row['id']] = {
-                id:row['id'],
-                treatment: row['activityName'],
-                cadre:row['cadre'],
-                duration:row['duration']
-            };*/
-
-        });
-
-        //res.json(treatments);
-    });
-});
-
-router.get('/count_facilities', (req, res) => {
-    db.query('SELECT COUNT(id) AS nb FROM facilities', function (error, results, fields) {
-        if (error) throw error;
-        res.json(results);
-    });
-});
-
 //Update facility selected state
-router.patch('/facilities/:id', (req, res) => {
+router.patch('/facilities/:id',withAuth, (req, res) => {
 
     var id = parseInt(req.params.id.toString());
 
@@ -326,52 +327,8 @@ router.patch('/facilities/:id', (req, res) => {
     });
 
 });
-//Update hours per week for a cadre
-router.patch('/cadre/hours/:id', (req, res) => {
 
-    var id = parseInt(req.params.id.toString());
-
-    var value = parseInt(req.body.hours.toString());
-
-    db.query(`UPDATE cadre SET hoursPerWeek =` + value + ` WHERE id =` + id, function (error, results) {
-        if (error) throw error;
-        res.json(results);
-    });
-});
-
-//Update hours per week for a cadre
-router.patch('/cadre/admin_work/:id', (req, res) => {
-
-    var id = parseInt(req.params.id.toString());
-
-    var value = parseInt(req.body.admin_task.toString());
-
-    db.query(`UPDATE cadre SET adminTask =` + value + ` WHERE id =` + id, function (error, results) {
-        if (error) throw error;
-        res.json(results);
-    });
-});
-
-// get list of cadres
-router.get('/cadres', (req, res) => {
-    db.query(`SELECT ct.std_code AS code,CONCAT(st.name_fr,"/",st.name_en) AS name,
-                ct.work_days AS work_days,ct.work_hours AS work_hours,ct.admin_task AS admin_task,
-                ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
-                ct.other_leave AS other_leave  FROM country_cadre ct, std_cadre st
-                WHERE ct.std_code=st.code `, function (error, results, fields) {
-            if (error) throw error;
-            res.json(results);
-        });
-});
-
-router.get('/count_cadres', (req, res) => {
-    db.query('SELECT COUNT(id) AS nb FROM cadre', function (error, results, fields) {
-        if (error) throw error;
-        res.json(results);
-    });
-});
-
-router.patch('/editHR', (req, res) => {
+router.patch('/editHR',withAuth, (req, res) => {
 
     let id = req.body.id;
 
@@ -386,46 +343,51 @@ router.patch('/editHR', (req, res) => {
 
 });
 // get list of available workforce by cadre and facility
-router.get('/workforce', (req, res) => {
+router.get('/workforce/:countryId',withAuth, (req, res) => {
+
+    let countryId = req.params.countryId;
 
     db.query(`SELECT s.id AS id,s.staffCount AS staff,
             fa.name AS facility,CONCAT(cstd.name_fr,'/',cstd.name_en) AS cadre  FROM 
                 staff s,country_cadre ca,std_cadre cstd, facility fa WHERE 
                 s.facilityCode=fa.code AND s.cadreCode=ca.std_code 
-                AND ca.std_code=cstd.code`, function (error, results, fields) {
+                AND ca.std_code=cstd.code AND fa.countryId=${countryId}`, function (error, results, fields) {
             if (error) throw error;
             res.json(results);
         });
 });
 
 // get list of available workforce without caring about facility
-router.get('/all_workforce', (req, res) => {
+router.get('/all_workforce',withAuth, (req, res) => {
     db.query('SELECT id AS id,facilityId AS facilityId, facilityCode AS facilityCode FROM staff', function (error, results, fields) {
         if (error) throw error;
         res.json(results);
     });
 });
 
-router.get('/count_staffs', (req, res) => {
-    db.query('SELECT SUM(`staffCount`) AS nb FROM staff', function (error, results, fields) {
+router.get('/count_staffs/:countryId',withAuth, (req, res) => {
+    let countryId = req.params.countryId;
+    db.query(`SELECT SUM('staffCount') AS nb FROM staff s, facility fa 
+                WHERE s.facilityCode=fa.code AND fa.countryId=${countryId}`, function (error, results, fields) {
         if (error) throw error;
         res.json(results);
     });
 });
 //get count staff per cadre
-router.get('/staff_per_cadre', (req, res) => {
+router.get('/staff_per_cadre/:countryId',withAuth, (req, res) => {
+    let countryId = req.params.countryId;
 
     db.query(`SELECT s.id AS id,s.staffCount AS staff,
         fa.name AS facility,CONCAT(cstd.name_fr,'/',cstd.name_en) AS cadre  FROM 
         staff s,country_cadre ca,std_cadre cstd, facility fa WHERE 
         s.facilityCode=fa.code AND s.cadreCode=ca.std_code 
-        AND ca.std_code=cstd.code GROUP BY s.cadreCode`, function (error, results, fields) {
+        AND ca.std_code=cstd.code AND fa.countryId=${countryId} GROUP BY s.cadreCode`, function (error, results, fields) {
             if (error) throw error;
             res.json(results);
         });
 });
 
-router.delete('/deleteWorkforce/:id', function (req, res) {
+router.delete('/deleteWorkforce/:id',withAuth, function (req, res) {
 
     let id = req.params.id;
 
@@ -435,28 +397,22 @@ router.delete('/deleteWorkforce/:id', function (req, res) {
     });
 });
 
-router.get('/workforce/:cadre_code', (req, res) => {
+router.get('/workforce/:cadre_code/:countryId',withAuth, (req, res) => {
 
     cadreCode = req.params.cadre_code;
+    let countryId = req.params.countryId;
 
     db.query(`SELECT s.id AS id,s.staffCount AS staff,
         fa.name AS facility,CONCAT(cstd.name_fr,'/',cstd.name_en) AS cadre  FROM 
         staff s,country_cadre ca,std_cadre cstd, facility fa WHERE 
         s.facilityCode=fa.code AND s.cadreCode=ca.std_code 
-        AND ca.std_code=cstd.code AND s.cadreCode="${cadreCode}"`, function (error, results, fields) {
+        AND ca.std_code=cstd.code AND s.cadreCode="${cadreCode}" AND fa.countryId=${countryId}`, function (error, results, fields) {
             if (error) throw error;
             res.json(results);
         });
 });
-//get list of treatments
-router.get('/activities', (req, res) => {
-    db.query(`SELECT id AS id, activityName AS activityName FROM activities`, function (error, results, fields) {
-        if (error) throw error;
-        res.json(results);
-    });
-});
 
-router.post('/uploadHR', function (req, res) {
+router.post('/uploadHR',withAuth, function (req, res) {
 
     if (!req.files) {
         return res.status(400).send('No files were uploaded');
@@ -501,9 +457,7 @@ router.post('/uploadHR', function (req, res) {
     });
 });
 
-// analytics
-router.use('/workforce', workforceRoute);
-router.use('/predictive', predictiveRoute);
-router.use('/utilization', utilizationRoute);
+router.use('/calculate_pressure', calculationRoute);
 
 module.exports = router;
+

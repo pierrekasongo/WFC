@@ -4,6 +4,8 @@ import * as axios from 'axios';
 
 import InlineEdit from 'react-edit-inline2';
 import UserPage from './UserPage';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
 
 export default class ConfigPage extends React.Component {
 
@@ -15,8 +17,11 @@ export default class ConfigPage extends React.Component {
             filter: "",
         }
 
-        axios.get('/configuration/configs')
-            .then(res => this.setState({ configs: res.data }))
+        axios.get(`/configuration/configs/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => this.setState({ configs: res.data }))
             .catch(err => console.log(err));
 
         this.handleChange = this.handleChange.bind(this);
@@ -28,6 +33,11 @@ export default class ConfigPage extends React.Component {
 
     handleChange(obj) {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         const id = Object.keys(obj)[0];
 
         const value = Object.values(obj)[0];
@@ -36,11 +46,25 @@ export default class ConfigPage extends React.Component {
             id: id,
             value: value,
         };
-        axios.patch('/configuration/config', data).then(res => {
+        axios.patch('/configuration/config', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
         }).catch(err => console.log(err));
+    }
+
+    launchToastr(msg) {
+        toastr.options = {
+            positionClass: 'toast-top-full-width',
+            hideDuration: 15,
+            timeOut: 6000
+        }
+        toastr.clear()
+        setTimeout(() => toastr.error(msg), 300)
     }
 
     getFilteredConfigs() {
@@ -72,36 +96,40 @@ export default class ConfigPage extends React.Component {
                         <tbody>
                             {this.getFilteredConfigs().map(paramId =>
                                 <tr key={paramId}>
-                                    <td>{this.state.configs[paramId].parameter}</td>
+                                    <td><b>{this.state.configs[paramId].parameter}</b></td>
                                     <td>
-                                        <div>
-                                            <InlineEdit
-                                                validate={this.validateValue}
-                                                activeClassName="editing"
-                                                text={this.state.configs[paramId].value}
-                                                paramName={this.state.configs[paramId].id}
-                                                change={this.handleChange}
-                                                style={{
-                                                    /*backgroundColor: 'yellow',*/
-                                                    minWidth: 150,
-                                                    display: 'inline-block',
-                                                    margin: 0,
-                                                    padding: 0,
-                                                    fontSize: 15,
-                                                    outline: 0,
-                                                    border: 0
-                                                }}
-                                            />
-                                        </div>
+                                        { localStorage.getItem('role') !== 'viewer' &&
+                                            <div>
+                                                <InlineEdit
+                                                    validate={this.validateValue}
+                                                    activeClassName="editing"
+                                                    text={this.state.configs[paramId].value}
+                                                    paramName={this.state.configs[paramId].id}
+                                                    change={this.handleChange}
+                                                    style={{
+                                                        /*backgroundColor: 'yellow',*/
+                                                        minWidth: 150,
+                                                        display: 'inline-block',
+                                                        margin: 0,
+                                                        padding: 0,
+                                                        fontSize: 15,
+                                                        outline: 0,
+                                                        border: 0
+                                                    }}
+                                                />
+                                            </div>
+                                        }
+                                        { localStorage.getItem('role') === 'viewer' && 
+                                            this.state.configs[paramId].value
+                                        }
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-                    <br />
-                    <UserPage />
                 </div>
-            </Panel>
+                <br/>
+            </Panel>  
         );
     }
 };

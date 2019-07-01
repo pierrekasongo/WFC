@@ -1,13 +1,14 @@
 const sql = require('mysql');
 const db=require('../dbconn');
 
-let router = require('express').Router();
 
-const countryId=52;
+const withAuth=require('../middleware/is-auth');
+
+let router = require('express').Router();
 
 
 //Update hours per week for a cadre
-router.patch('/cadre/hours/:id', (req, res) => {
+router.patch('/cadre/hours/:id',withAuth,(req, res) => {
 
     var id=parseInt(req.params.id.toString());
 
@@ -20,7 +21,7 @@ router.patch('/cadre/hours/:id', (req, res) => {
 });
 
 //Update hours per week for a cadre
-router.patch('/cadre/admin_work/:id', (req, res) => {
+router.patch('/cadre/admin_work/:id',withAuth, (req, res) => {
 
     var id=parseInt(req.params.id.toString());
 
@@ -32,7 +33,7 @@ router.patch('/cadre/admin_work/:id', (req, res) => {
     });
 });
 
-router.post('/insertCadre', (req, res) => {
+router.post('/insertCadre',withAuth,(req, res) => {
 
     var stdCode=req.body.stdCode;
 
@@ -48,6 +49,8 @@ router.post('/insertCadre', (req, res) => {
     
     var admin_task=req.body.adminTask;
 
+    var countryId=req.body.countryId;
+
     db.query(`INSERT INTO country_cadre (std_code,work_days,work_hours,
                 annual_leave,sick_leave,other_leave,admin_task, country_id) 
                 VALUES("${stdCode}",${work_days},${work_hours},${annual_leave},
@@ -57,7 +60,7 @@ router.post('/insertCadre', (req, res) => {
     });
 });
 
-router.patch('/editCadre', (req, res) => {
+router.patch('/editCadre',withAuth, (req, res) => {
 
     let code = req.body.std_code;
 
@@ -78,20 +81,33 @@ router.patch('/editCadre', (req, res) => {
     });
 
 });
+
 // get list of cadres
-router.get('/cadres', (req, res) => {
-        db.query(`SELECT ct.std_code AS std_code, ct.hris_code AS hris_code,
-                    ct.work_days AS work_days, ct.work_hours AS work_hours,
-                    ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
-                    ct.other_leave AS other_leave, ct.admin_task AS admin_task, std.name_fr
-                    AS name_fr, std.name_en AS name_en FROM country_cadre ct, std_cadre std 
-                    WHERE ct.std_code=std.code AND ct.country_id=${countryId}`,function(error,results,fields){
-            if(error) throw error;
+router.get('/cadres/:countryId',withAuth, (req, res) => {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT ct.std_code AS code,CONCAT(st.name_fr,"/",st.name_en) AS name,
+                ct.work_days AS work_days,ct.work_hours AS work_hours,ct.admin_task AS admin_task,
+                ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
+                ct.other_leave AS other_leave, ct.hris_code AS hris_code  FROM country_cadre ct, std_cadre st 
+                WHERE ct.std_code=st.code AND country_id=${countryId}`, function (error, results, fields) {
+            if (error) throw error;
             res.json(results);
         });
 });
 
-router.get('/getCadre/:cadreCode',function(req,res){
+router.get('/count_cadres/:countryId',withAuth, (req, res) => {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT COUNT(id) AS nb FROM country_cadres WHERE country_id=${countryId}`,function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
+router.get('/getCadre/:cadreCode',withAuth, function(req,res){
 
     let cadreCode=req.params.cadreCode;
 
@@ -106,7 +122,7 @@ router.get('/getCadre/:cadreCode',function(req,res){
     });
 })
 
-router.delete('/deleteCadre/:code', function(req, res){
+router.delete('/deleteCadre/:code', withAuth,function(req, res){
 
     let code=req.params.code; 
 
@@ -124,4 +140,27 @@ router.get('/workforce', (req, res) => {
     });
 });
 
-module.exports = router;
+let getCadreByihrisCode = async function (hris_code) {
+
+    let sql = `SELECT cc.std_code AS code, stc.name_fr AS name_fr, stc.name_en AS name_en FROM country_cadre cc, std_cadre stc WHERE 
+                cc.std_code=stc.code AND hris_code ="${hris_code}"`;
+
+    let results = await new Promise((resolve, reject) => db.query(sql, function (error, results) {
+        if (error) {
+            reject(error)
+        } else {
+            resolve(results);
+        }
+    }));
+
+    let cadre = {
+        code: results[0].code,
+        name: results[0].name_fr+'/'+results[0].name_en
+    }
+    return cadre;
+}
+
+module.exports = {
+    getCadreByihrisCode : getCadreByihrisCode,
+    router : router
+}

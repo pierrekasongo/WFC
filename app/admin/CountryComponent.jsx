@@ -25,7 +25,11 @@ export default class CountryComponent extends React.Component {
             countryToDelete: ''
         };
 
-        axios.get('/metadata/countries').then(res => {
+        axios.get('/metadata/countries',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({ countries: res.data });
         }).catch(err => {
             console.log(err);
@@ -67,10 +71,17 @@ export default class CountryComponent extends React.Component {
                   <button
                             onClick={() => {
 
-                                axios.delete(`/metadata/deleteCountry/${this.state.countryToDelete}`)
-                                    .then((res) => {
+                                axios.delete(`/metadata/deleteCountry/${this.state.countryToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+this.props.token
+                                    }
+                                }).then((res) => {
                                         //Update cadres
-                                        axios.get('/metadata/countries').then(res => {
+                                        axios.get('/metadata/countries',{
+                                            headers :{
+                                                Authorization : 'Bearer '+this.props.token
+                                            }
+                                        }).then(res => {
                                             this.setState({ countries: res.data });
                                         }).catch(err => console.log(err));
                                     }).catch(err => {
@@ -105,7 +116,11 @@ export default class CountryComponent extends React.Component {
             value: value,
         };
 
-        axios.patch('/metadata/editCountry', data).then(res => {
+        axios.patch('/metadata/editCountry', data,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -132,7 +147,11 @@ export default class CountryComponent extends React.Component {
         };
 
         //Insert cadre in the database
-        axios.post('/metadata/insertCountry', data).then(res => {
+        axios.post('/metadata/insertCountry', data,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             //Update the cadres list
             axios.get('/metadata/countries').then(res => {
                 this.setState({

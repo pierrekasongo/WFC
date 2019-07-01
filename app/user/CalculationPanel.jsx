@@ -48,7 +48,11 @@ export default class CalculationPanel extends React.Component {
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
         this.selectMultipleCadres = this.selectMultipleCadres.bind(this);
 
-        axios.get('/configuration/getCountryHolidays').then(res => {
+        axios.get(`/configuration/getCountryHolidays/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let config = {};
 
@@ -63,14 +67,22 @@ export default class CalculationPanel extends React.Component {
             this.setState({ config: config });
         }).catch(err => console.log(err));
 
-        axios.get('/configuration/getYears').then(res => {
+        axios.get('/configuration/getYears',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             let years = res.data;
             this.setState({
                 years: years
             })
         }).catch(err => console.log(err));
 
-        axios.get('/hris/cadres').then(res => {
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             let cadres = res.data;
             let cadreInputs = {};
             let cadreDict = {};
@@ -107,12 +119,13 @@ export default class CalculationPanel extends React.Component {
                 cadresCombo: cadresCombo,
             });
 
-            console.log(this.state.cadreInputs);
-
         }).catch(err => console.log(err));
 
-        axios.get('/dhis2/facilities')
-            .then(res => {
+        axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
                 let facilities = res.data;
 
@@ -268,13 +281,18 @@ export default class CalculationPanel extends React.Component {
                     cadres: {},
                     holidays: this.state.config.value,
                     selectedFacilities: {},
-                    selectedPeriod: this.state.selectedPeriod
+                    selectedPeriod: this.state.selectedPeriod,
+                    countryId : localStorage.getItem('countryId')
                 };
 
                 datas.selectedCadres = this.state.selectedCadres;
                 datas.selectedFacilities = this.state.selectedFacilities;
 
-                axios.post(`/hris/workforce`, datas).then(res => {
+                axios.post(`/hris/calculate_pressure`, datas,{
+                    headers :{
+                        Authorization : 'Bearer '+localStorage.getItem('token')
+                    }
+                }).then(res => {
 
                     let values = res.data;
 
@@ -353,84 +371,88 @@ export default class CalculationPanel extends React.Component {
 
     render() {
         return (
-            <div className="calc-container">
-                <div className="calc-container-left">
-                    <Form horizontal>
-                        <div className="div-title">
-                            <b>Set calculation values</b>
-                        </div>
-                        <hr />
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={10}>
-                                Year
-                            </Col>
-
-                            <Col sm={15}>
-                                <FormControl componentClass="select"
-                                    onChange={e => this.setState({ selectedPeriod: e.target.value })}>
-                                    <option key="000" value="000">Select year </option>
-                                    {(this.state.years.map(yr =>
-                                        <option key={yr.id} value={yr.year}>{yr.year}</option>
-                                    ))}
-                                </FormControl>
-                            </Col>
-                        </FormGroup>
-                        
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={10}>
-                                Facilities({(this.state.facilitiesCombo.length)})
-                            </Col>
-                            <Col sm={15}>
-                                <div className="div-multiselect">
-                                    <Multiselect
-                                        options={this.state.facilitiesCombo}
-                                        onChange={this.selectMultipleFacilities} />
-                                </div>
-
-                            </Col>
-                        </FormGroup>
-                        
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={10}>
-                                Cadres
-                            </Col>
-                            <Col sm={15}>
-                                <div className="div-multiselect">
-                                    <Multiselect
-                                        options={this.state.cadresCombo}
-                                        onChange={this.selectMultipleCadres} />
-                                </div>
-                            </Col>
-                        </FormGroup>
-                        <hr />
-                        <div style={{ textAlign: "right", paddingTop: 10 }}>
-                            <Button bsStyle="warning" bsSize="medium" onClick={() => this.calculateClicked()}>Calculate pressure</Button>
-                        </div>
-                        <br />
-                    </Form>
-                </div>
-                <div className="calc-container-right">
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={20}>
+        <div>
+            <Panel bsStyle="primary" header="Pressure Calculation">
+                <div className="calc-container">
+                    <div className="calc-container-left">
+                        <Form horizontal>
                             <div className="div-title">
-                                <b>Workforce pressure calculation results</b>
+                                <b>Set calculation values</b>
                             </div>
-                        </Col>
-                        <hr/>
-                    </FormGroup>
-                    {this.state.state == 'loading' &&
-                        <div style={{ marginTop: 120, marginBottom: 65 }}>
-                            <div className="loader"></div>
-                        </div>
-                    }
-                    {this.state.state == 'results' &&
-                        <ResultComponent
-                            results={this.state.results}
-                            cadreDict={this.state.cadreDict}
-                        />
-                    }
+                            <hr />
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={10}>
+                                    <b>Year</b>
+                                </Col>
+
+                                <Col sm={15}>
+                                    <FormControl componentClass="select"
+                                        onChange={e => this.setState({ selectedPeriod: e.target.value })}>
+                                        <option key="000" value="000">Select year </option>
+                                        {(this.state.years.map(yr =>
+                                            <option key={yr.id} value={yr.year}>{yr.year}</option>
+                                        ))}
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+                            
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={10}>
+                                    <b>Facilities({(this.state.facilitiesCombo.length)})</b>
+                                </Col>
+                                <Col sm={15}>
+                                    <div className="div-multiselect">
+                                        <Multiselect
+                                            options={this.state.facilitiesCombo}
+                                            onChange={this.selectMultipleFacilities} />
+                                    </div>
+
+                                </Col>
+                            </FormGroup>
+                            
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={10}>
+                                    <b>Cadres</b>
+                                </Col>
+                                <Col sm={15}>
+                                    <div className="div-multiselect">
+                                        <Multiselect
+                                            options={this.state.cadresCombo}
+                                            onChange={this.selectMultipleCadres} />
+                                    </div>
+                                </Col>
+                            </FormGroup>
+                            <hr />
+                            <div style={{ textAlign: "right", paddingTop: 10 }}>
+                                <Button bsStyle="warning" bsSize="medium" onClick={() => this.calculateClicked()}>Calculate pressure</Button>
+                            </div>
+                            <br />
+                        </Form>
+                    </div>
+                    <div className="calc-container-right">
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={20}>
+                                <div className="div-title">
+                                    <b>Workforce pressure calculation results</b>
+                                </div>
+                            </Col>
+                            <hr/>
+                        </FormGroup>
+                        {this.state.state == 'loading' &&
+                            <div style={{ marginTop: 120, marginBottom: 65 }}>
+                                <div className="loader"></div>
+                            </div>
+                        }
+                        {this.state.state == 'results' &&
+                            <ResultComponent
+                                results={this.state.results}
+                                cadreDict={this.state.cadreDict}
+                            />
+                        }
+                    </div>
                 </div>
-            </div>
+            </Panel>
+        </div>
 
         );
 

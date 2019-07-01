@@ -21,7 +21,11 @@ export default class CadreTimePage extends React.Component {
             config:{},
         };
 
-        axios.get('/countrycadre/cadres').then(res => {
+        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let cadreMap = new Map();
 
@@ -37,7 +41,11 @@ export default class CadreTimePage extends React.Component {
             });
         }).catch(err => console.log(err));
 
-        axios.get('/configuration/getCountryHolidays').then(res => {
+        axios.get(`/configuration/getCountryHolidays/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             let config = {};
 
@@ -64,6 +72,11 @@ export default class CadreTimePage extends React.Component {
 
     deleteCadre(code) {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         this.setState({
             cadreToDelete: code
         });
@@ -77,9 +90,16 @@ export default class CadreTimePage extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.delete(`/countrycadre/deleteCadre/${this.state.cadreToDelete}`)
-                                    .then((res) => {
-                                        axios.get('/countrycadre/cadres').then(res => {
+                                axios.delete(`/countrycadre/deleteCadre/${this.state.cadreToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then((res) => {
+                                        axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
                                             let cadreMap = new Map();
                                             res.data.forEach(cd => {
                                                 cadreMap.set(cd.std_code, "");
@@ -109,6 +129,11 @@ export default class CadreTimePage extends React.Component {
 
     handleHolidaysChange(obj){
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         const id= Object.keys(obj)[0];
 
         const value = Object.values(obj)[0];
@@ -117,9 +142,17 @@ export default class CadreTimePage extends React.Component {
             id: id,
             value: value,
         };
-        axios.patch('/configuration/config', data).then(res => {
+        axios.patch('/configuration/config', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
-            axios.get('/configuration/getCountryHolidays').then(res => {
+            axios.get(`/configuration/getCountryHolidays/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
 
             }).catch(err => console.log(err));
 
@@ -134,6 +167,11 @@ export default class CadreTimePage extends React.Component {
 
     handleCadreChange(obj) {
 
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
         const ident = Object.keys(obj)[0].split("-");
 
         const code = ident[0];
@@ -147,7 +185,11 @@ export default class CadreTimePage extends React.Component {
             param: param,
             value: value,
         };
-        axios.patch('/countrycadre/editCadre', data).then(res => {
+        axios.patch('/countrycadre/editCadre', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -206,12 +248,12 @@ export default class CadreTimePage extends React.Component {
                     <table className="table-list" cellspacing="5">
                         <thead>
                             <tr>
-                                <th>Name | </th>
-                                <th>Days per week | </th>
-                                <th>Hours per day | </th>
-                                <th>Annual leave | </th>
-                                <th>Sick leave | </th>
-                                <th>Other leave | </th>
+                                <th>Name</th>
+                                <th>Days per week</th>
+                                <th>Hours per day</th>
+                                <th>Annual leave</th>
+                                <th>Sick leave</th>
+                                <th>Other leave</th>
                                 <th>Admin task (%)</th>
                                 <th></th>
                             </tr>
@@ -220,7 +262,7 @@ export default class CadreTimePage extends React.Component {
                             {this.state.countryCadres.map(cadre =>
                                 <tr key={cadre.std_code} >
                                     <td>
-                                        {cadre.name_fr + '/' + cadre.name_en}
+                                        {cadre.name}
                                     </td>
                                     <td align="center">
                                         <div>

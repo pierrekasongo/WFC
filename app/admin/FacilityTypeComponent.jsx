@@ -24,7 +24,11 @@ export default class FacilityTypeComponent extends React.Component {
             showingNew: false,
             typeToDelete: ''
         };
-        axios.get('/metadata/facilityTypes').then(res => {
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             this.setState({ facilityTypes: res.data });
         }).catch(err => console.log(err));
     }
@@ -60,10 +64,17 @@ export default class FacilityTypeComponent extends React.Component {
                   <button
                             onClick={() => {
 
-                                axios.delete(`/metadata/deleteType/${this.state.typeToDelete}`)
-                                    .then((res) => {
+                                axios.delete(`/metadata/deleteType/${this.state.typeToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+this.props.token
+                                    }
+                                }).then((res) => {
                                         //Update cadres
-                                        axios.get('/metadata/facilityTypes').then(res => {
+                                        axios.get('/metadata/facilityTypes',{
+                                            headers :{
+                                                Authorization : 'Bearer '+this.props.token
+                                            }
+                                        }).then(res => {
                                             this.setState({ facilityTypes: res.data });
                                         }).catch(err => console.log(err));
                                     }).catch(err => {
@@ -93,7 +104,11 @@ export default class FacilityTypeComponent extends React.Component {
             value: value,
         };
 
-        axios.patch('/metadata/editType', data).then(res => {
+        axios.patch('/metadata/editType', data,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
 
             console.log('Value updated successfully');
 
@@ -118,9 +133,17 @@ export default class FacilityTypeComponent extends React.Component {
         };
 
         //Insert cadre in the database
-        axios.post('/metadata/insertType', data).then(res => {
+        axios.post('/metadata/insertType', data,{
+            headers :{
+                Authorization : 'Bearer '+this.props.token
+            }
+        }).then(res => {
             //Update the cadres list
-            axios.get('/metadata/facilityTypes').then(res => {
+            axios.get('/metadata/facilityTypes',{
+                headers :{
+                    Authorization : 'Bearer '+this.props.token
+                }
+            }).then(res => {
                 this.setState({
                     facilityTypes: res.data,
                     showingNew: false

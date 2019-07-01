@@ -6,28 +6,90 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const csv = require('csv');
 
-const countryId = 52;
+const withAuth = require('../middleware/is-auth');
 
 router.use(fileUpload(/*limits: { fileSize: 50 * 1024 * 1024 },*/));
 
-router.post('/insertTreatment', (req, res) => {
+router.post('/insertTreatment',withAuth, (req, res) => {
 
-    var code = req.body.code;
+    let code = req.body.code;
 
-    var cadre_code = req.body.cadre_code;
+    let cadre_code = req.body.cadre_code;
 
-    var name = req.body.name;
+    let name = req.body.name;  
 
-    var duration = req.body.duration;
+    let name_customized = req.body.name_customized;
 
-    db.query(`INSERT INTO country_treatment (std_code,cadre_code,name_std,duration) 
-                VALUES("${code}","${cadre_code}","${name}",${duration})`, function (error, results) {
+    let facility_type = req.body.facility_type;
+
+    let duration = req.body.duration;
+
+    let countryId = req.body.countryId;
+
+    db.query(`INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,name_customized,
+                treatment_type,facility_type,duration) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name_customized}","STD","${facility_type}",${duration})`, 
+        function (error, results) {
             if (error) throw error;
             res.json(results);
-        });
+    });
 });
 
-router.patch('/editTreatment', (req, res) => {
+router.post('/insertCustomizedTreatment', withAuth,(req, res) => {
+
+    let code = req.body.code;
+
+    let cadre_code = req.body.cadre_code;
+
+    let name = req.body.name;   
+
+    let duration = req.body.duration;
+
+    let facility_type = req.body.facility_type;
+
+    let countryId = req.body.countryId;
+
+    db.query(`INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,name_customized,
+                treatment_type,facility_type,duration) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name}","CUST","${facility_type}",${duration})`,
+        function (error, results) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
+router.post('/bulkInsertTreatment', withAuth,(req, res) => {
+
+    let countryId=req.body.countryId;
+
+    let cadre_code = req.body.cadre_code;
+
+    let sql_del_stats = `DELETE FROM activity_stats WHERE activityCode 
+            IN(SELECT std_code FROM country_treatment WHERE cadre_code="${cadre_code}" 
+            AND countryId=${countryId})`;
+
+    let sql_del_matching = `DELETE FROM country_treatment_dhis2 WHERE treatment_code 
+            IN(SELECT std_code FROM country_treatment WHERE cadre_code="${cadre_code}" 
+            AND countryId=${countryId})`;
+
+    let sql_del_country_treatment =`DELETE FROM country_treatment WHERE cadre_code="${cadre_code}" AND countryId=${countryId}`;
+
+    let sql_insert = `INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,facility_type,duration) 
+            SELECT code,${countryId}, cadre_code,name_en,facility_type,duration FROM std_treatment WHERE 
+            cadre_code="${cadre_code}"`;
+
+    /*let sql = `DELETE FROM country_treatment WHERE cadre_code="${cadre_code}" AND countryId=${countryId};
+                INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,facility_type,duration) 
+                SELECT code,${countryId}, cadre_code,name_en,facility_type,duration FROM std_treatment WHERE 
+                cadre_code="${cadre_code}"`;*/
+
+    db.query(`${sql_del_stats};${sql_del_matching};${sql_del_country_treatment};${sql_insert}`, function (error, results) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
+router.patch('/editTreatment',withAuth, (req, res) => {
 
     let code = req.body.std_code;
 
@@ -50,7 +112,7 @@ router.patch('/editTreatment', (req, res) => {
 
 });
 
-router.patch('/match_dhis2', (req, res) => {
+router.patch('/match_dhis2',withAuth, (req, res) => {
 
     let code = req.body.code;
 
@@ -73,12 +135,21 @@ router.patch('/match_dhis2', (req, res) => {
 
 });
 
-router.get('/treatments', function (req, res) {
 
-    db.query(`SELECT t.std_code AS code,c.name_fr AS cadre_name_fr,
+router.get('/treatments/:countryId',withAuth, function (req, res) {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
             FROM  country_treatment t, std_treatment st, std_cadre c 
-            WHERE t.std_code=st.code AND st.cadre_code=c.code;SELECT * FROM country_treatment_dhis2;`,
+            WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.treatment_type ='STD' AND t.countryId=${countryId} UNION 
+
+            SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
+            c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
+            FROM  country_treatment t, std_cadre c WHERE t.cadre_code = c.code AND t.treatment_type ="CUST" AND t.countryId=${countryId};
+
+            SELECT * FROM country_treatment_dhis2 WHERE treatment_code IN(SELECT std_code FROM country_treatment WHERE countryId=${countryId});`,
         function (error, results, fields) {
             if (error) throw error;
             let resultsArr = [];
@@ -98,6 +169,7 @@ router.get('/treatments', function (req, res) {
 
                 resultsArr.push({
                     code: tr.code,
+                    cadre_code: tr.cadre_code,
                     cadre_name_fr: tr.cadre_name_fr,
                     cadre_name_en: tr.cadre_name_en,
                     name_cust: tr.name_cust,
@@ -111,7 +183,7 @@ router.get('/treatments', function (req, res) {
         });
 });
 
-router.get('/dhis2_codes/:treatmentCode', function (req, res) {
+router.get('/dhis2_codes/:treatmentCode',withAuth, function (req, res) {
 
     let treatmentCode = req.params.treatmentCode;
 
@@ -122,18 +194,7 @@ router.get('/dhis2_codes/:treatmentCode', function (req, res) {
         });
 });
 
-router.get('/dhis2_codes/:treatmentCode', function (req, res) {
-
-    let treatmentCode = req.params.treatmentCode;
-
-    db.query(`SELECT * FROM country_treatment_dhis2 WHERE treatment_code="${treatmentCode}"`,
-        function (error, results, fields) {
-            if (error) throw error;
-            res.json(results);
-        });
-});
-
-router.post('/match_dhis2_codes', function (req, res) {
+router.post('/match_dhis2_codes', withAuth,function (req, res) {
 
     let treatmentCode = req.body.treatmentCode;
 
@@ -152,9 +213,11 @@ router.post('/match_dhis2_codes', function (req, res) {
     });
 });
 
-router.get('/treatments/:cadreCode', function (req, res) {
+router.get('/treatments/:cadreCode/:countryId',withAuth, function (req, res) {
 
     let cadreCode = req.params.cadreCode;
+
+    let countryId = req.params.countryId;
 
     let sql = "";
 
@@ -162,12 +225,12 @@ router.get('/treatments/:cadreCode', function (req, res) {
         sql = `SELECT t.std_code AS code,c.name_fr AS cadre_name_fr,
                 c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
                 FROM  country_treatment t, std_treatment st, std_cadre c 
-                WHERE t.std_code=st.code AND st.cadre_code=c.code`
+                WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.countryId=${countryId}`
     } else {
         sql = `SELECT t.std_code AS code, c.name_fr AS cadre_name_fr,
         c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
         FROM  country_treatment t, std_treatment st, std_cadre c 
-        WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.cadre_code="${cadreCode}"`;
+        WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.cadre_code="${cadreCode}" AND t.countryId=${countryId}`;
     }
 
     db.query(sql, function (error, results, fields) {
@@ -176,7 +239,7 @@ router.get('/treatments/:cadreCode', function (req, res) {
     });
 });
 
-router.get('/getTreatment/:cadreCode', function (req, res) {
+router.get('/getTreatment/:cadreCode',withAuth, function (req, res) {
 
     let cadreCode = req.params.cadreCode;
 
@@ -189,7 +252,7 @@ router.get('/getTreatment/:cadreCode', function (req, res) {
         });
 })
 
-router.delete('/deleteTreatment/:code', function (req, res) {
+router.delete('/deleteTreatment/:code',withAuth, function (req, res) {
 
     let code = req.params.code;
 
@@ -199,7 +262,7 @@ router.delete('/deleteTreatment/:code', function (req, res) {
     });
 });
 
-router.post('/uploadTreatments', function (req, res) {
+router.post('/uploadTreatments',withAuth, function (req, res) {
 
     if (!req.files) {
         return res.status(400).send('No files were uploaded');

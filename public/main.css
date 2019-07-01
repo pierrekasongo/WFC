@@ -1,6 +1,13 @@
 .container{
   max-width: 100%;
 }
+
+.loader-text{
+  font-weight: bold;
+  font-style: italic;
+  color:#fd956b;
+}
+
 .loader {
     position: relative;
     left: 50%;
@@ -605,6 +612,7 @@ input[type=select]{
 }
 
 .div-flex-table-left{
+  width:100%;
   height: 400px;
   overflow-y: auto;
   margin-right:5px;
@@ -612,6 +620,7 @@ input[type=select]{
   border-right: 1px dashed #ccc;
 }
 .div-flex-table-right{
+  width:100%;
   height: 400px;
   overflow-y: auto;
   margin-left:5px;
@@ -915,5 +924,23 @@ input[type=select]{
   padding:5px;
 }
 .div-multiselect button{
-  width: 200px;
+  margin-top:5px;
+  margin-bottom: 5px;
+  width: 388px;
+}
+.welcome-box{
+  background-color: rgb(243, 170, 67);
+  position:absolute;
+  right: 20px;
+  margin-top:20px;
+  margin-left:10px;
+  margin-bottom: 10px;
+  padding:10px;
+  border-radius: 0px 0px 8px 8px;
+  height: 30px;
+}
+.welcome-box p{
+  padding-bottom:15px;
+  color:#fff;
+  font-size: 12px;
 }

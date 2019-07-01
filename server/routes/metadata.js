@@ -8,13 +8,13 @@ const fs = require('fs');
 const csv = require('csv');
 const mime=require('mime');
 
-const withAuth=require('./middleware');
+const withAuth=require('../middleware/is-auth');
 
 let router = express.Router();
 
 router.use(fileUpload(/*limits: { fileSize: 50 * 1024 * 1024 },*/));
 
-router.get('/cadres'/*,withAuth,*/, function(req, res){
+router.get('/cadres',withAuth, function(req, res){
     
     db.query(`SELECT * FROM  std_cadre;`,function(error,results,fields){
         if(error) throw error;
@@ -32,7 +32,7 @@ router.get('/getCadre/:cadreCode',withAuth, function(req,res){
     });
 })
 
-router.get('/countries'/*,withAuth,*/, function(req, res){
+router.get('/countries',withAuth, function(req, res){
     
     db.query(`SELECT * FROM  country;`,function(error,results,fields){
         if(error) throw error;
@@ -40,10 +40,10 @@ router.get('/countries'/*,withAuth,*/, function(req, res){
     });
 });
 
-router.get('/treatments'/*,withAuth,*/, function(req, res){
+router.get('/treatments',withAuth, function(req, res){
     
     db.query(`SELECT t.code AS code,t.cadre_code AS cadre_code,CONCAT(c.name_fr,"/",c.name_en) AS cadre,
-            t.name_fr AS name_fr,t.name_en AS name_en, ft.facility_type as facility_type, CONCAT(ft.name_fr,"/",ft.name_en) AS facility_type,  
+            t.name_fr AS name_fr,t.name_en AS name_en, t.facility_type as facility_type, CONCAT(ft.name_fr,"/",ft.name_en) AS facility_type,  
             t.duration AS duration FROM  std_treatment t, std_cadre c, std_facility_type ft 
             WHERE t.cadre_code=c.code AND t.facility_type=ft.code;`,function(error,results,fields){
         if(error) throw error;
@@ -51,7 +51,7 @@ router.get('/treatments'/*,withAuth,*/, function(req, res){
     });
 });
 
-router.get('/getTreatment/:code'/*,withAuth*/, function(req,res){
+router.get('/getTreatment/:code',withAuth, function(req,res){
 
     let code=req.params.code;
 
@@ -209,7 +209,7 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
 });
 
-router.patch('/editCadre', (req, res) => {
+router.patch('/editCadre',withAuth, (req, res) => {
 
     let code = req.body.code;
 
@@ -233,7 +233,7 @@ router.patch('/editCadre', (req, res) => {
 
 });
 
-router.patch('/editCountry', (req, res) => {
+router.patch('/editCountry',withAuth, (req, res) => {
 
     let id=req.body.id;
 
@@ -259,7 +259,7 @@ router.patch('/editCountry', (req, res) => {
 
 });
 
-router.patch('/editTreatment', (req, res) => {
+router.patch('/editTreatment',withAuth,(req, res) => {
 
     let code = req.body.code;
 
@@ -283,7 +283,7 @@ router.patch('/editTreatment', (req, res) => {
 
 });
 
-router.get('/facilityTypes'/*,withAuth,*/, function(req, res){
+router.get('/facilityTypes',withAuth, function(req, res){
     
     db.query(`SELECT * FROM  std_facility_type;`,function(error,results,fields){
         if(error) throw error;
@@ -319,7 +319,7 @@ router.delete('/deleteType/:code',withAuth, function(req, res){
     });
 });
 
-router.patch('/editType', (req, res) => {
+router.patch('/editType',withAuth,(req, res) => {
 
     let code = req.body.code;
 
