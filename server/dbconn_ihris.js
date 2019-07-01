@@ -29,19 +29,6 @@ let getConnection = async function(countryId){
     return connection;
 }
 
-/*const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "capuccino@",
-    database: "ihrismanagesitedemo",
-    multipleStatements:true
-    
-});
-connection.connect(function(err) {
-    if (err) throw err
-    console.log('You are now connected to iHRIS')
-});*/
-
 module.exports = {
     connect : getConnection
 };
