@@ -313,21 +313,6 @@ router.get('/getiHRIS_PractitionerRoles/:countryId',withAuth, async function (re
     res.json(facilities);
 })
 
-
-//Update facility selected state
-router.patch('/facilities/:id',withAuth, (req, res) => {
-
-    var id = parseInt(req.params.id.toString());
-
-    var selected = parseInt(req.body.selected.toString());
-
-    db.query(`UPDATE facilities SET selected =` + selected + ` WHERE id =` + id, function (error, results) {
-        if (error) throw error;
-        res.json(results);
-    });
-
-});
-
 router.patch('/editHR',withAuth, (req, res) => {
 
     let id = req.body.id;

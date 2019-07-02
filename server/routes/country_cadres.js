@@ -101,7 +101,7 @@ router.get('/count_cadres/:countryId',withAuth, (req, res) => {
 
     let countryId = req.params.countryId;
 
-    db.query(`SELECT COUNT(id) AS nb FROM country_cadres WHERE country_id=${countryId}`,function (error, results, fields) {
+    db.query(`SELECT COUNT(std_code) AS nb FROM country_cadre WHERE country_id=${countryId}`,function (error, results, fields) {
         if (error) throw error;
         res.json(results);
     });

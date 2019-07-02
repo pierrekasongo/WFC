@@ -5,7 +5,7 @@ import axios from 'axios';
 import InlineEdit from 'react-edit-inline2';
 import Multiselect from 'react-multiselect-checkboxes';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { FaTrash, FaCheck, FaCheckSquare } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaCheckSquare, FaArrowRight } from 'react-icons/fa';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 
@@ -434,11 +434,11 @@ export default class StatisticsPage extends React.Component {
                                 </table>
                                 
                                 <br/>
-                                <button className="button" onClick={this.useStatistics}><FaCheck /> Use this</button>
+                                {/*<button className="button" onClick={this.useStatistics}><FaCheck /> Use this</button>*/}
                             </div>
                             <br />
                         </div>
-                        <br />
+                        <br />                       
                     </TabPanel>
 
                     <TabPanel>

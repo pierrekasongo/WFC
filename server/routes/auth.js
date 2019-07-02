@@ -58,7 +58,6 @@ router.post('/login', async function(req, res, next){
     let user = await getUserByLogin(login);
 
     if(!user){
-        console.log("USER NOT FOUND!");
         const error = new Error('A user with this login could not be found.');
         error.statusCode = 401;
         throw error;
@@ -67,7 +66,9 @@ router.post('/login', async function(req, res, next){
     bcrypt.compare(password, user.password, function(err, isEqual) {              
 
         if(!isEqual){
-            res.status(401).json('Wrong password!');
+            const error = new Error('Wrong password.');
+            error.statusCode = 401;
+            throw error;
         }
 
         const token = jwt.sign(

@@ -15,17 +15,15 @@ class HomePage extends React.Component {
             facilitiesCount:0,
             staffCount:0,
             cadreCount:0,
-            staffs:[],
-            cadres:[]
         };
 
         /*axios.get('/admin/count')
             .then(res => this.setState({ count: res.nb }))
             .catch(err => console.log(err));*/
 
-        axios.get('/admin/count_activities',{
+        axios.get(`/countrytreatment/count_treatments/${localStorage.getItem('countryId')}`,{
             headers :{
-                Authorization : 'Bearer '+this.props.token
+                Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
                 this.setState({
@@ -34,9 +32,9 @@ class HomePage extends React.Component {
                 
         }).catch(err => console.log(err));
 
-        axios.get('/user/count_facilities',{
+        axios.get(`/dhis2/count_facilities/${localStorage.getItem('countryId')}`,{
             headers :{
-                Authorization : 'Bearer '+this.props.token
+                Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
             this.setState({
@@ -44,30 +42,9 @@ class HomePage extends React.Component {
             });           
         }).catch(err => console.log(err));
 
-        axios.get('/user/count_staffs',{
+        axios.get(`/countrycadre/count_cadres/${localStorage.getItem('countryId')}`,{
             headers :{
-                Authorization : 'Bearer '+this.props.token
-            }
-        }).then(res => {
-            this.setState({
-                staffCount: res.data[0].nb
-            });           
-        }).catch(err => console.log(err));
-
-        axios.get('/user/staff_per_cadre',{
-            headers :{
-                Authorization : 'Bearer '+this.props.token
-            }
-        }).then(res => {
-            this.setState({
-                staffs:res.data
-            });
-
-        }).catch(err => console.log(err));
-
-        axios.get('/user/count_cadres',{
-            headers :{
-                Authorization : 'Bearer '+this.props.token
+                Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
             this.setState({
@@ -75,16 +52,6 @@ class HomePage extends React.Component {
             });           
         }).catch(err => console.log(err));
 
-        axios.get('/user/cadres',{
-            headers :{
-                Authorization : 'Bearer '+this.props.token
-            }
-        }).then(res => {
-            this.setState({
-                cadres:res.data
-            });
-
-        }).catch(err => console.log(err));
     }
 
     renderDashboard() {
@@ -105,7 +72,7 @@ class HomePage extends React.Component {
                                             <FaUserMd />
                                             <span>
                                                 <a href="#">
-                                                    {this.state.cadres.length}
+                                                    {this.state.cadreCount}
                                                 </a>  
                                             </span>
                                         </h2>

@@ -16,6 +16,7 @@ export default class FacilityImportPanel extends React.Component {
             state: 'done',
             stateFacilities:'loading',
             bulkFacilities: {},
+            bulkFacilitiesParent:[],
 
             facilitiesMap: new Map(),
             showButtons:false,
@@ -61,7 +62,13 @@ export default class FacilityImportPanel extends React.Component {
 
             let bulkFacilities = {};
 
+            let bulkFacilitiesParent = [];
+
             res.data.forEach(bf => {
+
+                if(bulkFacilitiesParent.indexOf(bf.parent) < 0){
+                    bulkFacilitiesParent.push(bf.parent);
+                }
 
                 bulkFacilities[bf.id] = {
                     id: bf.id,
@@ -70,7 +77,12 @@ export default class FacilityImportPanel extends React.Component {
                     parent: bf.parent
                 }
             });
-            this.setState({ bulkFacilities: bulkFacilities });
+            this.setState({ 
+                bulkFacilities: bulkFacilities,
+                bulkFacilitiesParent: bulkFacilitiesParent
+            });
+
+            console.log("PARENT ",this.state.bulkFacilitiesParent);
 
             let facilitiesCombo = [];
 
@@ -291,6 +303,23 @@ export default class FacilityImportPanel extends React.Component {
                             <div class="alert alert-warning" role="alert">
                                 Select facilities from below and click the button to import.
                             </div>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={10}>
+                                    <b>Filter by parent</b>
+                                </Col>
+
+                                <Col sm={15}>
+                                    <FormControl componentClass="select"
+                                        onChange={e => this.setState({ selectedPeriod: e.target.value })}>
+                                        <option key="000" value="000">Filter by parent </option>
+                                        {(this.state.bulkFacilitiesParent.map(p =>
+                                            <option key={p} value={p}>{p}</option>
+                                        ))}
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={10}>
                                     Choose from DHIS2 ({this.state.facilitiesCombo.length})

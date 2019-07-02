@@ -183,6 +183,16 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
         });
 });
 
+router.get('/count_treatments/:countryId',withAuth, (req, res) => {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT COUNT(id) AS nb FROM country_treatment WHERE countryId=${countryId}`,function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
 router.get('/dhis2_codes/:treatmentCode',withAuth, function (req, res) {
 
     let treatmentCode = req.params.treatmentCode;

@@ -21,8 +21,30 @@ export default class ConfigPage extends React.Component {
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
-        }).then(res => this.setState({ configs: res.data }))
-            .catch(err => console.log(err));
+        }).then(res => {
+
+            let configs = {};
+
+            //this.setState({ configs: res.data });
+
+            res.data.forEach(cf =>{
+
+                let value='';
+
+                if(cf.parameter.includes('PWD')){
+                    value='*******'
+                }else{
+                    value = cf.value
+                }
+                
+                configs[cf.id] = {
+                    id:cf.id,
+                    parameter:cf.parameter,
+                    value:value
+                }
+            });
+            this.setState({configs:configs});
+        }).catch(err => console.log(err));
 
         this.handleChange = this.handleChange.bind(this);
     }

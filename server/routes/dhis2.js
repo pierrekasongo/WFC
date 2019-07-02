@@ -56,6 +56,18 @@ router.get('/facilities/:countryId',withAuth,(req, res) => {
     });
 });
 
+router.get('/count_facilities/:countryId',withAuth,(req, res) => {
+
+    let countryId = req.params.countryId;
+
+    let sql = `SELECT COUNT(id) AS nb FROM facility WHERE countryId =${countryId};`;
+
+    db.query(sql, function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
 router.post('/insert_facilities',withAuth, (req,res) => {
 
     let sql=``;
@@ -385,6 +397,9 @@ router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
 
             let activityId = 0;
 
+            sql = `DELETE FROM activity_stats WHERE facilityCode ="${selectedFacilities}" AND year="${year}" AND 
+                AND cadreCode="${selectedCadres}";`
+
             results.forEach(row => {
 
                 let de = row['code'];
@@ -396,8 +411,6 @@ router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
                 let i = 0;
 
                 sum = 0;
-
-                sql="";
 
                 for (i = 0; i < months.length; i++) {
 
@@ -418,8 +431,8 @@ router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
 
                                     if(count == 11){
 
-                                        sql = `INSERT INTO activity_stats (facilityCode,year,activityCode,cadreCode,caseCount,source) 
-                                                VALUES("${selectedFacilities}","${year}","${treatment_code}","${selectedCadres}",${sum},'DHIS2');`;
+                                        sql+= `INSERT INTO activity_stats (facilityCode,year,activityCode,cadreCode,caseCount) 
+                                                VALUES("${selectedFacilities}","${year}","${treatment_code}","${selectedCadres}",${sum});`;
 
                                         db.query(sql,function(error,res){
                                             if(error)throw error;

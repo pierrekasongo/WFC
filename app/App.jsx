@@ -27,7 +27,7 @@ class App extends React.Component {
             isAuth: false,
             authLoading: false,
             error: '',
-            loading:false
+            loading:'done'
           };
           this.loginHandler = this.loginHandler.bind(this);
           this.logoutHandler = this.logoutHandler.bind(this);
@@ -71,7 +71,7 @@ class App extends React.Component {
 
         event.preventDefault();
 
-        this.setState({loading:true});
+        this.setState({loading:'loading'});
     
         let login = authData.login;
     
@@ -133,7 +133,7 @@ class App extends React.Component {
           this.setState({
             isAuth: true,
             authLoading: false,
-            loading:false
+            loading:'done'
           });
     
         }).catch(err => {
@@ -141,7 +141,7 @@ class App extends React.Component {
           this.setState({
               isAuth: false,
               authLoading: false,
-              loading:false,
+              loading:'done',
               error: err
           });
         });
