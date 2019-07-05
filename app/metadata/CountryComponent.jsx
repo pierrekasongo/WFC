@@ -68,7 +68,7 @@ export default class CountryComponent extends React.Component {
                         <p>Are you sure you want to delete this country?</p>
                         <p>This will also delete users attached to this country</p>
                         <button onClick={onClose}>No</button> &nbsp;&nbsp;
-                  <button
+                        <button
                             onClick={() => {
 
                                 axios.delete(`/metadata/deleteCountry/${this.state.countryToDelete}`,{
@@ -94,7 +94,7 @@ export default class CountryComponent extends React.Component {
                                 onClose();
                             }}>
                             Yes, Delete it!
-                  </button>
+                        </button>
                     </div>
                 );
             }

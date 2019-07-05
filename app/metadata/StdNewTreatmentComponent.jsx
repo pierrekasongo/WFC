@@ -11,7 +11,6 @@ export default class StdNewTreatmentComponent extends React.Component {
 
         this.state = {
             code: '',
-            facility_type:'',
             cadre_code: '',
             name_fr: '',
             name_en: '',
@@ -30,19 +29,6 @@ export default class StdNewTreatmentComponent extends React.Component {
                             value={this.state.code}
                             onChange={e => this.setState({ code: e.target.value })} />
                 </td>*/}
-                <td style={{ fontSize: 14 }}>
-                    <select onChange={e => this.setState({ facility_type: e.target.value })}
-                        value={this.state.facility_type}>
-                        <option value="000">Select value</option>
-                        {this.props.facilityTypes.map(faType =>
-                            <option
-                                key={faType.code}
-                                value={faType.code}>
-                                {faType.name_fr + '/' + faType.name_en}
-                            </option>
-                        )}
-                    </select>
-                </td>
 
                 <td style={{ fontSize: 14 }}>
                     <select onChange={e => this.setState({ cadre_code: e.target.value })}

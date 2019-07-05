@@ -20,15 +20,13 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
     let name_customized = req.body.name_customized;
 
-    let facility_type = req.body.facility_type;
-
     let duration = req.body.duration;
 
     let countryId = req.body.countryId;
 
     db.query(`INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,name_customized,
-                treatment_type,facility_type,duration) 
-                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name_customized}","STD","${facility_type}",${duration})`, 
+                treatment_type,duration) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name_customized}",,${duration})`, 
         function (error, results) {
             if (error) throw error;
             res.json(results);
@@ -45,13 +43,11 @@ router.post('/insertCustomizedTreatment', withAuth,(req, res) => {
 
     let duration = req.body.duration;
 
-    let facility_type = req.body.facility_type;
-
     let countryId = req.body.countryId;
 
     db.query(`INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,name_customized,
-                treatment_type,facility_type,duration) 
-                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name}","CUST","${facility_type}",${duration})`,
+                treatment_type,duration) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}","${name}","CUST",${duration})`,
         function (error, results) {
         if (error) throw error;
         res.json(results);
@@ -74,8 +70,8 @@ router.post('/bulkInsertTreatment', withAuth,(req, res) => {
 
     let sql_del_country_treatment =`DELETE FROM country_treatment WHERE cadre_code="${cadre_code}" AND countryId=${countryId}`;
 
-    let sql_insert = `INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,facility_type,duration) 
-            SELECT code,${countryId}, cadre_code,name_en,facility_type,duration FROM std_treatment WHERE 
+    let sql_insert = `INSERT INTO country_treatment (std_code,countryId,cadre_code,name_std,duration) 
+            SELECT code,${countryId}, cadre_code,name_en,duration FROM std_treatment WHERE 
             cadre_code="${cadre_code}"`;
 
     /*let sql = `DELETE FROM country_treatment WHERE cadre_code="${cadre_code}" AND countryId=${countryId};
@@ -140,12 +136,12 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
 
     let countryId = req.params.countryId;
 
-    db.query(`SELECT t.std_code AS code,t.cadre_code AS cadre_code, t.facility_type,c.name_fr AS cadre_name_fr,
+    db.query(`SELECT t.std_code AS code,t.cadre_code AS cadre_code, c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
             FROM  country_treatment t, std_treatment st, std_cadre c 
             WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.treatment_type ='STD' AND t.countryId=${countryId} UNION 
 
-            SELECT t.std_code AS code,t.cadre_code AS cadre_code,t.facility_type,c.name_fr AS cadre_name_fr,
+            SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
             FROM  country_treatment t, std_cadre c WHERE t.cadre_code = c.code AND t.treatment_type ="CUST" AND t.countryId=${countryId};
 

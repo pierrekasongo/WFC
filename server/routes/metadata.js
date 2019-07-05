@@ -43,9 +43,9 @@ router.get('/countries',withAuth, function(req, res){
 router.get('/treatments',withAuth, function(req, res){
     
     db.query(`SELECT t.code AS code,t.cadre_code AS cadre_code,CONCAT(c.name_fr,"/",c.name_en) AS cadre,
-            t.name_fr AS name_fr,t.name_en AS name_en, t.facility_type as facility_type, CONCAT(ft.name_fr,"/",ft.name_en) AS facility_type,  
-            t.duration AS duration FROM  std_treatment t, std_cadre c, std_facility_type ft 
-            WHERE t.cadre_code=c.code AND t.facility_type=ft.code;`,function(error,results,fields){
+            t.name_fr AS name_fr,t.name_en AS name_en,  
+            t.duration AS duration FROM  std_treatment t, std_cadre c 
+            WHERE t.cadre_code=c.code`,function(error,results,fields){
         if(error) throw error;
         res.json(results);
     });
@@ -56,8 +56,7 @@ router.get('/getTreatment/:code',withAuth, function(req,res){
     let code=req.params.code;
 
     db.query(`SELECT t.code AS code,t.cadre_code AS cadre_code,CONCAT(c.name_fr,"/",c.name_en) AS cadre,
-                t.name_fr AS name_fr,t.name_en AS name_en, t.duration AS duration, facility_type AS facility_type 
-                FROM  std_treatment t, std_cadre c 
+                t.name_fr AS name_fr,t.name_en AS name_en, t.duration AS duration FROM  std_treatment t, std_cadre c 
                 WHERE t.cadre_code=c.code AND t.code="${code}"`, function (error, results) {
         if (error) throw error;
         res.json(results);
@@ -71,12 +70,12 @@ router.get('/treatments/:cadreCode',withAuth, function(req, res){
     let sql="";
 
     if(cadreCode == "0"){
-        sql=`SELECT t.code AS code,t.cadre_code AS cadre_code, t.facility_type, CONCAT(c.name_fr,"/",c.name_en) AS cadre,
+        sql=`SELECT t.code AS code,t.cadre_code AS cadre_code CONCAT(c.name_fr,"/",c.name_en) AS cadre,
             t.name_fr AS name_fr,t.name_en AS name_en, t.duration AS duration 
             FROM  std_treatment t, std_cadre c 
             WHERE t.cadre_code=c.code`
     }else{
-        sql=`SELECT t.code AS code,t.cadre_code AS cadre_code,  t.facility_type,CONCAT(c.name_fr,"/",c.name_en) AS cadre,
+        sql=`SELECT t.code AS code,t.cadre_code AS cadre_codem CONCAT(c.name_fr,"/",c.name_en) AS cadre,
             t.name_fr AS name_fr,t.name_en AS name_en, t.duration AS duration 
             FROM  std_treatment t, std_cadre c 
             WHERE t.cadre_code=c.code AND cadre_code="${cadreCode}"`;
@@ -190,8 +189,6 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
     let code = req.body.code;
 
-    let facility_type=req.body.facility_type;
-
     let cadre_code=req.body.cadre_code;
 
     let name_fr = req.body.name_fr;
@@ -200,8 +197,8 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
     let duration = req.body.duration;
 
-    db.query(`INSERT INTO std_treatment(code,cadre_code,name_fr,name_en,facility_type,duration) 
-                VALUES("${code}","${cadre_code}","${name_fr}","${name_en}","${facility_type}",${duration})`, 
+    db.query(`INSERT INTO std_treatment(code,cadre_code,name_fr,name_en,duration) 
+                VALUES("${code}","${cadre_code}","${name_fr}","${name_en}",${duration})`, 
         function (error, results) {
         if (error) throw error;
         res.json(results);

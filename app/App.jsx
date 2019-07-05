@@ -185,7 +185,8 @@ class App extends React.Component {
                                 />
                                 )}
                             />
-                         {/*<Redirect to="/login" /> */}               
+                        
+                         <Redirect to="/login" />        
                     </div>
                 </Grid>
             </BrowserRouter>   

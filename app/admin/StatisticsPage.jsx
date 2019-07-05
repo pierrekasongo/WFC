@@ -380,7 +380,7 @@ export default class StatisticsPage extends React.Component {
                                             </div>
                                         </Col>
                                         <FormGroup>
-                                        <table className="tbl-multiselect">
+                                            <table className="tbl-multiselect">
                                                 <tr>
                                                     <td><b>Select facility type</b></td>
                                                     <td>
@@ -420,21 +420,19 @@ export default class StatisticsPage extends React.Component {
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Filter by facility</td>
+                                                    <td><b>Filter by facility</b></td>
                                                     <td>
-                                                    <FormGroup>
-                                                        <Col sm={15}>
-                                                            <input typye="text" className="form-control"
-                                                                placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
-                                                        </Col>
-                                                    </FormGroup>
-                                                </td>
+                                                        <FormGroup>
+                                                            <Col sm={15}>
+                                                                <input typye="text" className="form-control"
+                                                                    placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
+                                                            </Col>
+                                                        </FormGroup>
+                                                    </td>
                                                 </tr>
                                             </table>
                                         </FormGroup>
                                         <hr />
-
-                            
                                     </FormGroup>
                                     <hr />
                                     {this.state.state == 'loading' &&

@@ -14,7 +14,7 @@ import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 
 import StdNewCadreComponent from './StdNewCadreComponent';
-import StdNewTreatmentComponent from './StdNewTreatmentComponent';
+import TreatmentComponent from './TreatmentComponent';
 import CountryComponent from './CountryComponent';
 import FacilityTypeComponent from './FacilityTypeComponent';
 
@@ -25,27 +25,38 @@ export default class MetadataComponent extends React.Component {
 
         this.state = {
             cadres: [],
+            filteredCadres:[],
             treatments: [],
             cadreCode: '',
             progress: '',
             cadreToDelete: '',
             treatmentToDelete: '',
             showingNewCadre: false,
-            showingNewTreatment: false,
             selectedCadre: {},
             isEditCadre: false,
+            facilityTypes: [],
         };
         this.handleUploadCadre = this.handleUploadCadre.bind(this);
-        this.handleUploadTreatment = this.handleUploadTreatment.bind(this);
         this.deleteCadre = this.deleteCadre.bind(this);
-        this.deleteTreatment = this.deleteTreatment.bind(this);
+        
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
 
         axios.get('/metadata/cadres',{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({ cadres: res.data });
+            this.setState({
+                cadres: res.data,
+                filteredCadres: res.data
+            });
         }).catch(err => {
             console.log(err);
             if (err.response.status === 401) {
@@ -60,7 +71,7 @@ export default class MetadataComponent extends React.Component {
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({ treatments: res.data });
+            this.setState({treatments: res.data});
         }).catch(err => {
             if (err.response.status === 401) {
                 this.props.history.push(`/login`);
@@ -132,51 +143,6 @@ export default class MetadataComponent extends React.Component {
         });
     }
 
-    deleteTreatment(code) {
-
-        this.setState({
-            treatmentToDelete: code
-        });
-        confirmAlert({
-            customUI: ({ onClose }) => {
-                return (
-                    <div className='custom-ui'>
-                        <h3>Confirmation</h3>
-                        <p>Are you sure you want to delete this treatment?</p>
-                        <button onClick={onClose}>No</button> &nbsp;&nbsp;
-                  <button
-                            onClick={() => {
-
-                                axios.delete(`/metadata/deleteTreatment/${this.state.treatmentToDelete}`,{
-                                    headers :{
-                                        Authorization : 'Bearer '+localStorage.getItem('token')
-                                    }
-                                }).then((res) => {
-                                        //Update cadres
-                                        axios.get('/metadata/treatments',{
-                                            headers :{
-                                                Authorization : 'Bearer '+localStorage.getItem('token')
-                                            }
-                                        }).then(res => {
-                                            this.setState({ treatments: res.data });
-                                        }).catch(err => console.log(err));
-                                    }).catch(err => {
-                                        if (err.response.status === 401) {
-                                            this.props.history.push(`/login`);
-                                        } else {
-                                            console.log(err);
-                                        }
-                                    });
-                                onClose();
-                            }}>
-                            Yes, Delete it!
-                  </button>
-                    </div>
-                );
-            }
-        });
-    }
-
     launchToastr(msg) {
         toastr.options = {
             positionClass: 'toast-top-full-width',
@@ -185,50 +151,6 @@ export default class MetadataComponent extends React.Component {
         }
         toastr.clear()
         setTimeout(() => toastr.error(msg), 300)
-    }
-
-    handleUploadTreatment(ev) {
-
-        ev.preventDefault();
-
-        const data = new FormData();
-
-        if (this.uploadTreatmentInput.files.length == 0) {
-            this.launchToastr("No file selected");
-            return;
-        }
-        data.append('file', this.uploadTreatmentInput.files[0]);
-
-        axios.post('/metadata/uploadTreatments', data,
-            {
-                onUploadProgress: progressEvent => {
-                    var prog = (progressEvent.loaded / progressEvent.total) * 100;
-                    var pg = (prog < 100) ? prog.toFixed(2) : prog.toFixed(0);
-                    this.setState({ progress: pg });
-                    //console.log(pg+"%");
-                }
-            },{
-                headers :{
-                    Authorization : 'Bearer '+localStorage.getItem('token')
-                }
-            })
-            .then((result) => {
-                this.setState({ progress: result.data });
-                axios.get('/metadata/treatments',{
-                    headers :{
-                        Authorization : 'Bearer '+localStorage.getItem('token')
-                    }
-                }).then(res => {
-                    this.setState({ treatments: res.data });
-                }).catch(err => console.log(err));
-
-            }).catch(err => {
-                if (err.response.status === 401) {
-                    this.props.history.push(`/login`);
-                } else {
-                    console.log(err);
-                }
-            });
     }
 
     handleUploadCadre(ev) {
@@ -276,25 +198,6 @@ export default class MetadataComponent extends React.Component {
             });
     }
 
-    filterTreatement(cadreCode) {
-
-        this.setState({ showingNewTreatment: false });
-
-        axios.get(`/metadata/treatments/${cadreCode}`,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-            this.setState({ treatments: res.data });
-        }).catch(err => {
-            console.log(err);
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
-    }
     validateNumericValue(value) {
 
     }
@@ -312,46 +215,12 @@ export default class MetadataComponent extends React.Component {
 
         const value = Object.values(obj)[0];
 
-        console.log(code, param, value);
-
         let data = {
             code: code,
             param: param,
             value: value,
         };
         axios.patch('/metadata/editCadre', data,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-
-            console.log('Value updated successfully');
-
-        }).catch(err => {
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
-    }
-
-    handleTreatmentChange(obj) {
-
-        const ident = Object.keys(obj)[0].split("|");
-
-        const code = ident[0];
-
-        const param = ident[1];
-
-        const value = Object.values(obj)[0];
-
-        let data = {
-            code: code,
-            param: param,
-            value: value,
-        };
-        axios.patch('/metadata/editTreatment', data,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
@@ -445,49 +314,18 @@ export default class MetadataComponent extends React.Component {
         });
     }
 
-    newTreatmentSave(info) {
+    filterCadreByFaType(faTypeCode){
 
-        let code = info.code;
-        let facility_type = info.facility_type;
-        let cadre_code = info.cadre_code;
-        let name_fr = info.name_fr;
-        let name_en = info.name_en;
-        let duration = info.duration;
+        let cadres = this.state.cadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({filteredCadres:cadres});
+        }else{
 
-        let data = {
-            code: code,
-            facility_type: facility_type,
-            cadre_code: cadre_code,
-            name_fr: name_fr,
-            name_en: name_en,
-            duration: duration
-        };
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
 
-        //Insert cadre in the database
-        axios.post('/metadata/insertTreatment', data,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-            //Update the cadres list
-            axios.get('/metadata/treatments',{
-                headers :{
-                    Authorization : 'Bearer '+localStorage.getItem('token')
-                }
-            }).then(res => {
-                this.setState({
-                    treatments: res.data,
-                    showingNewTreatment: false
-                });
-            }).catch(err => console.log(err));
-
-        }).catch(err => {
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
+            this.setState({filteredCadres: filtered});
+        }
     }
 
     render() {
@@ -504,9 +342,35 @@ export default class MetadataComponent extends React.Component {
                     <TabPanel>
                         <div className="tab-main-container">
                             <div className="div-title">
-                                Available standard cadres ({this.state.cadres.length})
+                                Available standard cadres ({this.state.filteredCadres.length})
                             </div>
                             <hr />
+                            <div>
+                            <table>
+                                <tr>
+                                    <td><b>Filter by facility type</b></td>
+                                    <td>
+                                        <FormGroup>
+                                            <Col sm={15}>
+                                                <FormControl
+                                                    componentClass="select"
+                                                    onChange={e => this.filterCadreByFaType(e.target.value)}>
+                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        {this.state.facilityTypes.map(ft =>
+                                                            <option
+                                                                    key={ft.id}
+                                                                    value={ft.code}>
+                                                                    {ft.name_fr+'/'+ft.name_en}
+                                                            </option>
+                                                        )}
+                                                </FormControl>
+                                            </Col>
+                                        </FormGroup>
+                                    </td>
+                                </tr>
+                                </table>
+                            </div>
+                            <br/>
                             <div className="div-table">
                                 <div className="div-add-new-link">
                                     <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewCadre: true, isEditCadre: false, selectedCadre: '' })}>
@@ -538,7 +402,7 @@ export default class MetadataComponent extends React.Component {
                                                 save={info => this.newCadreSave(info)}
                                                 cancel={() => this.setState({ showingNewCadre: false })} />
                                         }
-                                        {this.state.cadres.map(cadre =>
+                                        {this.state.filteredCadres.map(cadre =>
                                             <tr key={cadre.id} >
                                                 <td>
                                                     {cadre.code}
@@ -737,6 +601,7 @@ export default class MetadataComponent extends React.Component {
                                     </tbody>
                                 </table>
                             </div>
+                            </div>
                             <hr />
                             <Form horizontal>
                                 <div>
@@ -769,7 +634,7 @@ export default class MetadataComponent extends React.Component {
 
                                 </div>
                             </Form >
-                        </div>
+                        
                     </TabPanel>
 
                     <TabPanel>
@@ -777,178 +642,13 @@ export default class MetadataComponent extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <div className="tab-main-container">
-                            <div className="div-title">
-                                Available standard treatments ({this.state.treatments.length})
-                            </div>
-                            <FormGroup>
-                                <Col sm={10}>
-                                    <FormControl
-                                        componentClass="select"
-                                        onChange={e => this.filterTreatement(e.target.value)}>
-                                        <option value="0" key="000">Filter by cadre</option>
-                                        {this.state.cadres.map(cadre =>
-                                            <option
-                                                key={cadre.code}
-                                                value={cadre.code}>
-                                                {cadre.name_fr + '/' + cadre.name_en}
-                                            </option>
-                                        )}
-                                    </FormControl>
-                                </Col>
-                            </FormGroup>
-                            <hr />
-                            <div className="div-table">
-                                <div className="div-add-new-link">
-                                    <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewTreatment: true })}>
-                                        <FaPlusSquare /> Add new
-                                    </a>
-                                </div>
-                                <br />
-                                <table className="table-list">
-                                    <thead>
-                                        <tr>
-                                            <th>Facility type</th>
-                                            <th>Cadre</th>
-                                            <th>Name (fr)</th>
-                                            <th>Name (en)</th>
-                                            <th>duration (min)</th>
-                                            <th colSpan="2">
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {
-                                            this.state.showingNewTreatment &&
-                                            <StdNewTreatmentComponent
-                                                facilityTypes={this.state.facilityTypes}
-                                                cadres={this.state.cadres}
-                                                save={info => this.newTreatmentSave(info)}
-                                                cancel={() => this.setState({ showingNewTreatment: false })} />
-                                        }
-                                        {this.state.treatments.map(treatment =>
-
-                                            <tr key={treatment.code} >
-                                                <td>
-                                                    {treatment.facility_type}
-                                                </td>
-                                                <td>
-                                                    {treatment.cadre}
-                                                </td>
-                                                <td>
-                                                    {/*treatment.name_fr*/}
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={treatment.name_fr}
-                                                                paramName={treatment.code + '|name_fr'}
-                                                                change={this.handleTreatmentChange}
-                                                                style={{
-                                                                    /*backgroundColor: 'yellow',*/
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    {/*treatment.name_en*/}
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={treatment.name_en}
-                                                                paramName={treatment.code + '|name_en'}
-                                                                change={this.handleTreatmentChange}
-                                                                style={{
-                                                                    /*backgroundColor: 'yellow',*/
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    {/*treatment.duration*/}
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={`` + treatment.duration}
-                                                                paramName={treatment.code + '|duration'}
-                                                                change={this.handleTreatmentChange}
-                                                                style={{
-                                                                    /*backgroundColor: 'yellow',*/
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td colSpan="2">
-                                                    <a href="#" onClick={() => this.deleteTreatment(`${treatment.code}`)}>
-                                                        <FaTrash />
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <hr />
-                            <Form horizontal>
-                                <div>
-                                    <div className="div-title">
-                                        Import from csv file.
-                                    </div>
-                                    <div class="alert alert-warning" role="alert">
-                                        Make sure it's a csv file with following headers and order. <br />
-                                        Also note that every duplicate code will update the existing value.<br />
-                                        <b>"Code", "Cadre code","Name fr", "Name en","duration(min)"</b>
-                                    </div>
-                                    <form onSubmit={this.handleUploadTreatment}>
-                                        {/*<div>
-                                            <input ref={(ref) => { this.uploadTreatmentInput = ref; }} type="file" id="file" className="inputfile"/>
-                                            <label for="file">Choose a file</label>
-                                        </div>*/}
-                                        <div class="upload-btn-wrapper">
-                                            <button class="btn"><FaCloudUploadAlt /> Upload a file...</button>
-                                            <input ref={(ref) => { this.uploadTreatmentInput = ref; }} type="file" name="myfile" />
-                                        </div>
-                                        <br />
-                                        <div>
-                                            <span>
-                                                <button className="button"><FaCheck /> Upload file</button><span> {this.state.progress}</span>
-                                            </span>
-                                        </div>
-                                    </form>
-
-                                </div>
-                            </Form >
-                        </div>
+                        <TreatmentComponent 
+                            facilityTypes={this.state.facilityTypes}
+                            treatments={this.state.treatments}
+                            cadres={this.state.cadres}
+                             />
                     </TabPanel>
+
                     <TabPanel>
                         <CountryComponent token={localStorage.getItem('token')} countries={this.state.countries} />
                     </TabPanel>

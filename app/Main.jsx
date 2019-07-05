@@ -9,7 +9,7 @@ import HomePage from './user/HomePage';
 import StatisticsPage from './admin/StatisticsPage';
 import StartPage from './admin/StartPage';
 import CadreTimePage from './user/CadreTimePage';
-import MetadataPage from './admin/MetadataComponent';
+import MetadataPage from './metadata/MetadataComponent';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const Main = () => {
