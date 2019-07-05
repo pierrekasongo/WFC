@@ -55,14 +55,13 @@ router.post('/',withAuth, (req, res) => {
             function(obj) {
                 calculationResults.push(obj);
                 if(--expecting === 0){
-                    //console.log(calculationResults);
+
                     res.json(calculationResults);
                 }
             });
     });
 
 })
-
 
 var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, countryId,callback){
     //PROCESS
@@ -252,6 +251,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
             obj = {
                 facility: facilities[facilityId].name,
+                facilityId:facilityCode,
                 currentWorkers: currentWorkers,
                 workersNeeded: workersNeeded,
                 pressure: pressure

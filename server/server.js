@@ -5,7 +5,7 @@ const cookieParser=require('cookie-parser');
 const cors = require('cors');
 
 // start db
-const db=require('./dbconn');
+//const db=require('./dbconn');
 
 // import our routes
 //const user=require('./routes/user');
@@ -18,6 +18,7 @@ const metadata=require('./routes/metadata');
 const countrycadre=require('./routes/country_cadres');
 const countrytreatment=require('./routes/country_treatments');
 const countrystatistics=require('./routes/country_statistics');
+const dashboard=require('./routes/dashboard');
 // create app server
 let app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/metadata',metadata);
 app.use('/api/countrycadre',countrycadre.router);
 app.use('/api/countrytreatment',countrytreatment);
 app.use('/api/countrystatistics',countrystatistics);
+app.use('/api/dashboard',dashboard);
 
 // instead of 404, redirect to index page
 app.use('*', (req, res) => {

@@ -5,6 +5,9 @@ import { Grid, NavItem, Nav, SplitButton, MenuItem } from 'react-bootstrap';
 import axios from 'axios';
 import decode from 'jwt-decode';
 
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
+
 axios.defaults.baseURL = 'http://127.0.0.1:3000/api';
 
 
@@ -49,6 +52,16 @@ class App extends React.Component {
         this.setAutoLogout(remainingMilliseconds);
     }
 
+    launchToastr(msg) {
+        toastr.options = {
+            positionClass: 'toast-top-full-width',
+            hideDuration: 15,
+            timeOut: 6000
+        }
+        toastr.clear()
+        setTimeout(() => toastr.error(msg), 300)
+    }
+
     logoutHandler(){
         this.setState({ isAuth: false, token: null });
         localStorage.removeItem('token');
@@ -87,6 +100,12 @@ class App extends React.Component {
             'Content-Type':'application/json'
           }
         }).then(res => {
+            console.log("response ",res);
+          if(res.status === 400){
+              this.setState({error: "Login not found"});
+              console.log("RESPONSE ",res.data);
+              console.log(res.responseText);
+          }
     
           if (res.status === 422) {
             throw new Error('Validation failed.');
@@ -137,7 +156,7 @@ class App extends React.Component {
           });
     
         }).catch(err => {
-
+            console.log("ERROR ",err);
           this.setState({
               isAuth: false,
               authLoading: false,
@@ -166,7 +185,7 @@ class App extends React.Component {
                                 />
                                 )}
                             />
-                         <Redirect to="/login" />                  
+                         {/*<Redirect to="/login" /> */}               
                     </div>
                 </Grid>
             </BrowserRouter>   

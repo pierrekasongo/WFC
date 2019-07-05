@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     
 });
 connection.connect(function(err) {
-    if (err) throw err
+    if (err) console.log("Local database error: ",error);
     console.log('You are now connected to the local db')
 });
 

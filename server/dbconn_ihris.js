@@ -22,7 +22,7 @@ let getConnection = async function(countryId){
         
     });
     connection.connect(function(err) {
-        if (err) throw err
+        if (err) console.log("iHRIS Database error: ",err)
         console.log('You are now connected to iHRIS')
     });
 

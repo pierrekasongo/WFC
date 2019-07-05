@@ -87,7 +87,7 @@ router.get('/cadres/:countryId',withAuth, (req, res) => {
 
     let countryId = req.params.countryId;
 
-    db.query(`SELECT ct.std_code AS code,CONCAT(st.name_fr,"/",st.name_en) AS name,
+    db.query(`SELECT ct.std_code,ct.facility_type_code, CONCAT(st.name_fr,"/",st.name_en) AS name,
                 ct.work_days AS work_days,ct.work_hours AS work_hours,ct.admin_task AS admin_task,
                 ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
                 ct.other_leave AS other_leave, ct.hris_code AS hris_code  FROM country_cadre ct, std_cadre st 

@@ -17,14 +17,29 @@ export default class CadreImportPanel extends React.Component {
             countryCadres: [],
             cadreToDelete: '',
             cadreMap: new Map(),
+            facilityTypes: [],
+            filteredCountryCadres:[],
+            filteredStdCadres:[]
         };
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
+
         axios.get('/metadata/cadres',{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
 
-            this.setState({ stdCadres: res.data });
+            this.setState({
+                stdCadres: res.data,
+                filteredStdCadres: res.data
+            });
 
         }).catch(err => console.log(err));
 
@@ -43,6 +58,8 @@ export default class CadreImportPanel extends React.Component {
             this.setState({
 
                 countryCadres: res.data,
+
+                filteredCountryCadres: res.data,
 
                 cadreMap: cadreMap
             });
@@ -218,6 +235,34 @@ export default class CadreImportPanel extends React.Component {
         }).catch(err => console.log(err));
     }
 
+    filterStdCadreByFaType(faTypeCode){
+
+        let cadres = this.state.stdCadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({stdCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredStdCadres: filtered});
+        }
+    }
+
+    filterCtCadreByFaType(faTypeCode){
+
+        let cadres = this.state.countryCadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({countryCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredCountryCadres: filtered});
+        }
+    }
+
     render() {
         return (
             <div className="tab-main-container">
@@ -237,6 +282,33 @@ export default class CadreImportPanel extends React.Component {
                                         </div>
                                     </Col>
                                 </FormGroup>
+                                <hr/>
+                                <div>
+                                    <table>
+                                        <tr>
+                                            <td><b>Filter from facility type</b></td>
+                                            <td>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <FormControl
+                                                                    componentClass="select"
+                                                                    onChange={e => this.filterStdCadreByFaType(e.target.value)}>
+                                                                    <option value="0" key="000">Filter by facility type</option>
+                                                                    {this.state.facilityTypes.map(ft =>
+                                                                        <option
+                                                                            key={ft.id}
+                                                                            value={ft.code}>
+                                                                            {ft.name_fr+'/'+ft.name_en}
+                                                                        </option>
+                                                                    )}
+                                                        </FormControl>
+                                                    </Col>
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <br/>
 
                                 <table className="table-list" cellSpacing="50">
                                     <thead>
@@ -248,7 +320,7 @@ export default class CadreImportPanel extends React.Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {this.state.stdCadres.map(cadre =>
+                                        {this.state.filteredStdCadres.map(cadre =>
                                             <tr key={cadre.code} >
                                                 <td>
                                                     {cadre.code}
@@ -278,7 +350,26 @@ export default class CadreImportPanel extends React.Component {
                                         </div>
                                     </Col>
                                 </FormGroup>
-
+                                <hr/>
+                                <div>
+                                    <FormGroup>
+                                        <Col sm={15}>
+                                            <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        {this.state.facilityTypes.map(ft =>
+                                                            <option
+                                                                key={ft.id}
+                                                                value={ft.code}>
+                                                                {ft.name_fr+'/'+ft.name_en}
+                                                            </option>
+                                                        )}
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
+                                </div>
+                                <br/>
                                 <table className="table-list" cellSpacing="50">
                                     <thead>
                                         <tr>
@@ -287,7 +378,7 @@ export default class CadreImportPanel extends React.Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {this.state.countryCadres.map(cadre =>
+                                        {this.state.filteredCountryCadres.map(cadre =>
                                             <tr key={cadre.std_code} >
                                                 <td>
                                                     {cadre.name}

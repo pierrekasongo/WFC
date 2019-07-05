@@ -14,8 +14,9 @@ export default class FacilityImportPanel extends React.Component {
 
         this.state = {
             state: 'done',
-            stateFacilities:'loading',
-            bulkFacilities: {},
+            stateParents:'loading',
+            stateFacilities:'done',
+            bulkFacilities: [],
             bulkFacilitiesParent:[],
 
             facilitiesMap: new Map(),
@@ -24,6 +25,7 @@ export default class FacilityImportPanel extends React.Component {
             facilitiesCombo: [],
 
             facilities: [],
+            filteredFacilities :[],
             cadres: [],
         }
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
@@ -35,7 +37,10 @@ export default class FacilityImportPanel extends React.Component {
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({ facilities: res.data });
+            this.setState({
+                facilities: res.data,
+                filteredFacilities: res.data
+            });
         }).catch(err => console.log(err));
 
         axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
@@ -60,7 +65,7 @@ export default class FacilityImportPanel extends React.Component {
             }
         }).then(res => {
 
-            let bulkFacilities = {};
+            let bulkFacilities = [];
 
             let bulkFacilitiesParent = [];
 
@@ -70,21 +75,21 @@ export default class FacilityImportPanel extends React.Component {
                     bulkFacilitiesParent.push(bf.parent);
                 }
 
-                bulkFacilities[bf.id] = {
+                bulkFacilities.push({
                     id: bf.id,
                     level: bf.level,
                     name: bf.name,
                     parent: bf.parent
-                }
+                })
+            
             });
             this.setState({ 
                 bulkFacilities: bulkFacilities,
-                bulkFacilitiesParent: bulkFacilitiesParent
+                bulkFacilitiesParent: bulkFacilitiesParent,
+                stateParents:'done',
             });
 
-            console.log("PARENT ",this.state.bulkFacilitiesParent);
-
-            let facilitiesCombo = [];
+            /*let facilitiesCombo = [];
 
             res.data.forEach(fa => {
 
@@ -100,7 +105,7 @@ export default class FacilityImportPanel extends React.Component {
             this.setState({
                 facilitiesCombo: facilitiesCombo,
                 stateFacilities:'done'
-            });
+            });*/
 
         }).catch(err => console.log(err));
     }
@@ -283,15 +288,52 @@ export default class FacilityImportPanel extends React.Component {
         }).catch(err => console.log(err));
     }
 
+    filterFacilityByParent(parent){
 
+        let facilitiesCombo = [];
+
+        let facilities = this.state.bulkFacilities;
+
+        if(parent === "0"){
+
+            this.setState({bulkFacilities:facilities});
+
+        }else{
+
+            let filtered = facilities.filter(fa => fa.parent.includes(parent));
+
+            this.setState({stateFacilities:'loading'});
+
+            filtered.forEach(fa => {
+
+                facilitiesCombo.push({ label: fa.name, value: fa.id });
+            });
+            this.setState({
+                facilitiesCombo: facilitiesCombo,
+                stateFacilities:'done'
+            });
+        }
+    }
+
+    filterByType(faTypeCode){
+
+        let facilities = this.state.facilities;
+        
+        if(faTypeCode === "0"){
+            this.setState({filteredFacilities:facilities});
+        }else{
+
+            let filtered = facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
+
+            this.setState({filteredFacilities: filtered});
+        }
+    }
 
     render() {
         return (
             <div className="tab-main-container">
                 <Form horizontal>
-                    <div className="cadres-container">
-
-                        <div>
+                        <div className="scrollable-container">
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={20}>
                                     <div className="div-title">
@@ -306,23 +348,34 @@ export default class FacilityImportPanel extends React.Component {
 
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={10}>
-                                    <b>Filter by parent</b>
+                                    <b>Filter by parent ({this.state.bulkFacilitiesParent.length})</b>
                                 </Col>
-
-                                <Col sm={15}>
-                                    <FormControl componentClass="select"
-                                        onChange={e => this.setState({ selectedPeriod: e.target.value })}>
-                                        <option key="000" value="000">Filter by parent </option>
-                                        {(this.state.bulkFacilitiesParent.map(p =>
-                                            <option key={p} value={p}>{p}</option>
-                                        ))}
-                                    </FormControl>
-                                </Col>
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <Col sm={15}>
+                                                <FormControl componentClass="select"
+                                                    onChange={e => this.filterFacilityByParent(e.target.value)}>
+                                                    <option key="000" value="0">Filter by parent</option>
+                                                    {(this.state.bulkFacilitiesParent.map(p =>
+                                                        <option key={p} value={p}>{p}</option>
+                                                    ))}
+                                                </FormControl>
+                                            </Col>
+                                        </td>
+                                        <td>
+                                            {this.state.stateParents === 'loading' &&
+                                                <span className="loader-text">Loading...</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                                
                             </FormGroup>
-
+                            <br/>
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={10}>
-                                    Choose from DHIS2 ({this.state.facilitiesCombo.length})
+                                    <b>Choose facilities from DHIS2 ({this.state.facilitiesCombo.length})</b>
                                 </Col>
                                 <table className="tbl-multiselect">
                                     <tr>
@@ -334,7 +387,7 @@ export default class FacilityImportPanel extends React.Component {
                                             </div>
                                         </td>                                        
                                         <td>
-                                            {this.state.stateFacilities == 'loading' &&
+                                            {this.state.stateFacilities === 'loading' &&
                                                 <span className="loader-text">Loading...</span>
                                             }
                                         </td>
@@ -347,7 +400,32 @@ export default class FacilityImportPanel extends React.Component {
                                 </table>
                                 <hr />
                             </FormGroup>
-
+                            <div>
+                                <table>
+                                    <tr>
+                                        <td><b>Filter by facility type</b></td>
+                                        <td>
+                                            <FormGroup>
+                                                <Col sm={15}>
+                                                    <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.filterByType(e.target.value)}>
+                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        {this.state.facilityTypes.map(ft =>
+                                                            <option
+                                                                key={ft.id}
+                                                                value={ft.code}>
+                                                                {ft.name_fr+'/'+ft.name_en}
+                                                            </option>
+                                                        )}
+                                                    </FormControl>
+                                                </Col>
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <br/>
                             {this.state.state == 'loading' &&
                                 <div style={{ marginTop: 120, marginBottom: 65 }}>
                                     <div className="loader"></div>
@@ -363,7 +441,7 @@ export default class FacilityImportPanel extends React.Component {
                                         <th></th>
                                     </thead>
                                     <tbody>
-                                        {this.state.facilities.map(fac =>
+                                        {this.state.filteredFacilities.map(fac =>
                                             <tr key={fac.code}>
                                                 <td>{fac.parentName}</td>
                                                 <td>{fac.name}</td>
@@ -390,7 +468,6 @@ export default class FacilityImportPanel extends React.Component {
                                 </table>
                             }
                         </div>
-                    </div>
                 </Form>
             </div>
         );

@@ -19,6 +19,7 @@ export default class StatisticsPage extends React.Component {
         this.state = {
             results: [],
             cadres: [],
+            filteredCadres: [],
             facilities: [],
             years: [],//Save years to db
             regions: [],
@@ -35,9 +36,18 @@ export default class StatisticsPage extends React.Component {
             facilitiesCombo: [],
 
             cadresCombo: [],
+            facilityTypes: []
         };
 
         this.importStatisticsFromDhis2 = this.importStatisticsFromDhis2.bind(this);
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
 
         axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
             headers :{
@@ -160,21 +170,19 @@ export default class StatisticsPage extends React.Component {
 
         let stats = this.state.statistics;
 
-        this.setState({ filteredStats: stats.filter(st => st.facility.toLowerCase().includes(facility.toLowerCase())) })
-        //let cadre = st.cadre.toUpperCase();
-        //item => item.name.includes(this.state.input)
-        //let filter = this.state.filteredCadre.toUpperCase();
-        // return this.state.statistics.indexOf(filter) > -1;
+        this.setState({ filteredStats: stats.filter(st => st.facility.toLowerCase().includes(facility.toLowerCase())) });
+
     }
     filterStatByCadre(cadreCode) {
 
-        let stats = this.state.filteredStats;
+        let stats = this.state.statistics;
 
-        if (cadreCode !== "000") {
+        if (cadreCode === "0") {
+            this.setState({filteredStats: stats});
+        }else{
+            let filtered = stats.filter(st => st.cadre_code.includes(cadreCode));
 
-            this.setState({
-                filteredStats: stats.filter(st => st.cadre_code.includes(cadreCode))
-            })
+            this.setState({filteredStats: filtered});
         }
     }
 
@@ -276,7 +284,19 @@ export default class StatisticsPage extends React.Component {
         }).catch(err => console.log(err));
 
     }
+    filterCtCadreByFaType(faTypeCode){
 
+        let cadres = this.state.cadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({cadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredCadres: filtered});
+        }
+    }
     render() {
         return (
             <Panel bsStyle="primary" header="Import yearly treatments statistics from DHIS2">
@@ -336,9 +356,9 @@ export default class StatisticsPage extends React.Component {
                                                 <Col sm={15}>
                                                     <FormControl componentClass="select"
                                                         onChange={e => this.setState({ selectedCadres: e.target.value })}>
-                                                        <option key="000" value="000">Select value</option>
+                                                        <option key="000" value="0">Select value</option>
                                                         {(this.state.cadres.map(cd =>
-                                                            <option key={cd.code} value={cd.code}>{cd.name}</option>
+                                                            <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
                                                         ))}
                                                     </FormControl>
                                                 </Col>
@@ -352,89 +372,121 @@ export default class StatisticsPage extends React.Component {
                                 </Form>
                             </div>
                             <div className="calc-container-right">
-                                <FormGroup>
-                                    <Col componentClass={ControlLabel} sm={20}>
-                                        <div className="div-title">
-                                            <b>Annual treatment statistics - </b>({this.state.filteredStats.length})
-                                        </div>
-                                    </Col>
-                                    <table>
-                                        <tr>
-                                            <td>
-                                                <FormGroup>
-                                                    <Col sm={15}>
-                                                        <FormControl componentClass="select"
-                                                            onChange={e => this.filterStatByCadre(e.target.value)}>
-                                                            <option key="000" value="000">Filter by cadre</option>
-                                                            {this.state.cadres.map(cd =>
-                                                                <option key={cd.code} value={cd.code}>{cd.name}</option>
-                                                            )}
-                                                        </FormControl>
-                                                    </Col>
-                                                </FormGroup>
-                                            </td>
-
-                                            <td>
-                                                <FormGroup>
-                                                    <Col sm={15}>
-                                                        <input typye="text" className="form-control"
-                                                            placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
-                                                    </Col>
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </FormGroup>
-                                <hr />
-                                {this.state.state == 'loading' &&
-                                    <div style={{ marginTop: 120, marginBottom: 65 }}>
-                                        <div className="loader"></div>
-                                    </div>
-                                }
-                                <table className="table-list">
-                                    <thead>
-                                        <tr>
-                                            <th>Facility</th>
-                                            <th>Cadre</th>
-                                            <th>Treatment</th>
-                                            <th># patients</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {this.state.filteredStats.map(st =>
-                                            <tr key={st.id}>
-                                                <td>{st.facility}</td>
-                                                <td>{st.cadre}</td>
-                                                <td>{st.treatment}</td>
-                                                <td>
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={`` + st.patients}
-                                                                paramName={st.id + '-caseCount'}
-                                                                change={this.handlePatientsChange}
-                                                                style={{
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
+                                <div className="scrollable-container">
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={20}>
+                                            <div className="div-title">
+                                                <b>Annual treatment statistics - </b>({this.state.filteredStats.length})
+                                            </div>
+                                        </Col>
+                                        <FormGroup>
+                                        <table className="tbl-multiselect">
+                                                <tr>
+                                                    <td><b>Select facility type</b></td>
+                                                    <td>
+                                                        <FormGroup>
+                                                            <Col sm={10}>
+                                                                <FormControl
+                                                                    componentClass="select"
+                                                                    onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                                    <option value="0" key="000">Filter by facility type</option>
+                                                                    {this.state.facilityTypes.map(ft =>
+                                                                        <option
+                                                                            key={ft.id}
+                                                                            value={ft.code}>
+                                                                            {ft.name_fr+'/'+ft.name_en}
+                                                                        </option>
+                                                                    )}
+                                                                </FormControl>
+                                                            </Col>
+                                                        </FormGroup>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Filter by cadre</b></td>
+                                                    <td>
+                                                        <FormGroup>
+                                                            <Col sm={10}>
+                                                                <FormControl
+                                                                    componentClass="select"
+                                                                    onChange={e => this.filterStatByCadre(e.target.value)}>
+                                                                    <option key="000" value="0">Filter by cadre</option>
+                                                                    {this.state.filteredCadres.map(cd =>
+                                                                        <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
+                                                                    )}
+                                                                </FormControl>
+                                                            </Col>
+                                                        </FormGroup>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Filter by facility</td>
+                                                    <td>
+                                                    <FormGroup>
+                                                        <Col sm={15}>
+                                                            <input typye="text" className="form-control"
+                                                                placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
+                                                        </Col>
+                                                    </FormGroup>
                                                 </td>
+                                                </tr>
+                                            </table>
+                                        </FormGroup>
+                                        <hr />
+
+                            
+                                    </FormGroup>
+                                    <hr />
+                                    {this.state.state == 'loading' &&
+                                        <div style={{ marginTop: 120, marginBottom: 65 }}>
+                                            <div className="loader"></div>
+                                        </div>
+                                    }
+                                    <table className="table-list">
+                                        <thead>
+                                            <tr>
+                                                <th>Facility</th>
+                                                <th>Cadre</th>
+                                                <th>Treatment</th>
+                                                <th># patients</th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {this.state.filteredStats.map(st =>
+                                                <tr key={st.id}>
+                                                    <td>{st.facility}</td>
+                                                    <td>{st.cadre}</td>
+                                                    <td>{st.treatment}</td>
+                                                    <td>
+                                                        <div>
+                                                            <a href="#">
+                                                                <InlineEdit
+                                                                    validate={this.validateTextValue}
+                                                                    activeClassName="editing"
+                                                                    text={`` + st.patients}
+                                                                    paramName={st.id + '-caseCount'}
+                                                                    change={this.handlePatientsChange}
+                                                                    style={{
+                                                                        minWidth: 150,
+                                                                        display: 'inline-block',
+                                                                        margin: 0,
+                                                                        padding: 0,
+                                                                        fontSize: 11,
+                                                                        outline: 0,
+                                                                        border: 0
+                                                                    }}
+                                                                />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                    
+                                    <br/>
                                 
-                                <br/>
-                                {/*<button className="button" onClick={this.useStatistics}><FaCheck /> Use this</button>*/}
+                                </div>
                             </div>
                             <br />
                         </div>

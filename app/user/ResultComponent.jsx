@@ -1,8 +1,10 @@
 import * as React from 'react';
 import Collapsible from 'react-collapsible';
 import { Button, Table, FormGroup } from 'react-bootstrap';
-
+import axios from 'axios';
 import CsvComponent from './CsvComponent';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
 
 export default class ResultComponent extends React.Component {
 
@@ -12,6 +14,34 @@ export default class ResultComponent extends React.Component {
             cadreDict: props.cadreDict,
             results: props.results
         };
+    }
+
+    launchToastr(msg) {
+        toastr.options = {
+            positionClass: 'toast-top-full-width',
+            hideDuration: 15,
+            timeOut: 6000
+        }
+        toastr.clear()
+        setTimeout(() => toastr.error(msg), 300)
+    }
+
+    addToDashboard(facilityId, cadreId, current,needed){
+
+        let data = {
+            facilityCode :facilityId,
+            cadreCode : cadreId,
+            current : current,
+            needed : needed
+        };
+
+        axios.post(`/dashboard/insert`,data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.launchToastr('Results successfully added to dashboard.');
+        }).catch(err => console.log(err));
     }
     render() {
         return (
@@ -66,6 +96,16 @@ export default class ResultComponent extends React.Component {
                                                 {!this.state.results[id].pressure[cadreId] &&
                                                     <h4 key={cadreId} style={{ color: "gray" }}>N/A</h4>
                                                 }
+                                            </td>
+                                            <td>
+                                                <div className="div-add-new-link">
+                                                    <a href="#" className="add-new-link" onClick={() => this.addToDashboard(this.state.results[id].facilityId,
+                                                        cadreId,
+                                                        this.state.results[id].currentWorkers[cadreId],
+                                                        Math.round(this.state.results[id].workersNeeded[cadreId]))}>
+                                                        Add to dashboard
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}

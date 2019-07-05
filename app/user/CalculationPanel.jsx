@@ -98,7 +98,7 @@ export default class CalculationPanel extends React.Component {
                 let sick_leave = cadre.sick_leave;
                 let other_leave = cadre.other_leave;
 
-                cadreInputs[cadre.code] = {
+                cadreInputs[cadre.std_code] = {
                     days: days,
                     hours: hours,
                     adminPercentage: admin,
@@ -106,11 +106,11 @@ export default class CalculationPanel extends React.Component {
                     sickLeave: sick_leave,
                     otherLeave: other_leave
                 }
-                cadreDict[cadre.code] = cadre.name;
+                cadreDict[cadre.std_code] = cadre.name;
 
                 //let id = cadre.code + '|' + cadre.Hours + '|' + cadre.AdminTask
 
-                cadresCombo.push({ label: cadre.name, value: cadre.code });
+                cadresCombo.push({ label: cadre.name, value: cadre.std_code });
             });
             this.setState({
                 cadres: cadres,
@@ -301,6 +301,8 @@ export default class CalculationPanel extends React.Component {
                         this.state.results.push({
 
                             facility: values[id].facility,
+
+                            facilityId: values[id].facilityId,
 
                             currentWorkers: values[id].currentWorkers,
 

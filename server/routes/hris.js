@@ -108,7 +108,9 @@ router.get('/getiHRIS_cadres/:countryId',withAuth,async function(req,res){
         if (error) throw error;
         res.json(results);
     });
+    
 })
+
 
 router.post('/getiHRIS_staffs',withAuth,async function(req,res){
 

@@ -20,7 +20,9 @@ export default class ServiceImportPanel extends React.Component {
 
         this.state = {
             stdCadres: [],
+            filteredStdCadres: [],
             countryCadres: [],
+            filteredCountryCadres: [],
             stdTreatements: [],
             facilityTypes:[],
             filteredCountryTreatments: [],
@@ -43,7 +45,9 @@ export default class ServiceImportPanel extends React.Component {
             }
         }).then(res => {
 
-            this.setState({ stdCadres: res.data });
+            this.setState({
+                stdCadres: res.data
+            });
 
         }).catch(err => console.log(err));
 
@@ -93,7 +97,9 @@ export default class ServiceImportPanel extends React.Component {
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({countryCadres: res.data});
+            this.setState({
+                countryCadres: res.data
+            });
 
         }).catch(err => console.log(err));
     }
@@ -383,22 +389,21 @@ export default class ServiceImportPanel extends React.Component {
 
     filterCountryTreatementByCadre(cadreCode) {
 
-        /*this.setState({ selectedCountryCadre: cadreCode })
-        axios.get(`/countrytreatment/treatments/${cadreCode}`).then(res => {
-            this.setState({
-                countryTreatments: res.data,
-                filteredCountryTreatments: res.data,
-            });
-        }).catch(err => {
-            console.log(err);
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });*/
         let treats = this.state.countryTreatments;
-        this.setState({ filteredCountryTreatments: treats.filter(tr => tr.cadre_code === cadreCode) })
+        
+        if(cadreCode === "0"){
+
+            this.setState({
+                filteredCountryTreatments:treats,     
+            });
+        }else{
+
+            let filtered = treats.filter(tr => tr.cadre_code.includes(cadreCode));
+
+            this.setState({
+                filteredCountryTreatments: filtered,
+            });
+        }
     }
 
     newCountryTreatmentSave(info){
@@ -456,6 +461,34 @@ export default class ServiceImportPanel extends React.Component {
             }
         });
     }
+
+    filterStdCadreByFaType(faTypeCode){
+
+        let cadres = this.state.stdCadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({stdCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredStdCadres: filtered});
+        }
+    }
+
+    filterCtCadreByFaType(faTypeCode){
+
+        let cadres = this.state.countryCadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({countryCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredCountryCadres: filtered});
+        }
+    }
     
     render() {
         return (
@@ -467,7 +500,7 @@ export default class ServiceImportPanel extends React.Component {
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
-                                            <b>Standard treatments</b> ({this.state.stdTreatements.length})
+                                            <b>Standard treatments</b> ({this.state.filteredStdTreatments.length})
                                         </div>
                                         <hr />
                                     </Col>
@@ -476,6 +509,28 @@ export default class ServiceImportPanel extends React.Component {
                                 <FormGroup>
                                     <table className="tbl-multiselect">
                                             <tr>
+                                                <td><b>Select facility type</b></td>
+                                                <td>
+                                                    <FormGroup>
+                                                        <Col sm={10}>
+                                                            <FormControl
+                                                                componentClass="select"
+                                                                onChange={e => this.filterStdCadreByFaType(e.target.value)}>
+                                                                <option value="0" key="000">Filter by facility type</option>
+                                                                {this.state.facilityTypes.map(ft =>
+                                                                    <option
+                                                                        key={ft.id}
+                                                                        value={ft.code}>
+                                                                        {ft.name_fr+'/'+ft.name_en}
+                                                                    </option>
+                                                                )}
+                                                            </FormControl>
+                                                        </Col>
+                                                    </FormGroup>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><b>Filter by cadre</b></td>
                                                 <td>
                                                     <FormGroup>
                                                         <Col sm={10}>
@@ -483,7 +538,7 @@ export default class ServiceImportPanel extends React.Component {
                                                                 componentClass="select"
                                                                 onChange={e => this.filterStdTreatement(e.target.value)}>
                                                                 <option value="0" key="000">Filter by cadre</option>
-                                                                {this.state.stdCadres.map(cadre =>
+                                                                {this.state.filteredStdCadres.map(cadre =>
                                                                     <option
                                                                         key={cadre.code}
                                                                         value={cadre.code}>
@@ -550,33 +605,63 @@ export default class ServiceImportPanel extends React.Component {
                                         <hr />
                                     </Col>
                                 </FormGroup>
-                                <div className="filter-container">
-                                    <div>
-                                        <FormGroup>
-                                            <FormControl
-                                                componentClass="select"
-                                                onChange={e => this.filterCountryTreatementByCadre(e.target.value)}>
-                                                <option value="0" key="000">Filter by cadre</option>
-                                                {this.state.countryCadres.map(cadre =>
-                                                    <option
-                                                        key={cadre.std_code}
-                                                        value={cadre.std_code}>
-                                                        {cadre.name}
-                                                    </option>
-                                                )}
-                                            </FormControl>
-                                        </FormGroup>
-                                    </div>
+                                <table className="tbl-multiselect">
+                                    <tr>
+                                        <td><b>Select facility type</b></td>
+                                        <td>
+                                            <FormGroup>
+                                                <Col sm={10}>
+                                                    <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        {this.state.facilityTypes.map(ft =>
+                                                            <option
+                                                                key={ft.id}
+                                                                value={ft.code}>
+                                                                {ft.name_fr+'/'+ft.name_en}
+                                                            </option>
+                                                        )}
+                                                    </FormControl>
+                                                </Col>
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Filter by cadre</b></td>
+                                        <td>
+                                            <div>
+                                                <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.filterCountryTreatementByCadre(e.target.value)}>
+                                                        <option value="0" key="000">Filter by cadre</option>
+                                                        {this.state.filteredCountryCadres.map(cadre =>
+                                                            <option
+                                                                key={cadre.std_code}
+                                                                value={cadre.std_code}>
+                                                                {cadre.name}
+                                                            </option>
+                                                        )}
+                                                </FormControl>
+                                            </div>
+                                        </td>
 
-                                    <div>
-                                        <FormGroup>
-                                            <Col sm={15}>
-                                                <input typye="text" className="form-control"
-                                                    placeholder="Filter by treatment" onChange={e => this.filterCountryTreatmentByName(e.target.value)} />
-                                            </Col>
-                                        </FormGroup>
-                                    </div>
-                                </div>
+                                        
+                                    </tr>
+                                    <tr>
+                                        <td><b>Filter by treatment</b></td>
+                                        <td>
+                                            <div>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <input typye="text" className="form-control"
+                                                            placeholder="Filter by treatment" onChange={e => this.filterCountryTreatmentByName(e.target.value)} />
+                                                    </Col>
+                                                </FormGroup>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
 
                                 <hr />
                                 {this.state.state == 'loading' &&

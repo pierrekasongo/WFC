@@ -58,9 +58,12 @@ router.post('/login', async function(req, res, next){
     let user = await getUserByLogin(login);
 
     if(!user){
-        const error = new Error('A user with this login could not be found.');
+        console.log("A user with this login could not be found");
+        res.status(400).send('A user with this login could not be found');
+        return;
+        /*const error = new Error('A user with this login could not be found.');
         error.statusCode = 401;
-        throw error;
+        throw error;*/
     }
 
     bcrypt.compare(password, user.password, function(err, isEqual) {              

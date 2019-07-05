@@ -140,12 +140,12 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
 
     let countryId = req.params.countryId;
 
-    db.query(`SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
+    db.query(`SELECT t.std_code AS code,t.cadre_code AS cadre_code, t.facility_type,c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
             FROM  country_treatment t, std_treatment st, std_cadre c 
             WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.treatment_type ='STD' AND t.countryId=${countryId} UNION 
 
-            SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
+            SELECT t.std_code AS code,t.cadre_code AS cadre_code,t.facility_type,c.name_fr AS cadre_name_fr,
             c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
             FROM  country_treatment t, std_cadre c WHERE t.cadre_code = c.code AND t.treatment_type ="CUST" AND t.countryId=${countryId};
 
@@ -232,7 +232,7 @@ router.get('/treatments/:cadreCode/:countryId',withAuth, function (req, res) {
     let sql = "";
 
     if (cadreCode == "0") {
-        sql = `SELECT t.std_code AS code,c.name_fr AS cadre_name_fr,
+        sql = `SELECT t.std_code AS code,c.name_fr AS cadre_name_fr,t.cadre_code, 
                 c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
                 FROM  country_treatment t, std_treatment st, std_cadre c 
                 WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.countryId=${countryId}`

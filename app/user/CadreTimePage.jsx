@@ -16,10 +16,20 @@ export default class CadreTimePage extends React.Component {
         this.state = {
             stdCadres: [],
             countryCadres: [],
+            filteredCountryCadres: [],
             cadreToDelete: '',
             cadreMap: new Map(),
             config:{},
+            facilityTypes: [],
         };
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
 
         axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
             headers :{
@@ -36,6 +46,8 @@ export default class CadreTimePage extends React.Component {
             this.setState({
 
                 countryCadres: res.data,
+
+                filteredCountryCadres: res.data,
 
                 cadreMap: cadreMap
             });
@@ -202,79 +214,74 @@ export default class CadreTimePage extends React.Component {
         });
     }
 
+    filterCtCadreByFaType(faTypeCode){
+
+        let cadres = this.state.countryCadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({filteredCountryCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredCountryCadres: filtered});
+        }
+    }
+
     render() {
         return (
             <div className="tab-main-container">
                 <Panel bsStyle="primary" header="Cadre working / not working time">
-                    <FormGroup>
-                        <Col componentClass={ControlLabel} sm={20}>
-                            <div className="div-title">
-                                <b>Cadre working and not working time</b> ({this.state.countryCadres.length})
-                            </div>
-                            <hr />
-                        </Col>
-                    </FormGroup>
-
-                    <FormGroup>
-                        <table>
+                    <div className="scrollable-container">
+                        <FormGroup>
+                            <Col componentClass={ControlLabel} sm={20}>
+                                <div className="div-title">
+                                    <b>Cadre working and not working time</b> ({this.state.filteredCountryCadres.length})
+                                </div>
+                                <hr />
+                            </Col>
+                        </FormGroup>
+                        <div>
+                            <table>
                             <tr>
-                                <td><b>Country public holidays: </b></td>
+                                <td><b>Filter by facility type</b></td>
                                 <td>
-                                    <div>
-                                        <a href="#">
-                                            <InlineEdit
-                                                validate={this.validateTextValue}
-                                                activeClassName="editing"
-                                                text={this.state.config.value}
-                                                paramName={this.state.config.id}
-                                                change={this.handleHolidaysChange}
-                                                style={{
-                                                    minWidth: 100,
-                                                    display: 'inline-block',
-                                                    margin: 0,
-                                                    padding: 0,
-                                                    fontSize: 11,
-                                                    outline: 0,
-                                                    border: 0
-                                                }}
-                                            />
-                                        </a>
-                                    </div>
+                                    <FormGroup>
+                                        <Col sm={15}>
+                                            <FormControl
+                                                componentClass="select"
+                                                onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                    <option value="0" key="000">Filter by facility type</option>
+                                                    {this.state.facilityTypes.map(ft =>
+                                                        <option
+                                                                key={ft.id}
+                                                                value={ft.code}>
+                                                                {ft.name_fr+'/'+ft.name_en}
+                                                        </option>
+                                                    )}
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
                                 </td>
                             </tr>
-                        </table>
-                    </FormGroup>
-                    <br/>
-                    <table className="table-list" cellspacing="5">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Days per week</th>
-                                <th>Hours per day</th>
-                                <th>Annual leave</th>
-                                <th>Sick leave</th>
-                                <th>Other leave</th>
-                                <th>Admin task (%)</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {this.state.countryCadres.map(cadre =>
-                                <tr key={cadre.std_code} >
+                            </table>
+                        </div>
+                        <br/>
+                        <FormGroup>
+                            <table>
+                                <tr>
+                                    <td><b>Country public holidays: </b></td>
                                     <td>
-                                        {cadre.name}
-                                    </td>
-                                    <td align="center">
                                         <div>
                                             <a href="#">
                                                 <InlineEdit
                                                     validate={this.validateTextValue}
                                                     activeClassName="editing"
-                                                    text={"" + cadre.work_days}
-                                                    paramName={cadre.std_code + '-work_days'}
-                                                    change={this.handleCadreChange}
+                                                    text={this.state.config.value}
+                                                    paramName={this.state.config.id}
+                                                    change={this.handleHolidaysChange}
                                                     style={{
-                                                        minWidth: 50,
+                                                        minWidth: 100,
                                                         display: 'inline-block',
                                                         margin: 0,
                                                         padding: 0,
@@ -285,128 +292,174 @@ export default class CadreTimePage extends React.Component {
                                                 />
                                             </a>
                                         </div>
-                                    </td>
-                                    <td align="center">
-                                        <div>
-                                            <a href="#">
-                                                <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={"" + cadre.work_hours}
-                                                    paramName={cadre.std_code + '-work_hours'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                        minWidth: 50,
-                                                        display: 'inline-block',
-                                                        margin: 0,
-                                                        padding: 0,
-                                                        fontSize: 11,
-                                                        outline: 0,
-                                                        border: 0
-                                                    }}
-                                                />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td align="center">
-                                        <div>
-                                            <a href="#">
-                                                <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={"" + cadre.annual_leave}
-                                                    paramName={cadre.std_code + '-annual_leave'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                        minWidth: 50,
-                                                        display: 'inline-block',
-                                                        margin: 0,
-                                                        padding: 0,
-                                                        fontSize: 11,
-                                                        outline: 0,
-                                                        border: 0
-                                                    }}
-                                                />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td align="center">
-                                        <div>
-                                            <a href="#">
-                                                <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={"" + cadre.sick_leave}
-                                                    paramName={cadre.std_code + '-sick_leave'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                        minWidth: 50,
-                                                        display: 'inline-block',
-                                                        margin: 0,
-                                                        padding: 0,
-                                                        fontSize: 11,
-                                                        outline: 0,
-                                                        border: 0
-                                                    }}
-                                                />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td align="center">
-                                        <div>
-                                            <a href="#">
-                                                <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={"" + cadre.other_leave}
-                                                    paramName={cadre.std_code + '-other_leave'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                        minWidth: 50,
-                                                        display: 'inline-block',
-                                                        margin: 0,
-                                                        padding: 0,
-                                                        fontSize: 11,
-                                                        outline: 0,
-                                                        border: 0
-                                                    }}
-                                                />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td align="center">
-                                        <div>
-                                            <a href="#">
-                                                <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={"" + cadre.admin_task}
-                                                    paramName={cadre.std_code + '-admin_task'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                        minWidth: 50,
-                                                        display: 'inline-block',
-                                                        margin: 0,
-                                                        padding: 0,
-                                                        fontSize: 11,
-                                                        outline: 0,
-                                                        border: 0
-                                                    }}
-                                                />
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <a href="#" onClick={() => this.deleteCadre(cadre.std_code)}>
-                                            <FaTrash />
-                                        </a>
                                     </td>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    <br />
-                    <br />
+                            </table>
+                        </FormGroup>
+                        <br/>
+                        <table className="table-list" cellspacing="5">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Days per week</th>
+                                    <th>Hours per day</th>
+                                    <th>Annual leave</th>
+                                    <th>Sick leave</th>
+                                    <th>Other leave</th>
+                                    <th>Admin task (%)</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {this.state.filteredCountryCadres.map(cadre =>
+                                    <tr key={cadre.std_code} >
+                                        <td>
+                                            {cadre.name}
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.work_days}
+                                                        paramName={cadre.std_code + '-work_days'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.work_hours}
+                                                        paramName={cadre.std_code + '-work_hours'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.annual_leave}
+                                                        paramName={cadre.std_code + '-annual_leave'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.sick_leave}
+                                                        paramName={cadre.std_code + '-sick_leave'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.other_leave}
+                                                        paramName={cadre.std_code + '-other_leave'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td align="center">
+                                            <div>
+                                                <a href="#">
+                                                    <InlineEdit
+                                                        validate={this.validateTextValue}
+                                                        activeClassName="editing"
+                                                        text={"" + cadre.admin_task}
+                                                        paramName={cadre.std_code + '-admin_task'}
+                                                        change={this.handleCadreChange}
+                                                        style={{
+                                                            minWidth: 50,
+                                                            display: 'inline-block',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            fontSize: 11,
+                                                            outline: 0,
+                                                            border: 0
+                                                        }}
+                                                    />
+                                                </a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="#" onClick={() => this.deleteCadre(cadre.std_code)}>
+                                                <FaTrash />
+                                            </a>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <br />
+                        <br />
+                    </div>
                 </Panel>
                 <br />
             </div>

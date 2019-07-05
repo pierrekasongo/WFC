@@ -45,7 +45,7 @@ router.get('/facilities/:countryId',withAuth,(req, res) => {
 
     let countryId = req.params.countryId;
 
-    let sql = `SELECT f.code as code, f.ihrisCode as ihrisCode, f.name as name,
+    let sql = `SELECT f.id as id, f.code as code, f.ihrisCode as ihrisCode, f.name as name,
                 f.parentName as parentName, f.facilityType as faTypeCode, CONCAT(ft.name_en,'/',ft.name_fr) as faTypeName 
                  FROM facility f LEFT JOIN  std_facility_type ft ON f.facilityType = ft.code 
                  WHERE countryId =${countryId};`;
@@ -55,6 +55,8 @@ router.get('/facilities/:countryId',withAuth,(req, res) => {
         res.json(results);
     });
 });
+
+
 
 router.get('/count_facilities/:countryId',withAuth,(req, res) => {
 
@@ -260,7 +262,7 @@ router.get(`/import_facilities_from_dhis2/:countryId`,withAuth, async function (
 
     let password = params.pwd;
 
-    var resource = "organisationUnits.json?fields=id,name,level,parent&paging=false";
+    var resource = "organisationUnits.json?fields=id,name,level,parent[name]&paging=false";
 
     url = dhis2_url + "/api/" + resource;
 
@@ -273,16 +275,23 @@ router.get(`/import_facilities_from_dhis2/:countryId`,withAuth, async function (
         } else {
             var data = JSON.parse(body);
 
-            data.organisationUnits.forEach(row =>
+            data.organisationUnits.forEach(row =>{
+
+                let prt = row.parent;
+
+                let parent ="";
+
+                if(prt)
+                    parent=prt.name;
 
                 facilities.push({
                     id:row.id,
                     level:row.level,
                     name:row.name,
-                    parent:row.parent
+                    parent:parent
                 })
 
-            );
+            });
             res.json(facilities);
         }
     }, function (err) {
