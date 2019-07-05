@@ -638,7 +638,7 @@ export default class MetadataComponent extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <FacilityTypeComponent token={localStorage.getItem('token')}/>
+                        <FacilityTypeComponent facilityTypes={this.state.facilityTypes}/>
                     </TabPanel>
 
                     <TabPanel>
@@ -650,7 +650,7 @@ export default class MetadataComponent extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <CountryComponent token={localStorage.getItem('token')} countries={this.state.countries} />
+                        <CountryComponent countries={this.state.countries} />
                     </TabPanel>
                 </Tabs>
                 <br />
