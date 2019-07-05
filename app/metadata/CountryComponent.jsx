@@ -24,21 +24,6 @@ export default class CountryComponent extends React.Component {
             showingNewCountry: false,
             countryToDelete: ''
         };
-
-        axios.get('/metadata/countries',{
-            headers :{
-                Authorization : 'Bearer '+this.props.token
-            }
-        }).then(res => {
-            this.setState({ countries: res.data });
-        }).catch(err => {
-            console.log(err);
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
     }
 
     launchToastr(msg) {
@@ -73,13 +58,13 @@ export default class CountryComponent extends React.Component {
 
                                 axios.delete(`/metadata/deleteCountry/${this.state.countryToDelete}`,{
                                     headers :{
-                                        Authorization : 'Bearer '+this.props.token
+                                        Authorization : 'Bearer '+localStorage.getItem('tokeen')
                                     }
                                 }).then((res) => {
                                         //Update cadres
                                         axios.get('/metadata/countries',{
                                             headers :{
-                                                Authorization : 'Bearer '+this.props.token
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
                                             }
                                         }).then(res => {
                                             this.setState({ countries: res.data });
