@@ -20,17 +20,10 @@ export default class FacilityTypeComponent extends React.Component {
         super(props);
 
         this.state = {
-            facilityTypes: [],
+            facilityTypes: this.props.facilityTypes,
             showingNew: false,
             typeToDelete: ''
         };
-        axios.get('/metadata/facilityTypes',{
-            headers :{
-                Authorization : 'Bearer '+this.props.token
-            }
-        }).then(res => {
-            this.setState({ facilityTypes: res.data });
-        }).catch(err => console.log(err));
     }
     
 
@@ -61,18 +54,18 @@ export default class FacilityTypeComponent extends React.Component {
                         <p>Are you sure you want to delete this type?</p>
                         <p>This will also delete treatments attached to it.</p>
                         <button onClick={onClose}>No</button> &nbsp;&nbsp;
-                  <button
+                        <button
                             onClick={() => {
 
                                 axios.delete(`/metadata/deleteType/${this.state.typeToDelete}`,{
                                     headers :{
-                                        Authorization : 'Bearer '+this.props.token
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
                                     }
                                 }).then((res) => {
                                         //Update cadres
                                         axios.get('/metadata/facilityTypes',{
                                             headers :{
-                                                Authorization : 'Bearer '+this.props.token
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
                                             }
                                         }).then(res => {
                                             this.setState({ facilityTypes: res.data });
@@ -82,7 +75,7 @@ export default class FacilityTypeComponent extends React.Component {
                                 onClose();
                             }}>
                             Yes, Delete it!
-                  </button>
+                        </button>
                     </div>
                 );
             }
