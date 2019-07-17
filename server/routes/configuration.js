@@ -37,6 +37,14 @@ router.get('/configs/:countryId',withAuth, function (req, res) {
         });
 });
 
+router.get('/time_units',withAuth, function (req, res) {
+
+    db.query(`SELECT * FROM time_unit`,function (error, results, fields) {
+            if (error) throw error;
+            res.json(results);
+    });
+});
+
 router.get('/getCountryHolidays/:countryId',withAuth,function (req, res) {
 
     let countryId = req.params.countryId;

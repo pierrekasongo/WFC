@@ -5,11 +5,19 @@ import axios from 'axios';
 import InlineEdit from 'react-edit-inline2';
 import Multiselect from 'react-multiselect-checkboxes';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { FaTrash, FaCheck, FaCheckSquare, FaArrowRight } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaCheckSquare, FaArrowRight, FaFileCsv,FaFileImport } from 'react-icons/fa';
+import { CSVLink, CSVDownload } from "react-csv";
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 
 import HRUploadPanel from '../import/HRUploadPanel';
+
+/*const csvData = [
+    ["firstname", "lastname", "email"],
+    ["Ahmed", "Tomi", "ah@smthing.co.com"],
+    ["Raed", "Labes", "rl@smthing.co.com"],
+    ["Yezzi", "Min l3b", "ymin@cocococo.com"]
+];*/
 
 export default class StatisticsPage extends React.Component {
 
@@ -36,8 +44,11 @@ export default class StatisticsPage extends React.Component {
             facilitiesCombo: [],
 
             cadresCombo: [],
-            facilityTypes: []
+            facilityTypes: [],
+            csvData: []
         };
+
+        this.csvLink=React.createRef();
 
         this.importStatisticsFromDhis2 = this.importStatisticsFromDhis2.bind(this);
 
@@ -173,6 +184,7 @@ export default class StatisticsPage extends React.Component {
         this.setState({ filteredStats: stats.filter(st => st.facility.toLowerCase().includes(facility.toLowerCase())) });
 
     }
+
     filterStatByCadre(cadreCode) {
 
         let stats = this.state.statistics;
@@ -184,6 +196,25 @@ export default class StatisticsPage extends React.Component {
 
             this.setState({filteredStats: filtered});
         }
+    }
+
+    generateCSV(){
+        let csvData = [];
+        let year = this.state.selectedPeriod;
+        let cadre = this.state.selectedCadres;
+        let facility = this.state.selectedFacilities;
+
+        csvData.push({
+            year:year,
+            cadre:cadre,
+            facilicity:facility
+        });
+
+        this.setState({
+            csvData:csvData
+        });
+
+        this.csvLink.current.link.click();
     }
 
     importStatisticsFromDhis2() {
@@ -297,6 +328,46 @@ export default class StatisticsPage extends React.Component {
             this.setState({filteredCadres: filtered});
         }
     }
+
+    filterCadreFacilitiesByFaType(faTypeCode){
+
+        let cadresCombo = [];
+
+        let facilitiesCombo = [];
+
+        if(faTypeCode === "0"){
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+
+        }else{
+
+            let cadres = this.state.cadres;
+
+            let filteredCadres = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            filteredCadres.forEach(cd =>{
+                cadresCombo.push({ label: cd.name, value: cd.std_code });
+            });
+
+            let filteredFacilities = this.state.facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
+
+            filteredFacilities.forEach(fa =>{
+
+                let id = fa.id + '|' + fa.code;
+
+                facilitiesCombo.push({ label: fa.name, value: id });
+            });
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+        }
+    }
+
     render() {
         return (
             <Panel bsStyle="primary" header="Import yearly treatments statistics from DHIS2">
@@ -324,6 +395,26 @@ export default class StatisticsPage extends React.Component {
                                                 {(this.state.years.map(yr =>
                                                     <option key={yr.id} value={yr.year}>{yr.year}</option>
                                                 ))}
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
+
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Select facility type</b>
+                                        </Col>
+                                        <Col sm={15}>
+                                            <FormControl
+                                                componentClass="select"
+                                                onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                                <option value="0" key="000">Filter by facility type</option>
+                                                {this.state.facilityTypes.map(ft =>
+                                                    <option
+                                                        key={ft.id}
+                                                        value={ft.code}>
+                                                        {ft.name_fr+'/'+ft.name_en}
+                                                    </option>
+                                                )}
                                             </FormControl>
                                         </Col>
                                     </FormGroup>
@@ -366,8 +457,22 @@ export default class StatisticsPage extends React.Component {
                                         </Col>
                                     </FormGroup>
                                     <hr />
-                                    <div style={{ textAlign: "right", paddingTop: 10 }}>
-                                        <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>Import statistics from DHIS2</Button>
+                                    <div style={{ textAlign: "right", padding: 10 }}>
+                                        <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>
+                                            <FaFileImport /> Import statistics from DHIS2
+                                        </Button>
+                                        <br/><br/>
+                                        <Button bsStyle="info" bsSize="medium" onClick={() => this.generateCSV()}>
+                                            <FaFileCsv /> Generate csv
+                                        </Button>
+                                    </div>
+
+                                    <div>
+                                        <CSVLink data={this.state.csvData} 
+                                                filename="treatment_statistics.csv"
+                                                className="hidden"
+                                                ref={this.csvLink}
+                                                target="_blank" /> 
                                     </div>
                                 </Form>
                             </div>

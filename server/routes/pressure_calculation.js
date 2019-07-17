@@ -71,7 +71,13 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
     let facilityCode=facilities[facilityId].code;
 
+    let total_CAS = 0;
+
     let CAF = 0;
+
+    let total_IAS = 0;
+
+    let IAF = 0;
 
     let publicHolidays=holidays;
 
@@ -90,9 +96,19 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
     
     let facilityStaffCountQuery = `SELECT id, cadreCode, staffCount AS StaffCount FROM staff
                                     WHERE  facilityCode="${facilityCode}" AND cadreCode IN(?)`;
+
+    let supportActivityQuery = `SELECT t.id, t.code, t.cadre_code, t.name, t.duration,tu.name as time_unit 
+                                    FROM country_treatment_support t, time_unit tu WHERE countryId=${countryId} 
+                                    AND t.time_unit=tu.id AND cadre_code IN(?)`;
+
+    let individualActivityQuery = `SELECT t.id, t.code, t.cadre_code, t.name, t.nb_staff, t.duration,tu.name as time_unit 
+                                    FROM country_treatment_individual t, time_unit tu WHERE countryId=${countryId} 
+                                    AND t.time_unit=tu.id AND cadre_code IN(?)`;
     
 
-    db.query(`${treatmentsQuery}; ${patientCountQuery}; ${timePerTreatmentQuery}; ${facilityStaffCountQuery};`, [cadreIds, cadreIds,cadreIds],
+    db.query(`${treatmentsQuery}; ${patientCountQuery}; ${timePerTreatmentQuery}; ${facilityStaffCountQuery};
+                ${supportActivityQuery};${individualActivityQuery}`, 
+                [cadreIds, cadreIds, cadreIds, cadreIds, cadreIds],
         function (error,results) {
 
             let treatmentsQueryResult = results[0];
@@ -100,6 +116,10 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
             let patientCountQueryResult = results[1];
 
             let facilityStaffCountQueryResult = results[3];
+
+            let supportActivityQueryResult = results[4];
+
+            let individualActivityQueryResult = results[5];
 
             // convert results from query into a dictionary from an array
             let patientsPerTreatment = {};
@@ -124,6 +144,82 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
             Object.keys(cadres).forEach(cadreId => {
 
+                let workHours = cadres[cadreId].hours;
+
+                let workDays = cadres[cadreId].days;
+                
+                let weeklyWorkHours = workHours * workDays;
+
+                let cadreAdminPercentage = cadres[cadreId].adminPercentage;
+                    
+                //Non working days
+                let holidays = parseInt(publicHolidays);
+
+                let annualLeave = parseInt(cadres[cadreId].annualLeave);
+
+                let sickLeave = parseInt(cadres[cadreId].sickLeave);
+
+                let otherLeave = parseInt(cadres[cadreId].otherLeave);
+
+                let nonWorkingHours = (holidays + annualLeave + sickLeave + otherLeave) * workHours;
+                
+                let hoursAYear = (weeklyWorkHours * 52) - nonWorkingHours;//Available Working Time
+
+                //Category allowance factor
+
+                let supportActivities = supportActivityQueryResult.filter(val => val['cadre_code'] == cadreId);
+
+                let factor = 0;
+
+                supportActivities.forEach(sa =>{
+
+                    if(sa.time_unit === 'min/day'){
+
+                        factor = ((sa.duration/60)/workHours)*100;
+
+                    }else if(sa.time_unit === 'min/week'){
+
+                        factor = ((sa.duration/60)/weeklyWorkHours)*100;
+
+                    }else if(sa.time_unit === 'min/month'){
+
+                        factor = (((sa.duration/60)*12)/hoursAYear)*100;
+                    }else{
+                        factor = ((sa.duration/60)/hoursAYear)*100
+                    }
+                    total_CAS+=factor;
+                })
+
+                CAF = 1 / (1 - (total_CAS / 100));
+
+                //Individual allowance factor
+                let individualsActivities = individualActivityQueryResult.filter(val => val['cadre_code'] == cadreId);
+
+                let fact = 0;
+
+                individualsActivities.forEach(ind => {
+
+                    let duration = ind.duration * ind.nb_staff;
+
+                    if(ind.time_unit === 'min/day'){
+
+                        fact = (duration/60) * (hoursAYear/workHours);
+
+                    }else if(ind.time_unit === 'min/week'){
+
+                        fact = (duration/60) * 52;
+
+                    }else if(ind.time_unit === 'min/month'){
+
+                        fact = (duration/60) * 12;
+                    }else{
+                        fatc = (duration/60);
+                    }
+                    total_IAS+=fact;
+                })
+                
+                IAF = total_IAS/hoursAYear;
+
                 treatmentsQueryResult.forEach(treatmentRow => {
 
                     let treatmentId = treatmentRow['id'];
@@ -141,36 +237,9 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
                     totalHoursForTreatment = (timePerPatient / 60) * patientsPerTreatment[treatmentId];
 
-                    // input parameters
-                    //let cadreHours = cadres[cadreId].hours;
 
-                    let workHours = cadres[cadreId].hours;
+                    //CAF = 1 / (1 - (cadreAdminPercentage / 100));
 
-                    let workDays = cadres[cadreId].days;
-                    let weeklyWorkHours = workHours * workDays;
-
-                    let cadreAdminPercentage = cadres[cadreId].adminPercentage;
-
-                    
-                    //Non working days
-                    let holidays = parseInt(publicHolidays);
-
-                    let annualLeave = parseInt(cadres[cadreId].annualLeave);
-
-                    let sickLeave = parseInt(cadres[cadreId].sickLeave);
-
-                    let otherLeave = parseInt(cadres[cadreId].otherLeave);
-
-                    let nonWorkingHours = (holidays + annualLeave + sickLeave + otherLeave) * workHours;
-                    //End non working days
-
-                    CAF = 1 / (1 - (cadreAdminPercentage / 100));
-
-                    //let hoursAWeek = weeklyWorkHours * (1 - (cadreAdminPercentage / 100));
-
-                    //let hoursAYear = hoursAWeek * 52;
-
-                    let hoursAYear = (weeklyWorkHours * 52) - nonWorkingHours;
       
                     if (workersNeededPerTreatment[cadreId] == null) {
 
@@ -179,6 +248,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                     workersNeededPerTreatment[cadreId][treatmentId] = totalHoursForTreatment / hoursAYear;
 
                 });
+
             });
 
             // sum workers needed for only selected treatments
@@ -194,7 +264,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                     workersNeeded[cadreId] += workersNeededPerTreatment[cadreId][treatmentId];
 
                 })
-                workersNeeded[cadreId] = workersNeeded[cadreId] * CAF;
+                workersNeeded[cadreId] = (workersNeeded[cadreId] * CAF) + IAF;
             });
 
             /******* calculate workforce pressure ***************/
@@ -227,7 +297,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
             let currentWorkers = {};
 
-            Object.keys(workersPerTreatment).forEach(cadreId => {
+            /*Object.keys(workersPerTreatment).forEach(cadreId => {
 
                 let workers = 0;
 
@@ -239,14 +309,16 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                 currentWorkers[cadreId] = parseInt(workers);
 
                 pressure[cadreId] = Number.parseFloat(workers).toFixed(2) / Number.parseFloat(workersNeeded[cadreId]).toFixed(2);
-            });
+            });*/
 
             //Current workers: suggested by Pierre; simply select the available workers for the cadre
             facilityStaffCountQueryResult.forEach(row => {
 
                 currentWorkers[row['cadreCode']] = row['StaffCount'];
 
-                pressure[row['cadreCode']] = Number.parseInt(row['StaffCount']) / Number.parseFloat(workersNeeded[row['cadreCode']]).toFixed(2);
+                let needed = Number.parseFloat(workersNeeded[row['cadreCode']]);
+
+                pressure[row['cadreCode']] = (Number.parseFloat(row['StaffCount']) / needed).toFixed(3);
             });
 
             obj = {

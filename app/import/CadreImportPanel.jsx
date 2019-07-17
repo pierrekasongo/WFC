@@ -351,24 +351,31 @@ export default class CadreImportPanel extends React.Component {
                                     </Col>
                                 </FormGroup>
                                 <hr/>
-                                <div>
-                                    <FormGroup>
-                                        <Col sm={15}>
-                                            <FormControl
-                                                        componentClass="select"
-                                                        onChange={e => this.filterCtCadreByFaType(e.target.value)}>
-                                                        <option value="0" key="000">Filter by facility type</option>
-                                                        {this.state.facilityTypes.map(ft =>
-                                                            <option
-                                                                key={ft.id}
-                                                                value={ft.code}>
-                                                                {ft.name_fr+'/'+ft.name_en}
-                                                            </option>
-                                                        )}
-                                            </FormControl>
-                                        </Col>
-                                    </FormGroup>
-                                </div>
+                                <table>
+                                    <tr>
+                                        <td>Filter by facility type</td>
+                                        <td>
+                                            <div>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <FormControl
+                                                                    componentClass="select"
+                                                                    onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                                    <option value="0" key="000">Filter by facility type</option>
+                                                                    {this.state.facilityTypes.map(ft =>
+                                                                        <option
+                                                                            key={ft.id}
+                                                                            value={ft.code}>
+                                                                            {ft.name_fr+'/'+ft.name_en}
+                                                                        </option>
+                                                                    )}
+                                                        </FormControl>
+                                                    </Col>
+                                                </FormGroup>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
                                 <br/>
                                 <table className="table-list" cellSpacing="50">
                                     <thead>

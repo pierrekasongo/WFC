@@ -33,6 +33,52 @@ router.post('/insertTreatment',withAuth, (req, res) => {
     });
 });
 
+router.post('/insertSupportTreatment',withAuth, (req, res) => {
+
+    let code = req.body.code;
+
+    let cadre_code = req.body.cadre_code;
+
+    let name = req.body.name;  
+
+    let duration = req.body.duration;
+
+    let time_unit = req.body.time_unit;
+
+    let countryId = req.body.countryId;
+
+    db.query(`INSERT INTO country_treatment_support (code,countryId,cadre_code,name,duration ,time_unit) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}",${duration},${time_unit})`, 
+        function (error, results) {
+            if (error) throw error;
+            res.json(results);
+    });
+});
+
+router.post('/insertIndividualTreatment',withAuth, (req, res) => {
+
+    let code = req.body.code;
+
+    let cadre_code = req.body.cadre_code;
+
+    let name = req.body.name;  
+
+    let duration = req.body.duration;
+
+    let nb_staff = req.body.nb_staff;
+
+    let time_unit = req.body.time_unit;
+
+    let countryId = req.body.countryId;
+
+    db.query(`INSERT INTO country_treatment_individual(code,countryId,cadre_code,name,nb_staff,duration,time_unit) 
+                VALUES("${code}",${countryId},"${cadre_code}","${name}",${nb_staff},${duration},${time_unit})`, 
+        function (error, results) {
+            if (error) throw error;
+            res.json(results);
+    });
+});
+
 router.post('/insertCustomizedTreatment', withAuth,(req, res) => {
 
     let code = req.body.code;
@@ -131,7 +177,6 @@ router.patch('/match_dhis2',withAuth, (req, res) => {
 
 });
 
-
 router.get('/treatments/:countryId',withAuth, function (req, res) {
 
     let countryId = req.params.countryId;
@@ -142,7 +187,7 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
             WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.treatment_type ='STD' AND t.countryId=${countryId} UNION 
 
             SELECT t.std_code AS code,t.cadre_code AS cadre_code,c.name_fr AS cadre_name_fr,
-            c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
+            c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,t.duration AS duration 
             FROM  country_treatment t, std_cadre c WHERE t.cadre_code = c.code AND t.treatment_type ="CUST" AND t.countryId=${countryId};
 
             SELECT * FROM country_treatment_dhis2 WHERE treatment_code IN(SELECT std_code FROM country_treatment WHERE countryId=${countryId});`,
@@ -174,9 +219,30 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
                     dhis2_codes: subRes
                 })
             });
-            //console.log(res);
             res.json(resultsArr);
         });
+});
+
+router.get('/treatment_supports/:countryId',withAuth, function (req, res) {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT t.id, t.code, t.cadre_code, t.name, t.duration,tu.name as time_unit 
+                FROM country_treatment_support t, time_unit tu WHERE countryId=${countryId} AND t.time_unit=tu.id`,function (error, results, fields) {
+            if (error) throw error;
+            res.json(results);
+    });
+});
+
+router.get('/treatment_individuals/:countryId',withAuth, function (req, res) {
+
+    let countryId = req.params.countryId;
+
+    db.query(`SELECT t.id, t.code, t.cadre_code, t.name, t.nb_staff, t.duration,tu.name as time_unit 
+                FROM country_treatment_individual t, time_unit tu WHERE countryId=${countryId} AND t.time_unit=tu.id`,function (error, results, fields) {
+            if (error) throw error;
+            res.json(results);
+    });
 });
 
 router.get('/count_treatments/:countryId',withAuth, (req, res) => {
@@ -229,12 +295,12 @@ router.get('/treatments/:cadreCode/:countryId',withAuth, function (req, res) {
 
     if (cadreCode == "0") {
         sql = `SELECT t.std_code AS code,c.name_fr AS cadre_name_fr,t.cadre_code, 
-                c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
+                c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration 
                 FROM  country_treatment t, std_treatment st, std_cadre c 
                 WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.countryId=${countryId}`
     } else {
         sql = `SELECT t.std_code AS code, c.name_fr AS cadre_name_fr,
-        c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std,  t.duration AS duration 
+        c.name_en AS cadre_name_en, t.name_customized AS name_cust,t.name_std AS name_std, t.duration AS duration  
         FROM  country_treatment t, std_treatment st, std_cadre c 
         WHERE t.std_code=st.code AND st.cadre_code=c.code AND t.cadre_code="${cadreCode}" AND t.countryId=${countryId}`;
     }

@@ -29,7 +29,8 @@ class App extends React.Component {
         this.state = {
             isAuth: false,
             authLoading: false,
-            error: '',
+            loginError: '',
+            passwordError: '',
             loading:'done'
           };
           this.loginHandler = this.loginHandler.bind(this);
@@ -100,11 +101,11 @@ class App extends React.Component {
             'Content-Type':'application/json'
           }
         }).then(res => {
-            console.log("response ",res);
+           
           if(res.status === 400){
-              this.setState({error: "Login not found"});
-              console.log("RESPONSE ",res.data);
-              console.log(res.responseText);
+              console.log("Login problem");
+              
+              throw new Error('Login not found.');
           }
     
           if (res.status === 422) {
@@ -120,48 +121,68 @@ class App extends React.Component {
           if(!res.data){
               throw new Error('No user found');
           }
+          //if(res.status === 200){
+              
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('userId', res.data.userId);
+            localStorage.setItem('username',res.data.username);
+            localStorage.setItem('countryId',res.data.countryId);
+            localStorage.setItem('roleId',res.data.roleId);
+            localStorage.setItem('role',res.data.role);
+            localStorage.setItem('language',res.data.language);
 
-          localStorage.setItem('token', res.data.token);
-          localStorage.setItem('userId', res.data.userId);
-          localStorage.setItem('username',res.data.username);
-          localStorage.setItem('countryId',res.data.countryId);
-          localStorage.setItem('roleId',res.data.roleId);
-          localStorage.setItem('role',res.data.role);
-          localStorage.setItem('language',res.data.language);
+            //Update last login
+            data = {
+                    userId:res.data.userId
+                };
 
-          //Update last login
-          data = {
-                userId:res.data.userId
-            };
+            axios.patch(`/auth/set_last_login`,data,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(rs => {
+                    console.log(rs.data);
+            }).catch(err => console.log(err))
+        
+            const remainingMilliseconds = 60 * 60 * 1000;
 
-          axios.patch(`/auth/set_last_login`,data,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-          }).then(rs => {
-                console.log(rs.data);
-          }).catch(err => console.log(err))
-    
-          const remainingMilliseconds = 60 * 60 * 1000;
-          const expiryDate = new Date(
-            new Date().getTime() + remainingMilliseconds
-          );
-          localStorage.setItem('expiryDate', expiryDate.toISOString());
-          this.setAutoLogout(remainingMilliseconds);
+            const expiryDate = new Date(
+                new Date().getTime() + remainingMilliseconds
+            );
+            localStorage.setItem('expiryDate', expiryDate.toISOString());
+            this.setAutoLogout(remainingMilliseconds);
 
-          this.setState({
-            isAuth: true,
-            authLoading: false,
-            loading:'done'
-          });
+            this.setState({
+                isAuth: true,
+                authLoading: false,
+                loading:'done'
+            });
+        //}
     
         }).catch(err => {
-            console.log("ERROR ",err);
+
+          let loginError='';
+          let passwordError='';
+
+          if(err.response.status === 400){
+              loginError = err.response.data;
+              passwordError = "";
+          }else if(err.response.status === 401){
+            loginError = "";
+            passwordError = err.response.data;
+          }
+
           this.setState({
+
               isAuth: false,
+
               authLoading: false,
+
               loading:'done',
-              error: err
+
+              loginError:loginError,
+
+              passwordError: passwordError
           });
         });
     }
@@ -180,7 +201,8 @@ class App extends React.Component {
                                     onLogin={this.loginHandler}
                                     onLogout={this.logoutHandler}
                                     loading ={this.state.loading}
-                                    error={this.state.error}
+                                    loginError={this.state.loginError}
+                                    passwordError={this.state.passwordError}
                                         /*loading={this.state.authLoading}*/
                                 />
                                 )}

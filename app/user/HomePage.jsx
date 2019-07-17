@@ -171,6 +171,7 @@ class HomePage extends React.Component {
                 </div>
                 <Panel bsStyle="primary" header="Home">
                 <br/>
+                
                 <div class="container">
                     <div class="row">
                         <div class="col-md-4 col-xl-3">

@@ -48,13 +48,17 @@ class LoginPage extends React.Component {
                 }>
               <h3><b>Login</b></h3>
               {
-                this.props.error.length > 0 &&
-                <p className="error">{this.props.error}</p>
+                  this.props.loginError.length > 0 &&
+                  <span className="error">{this.props.loginError}</span>
               }
               <FormControl type="text" placeholder="login" value={this.state.login}
                 onChange={e => this.setState({ login: e.target.value })} />
               <br />
               <h3><b>Password</b></h3>
+              {
+                  this.props.passwordError.length > 0 &&
+                  <span className="error">{this.props.passwordError}</span>
+              }
               <FormControl type="password" placeholder="password" value={this.state.password}
                 onChange={e => this.setState({ password: e.target.value })} />
               <br />
@@ -110,4 +114,4 @@ class LoginPage extends React.Component {
     );
   }
 }
-export default withRouter(LoginPage)
+export default LoginPage//withRouter(LoginPage)

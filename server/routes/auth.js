@@ -46,7 +46,7 @@ let getUserByLogin = async login => {
                 resolve(results);
             }
     }));
-
+ 
     return results[0];
 }
 router.post('/login', async function(req, res, next){
@@ -59,21 +59,20 @@ router.post('/login', async function(req, res, next){
 
     if(!user){
         console.log("A user with this login could not be found");
-        res.status(400).send('A user with this login could not be found');
+        res.status(400);
+        res.setHeader('Content-type','application/json');
+        res.send(JSON.stringify('A user with this login could not be found'));
         return;
-        /*const error = new Error('A user with this login could not be found.');
-        error.statusCode = 401;
-        throw error;*/
     }
 
-    bcrypt.compare(password, user.password, function(err, isEqual) {              
-
+    bcrypt.compare(password, user.password, function(err, isEqual) {
         if(!isEqual){
-            const error = new Error('Wrong password.');
-            error.statusCode = 401;
-            throw error;
+            console.log("Wrong password");
+            res.status(401);
+            res.setHeader('Content-type','application/json');
+            res.send(JSON.stringify('Wrong password'));
+            return;
         }
-
         const token = jwt.sign(
             {
                 username:user.name,

@@ -9,6 +9,7 @@ import { confirmAlert } from 'react-confirm-alert';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import MatchCadreComponent from './MatchCadreComponent';
 
 export default class MatchingPage extends React.Component {
 
@@ -46,7 +47,6 @@ export default class MatchingPage extends React.Component {
         this.selectMultipleDHIS2Treatments = this.selectMultipleDHIS2Treatments.bind(this);
         this.matchTreatments = this.matchTreatments.bind(this);
         this.matchFacilities = this.matchFacilities.bind(this);
-        this.matchCadres = this.matchCadres.bind(this);
 
         axios.get('/metadata/facilityTypes',{
             headers :{
@@ -84,25 +84,6 @@ export default class MatchingPage extends React.Component {
         }).then(res => {
 
             this.setState({ ihrisFacilities: res.data });
-
-        }).catch(err => {
-            console.log(err);
-        });
-
-        axios.get(`/hris/getiHRIS_PractitionerRoles/${localStorage.getItem('countryId')}`,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-
-            let rolesCombo = [];
-
-            res.data.forEach(role => {
-
-                rolesCombo.push({ label: role.name, value: role.code });
-
-            })
-            this.setState({ rolesCombo: rolesCombo });
 
         }).catch(err => {
             console.log(err);
@@ -365,49 +346,6 @@ export default class MatchingPage extends React.Component {
         });
     }
 
-    matchCadres(stdCode, ihrisCode) {
-        
-        if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
-            return;
-        }
-        let data = {
-            ihrisCode: ihrisCode,
-            stdCode: stdCode
-        }
-        confirmAlert({
-            customUI: ({ onClose }) => {
-                return (
-                    <div className='custom-ui'>
-                        <h3>Confirmation</h3>
-                        <p>Are you sure you want to match this?</p>
-                        <button onClick={onClose}>No</button> &nbsp;&nbsp;
-                        <button
-                            onClick={() => {
-
-                                axios.post(`/hris/match_cadre`, data,{
-                                    headers :{
-                                        Authorization : 'Bearer '+localStorage.getItem('token')
-                                    }
-                                }).then(res => {
-                                    axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
-                                        headers :{
-                                            Authorization : 'Bearer '+localStorage.getItem('token')
-                                        }
-                                    })
-                                        .then(res => this.setState({ countryCadres: res.data }))
-                                        .catch(err => console.log(err));
-                                }).catch(err => console.log(err));
-
-                                onClose();
-                            }}>
-                            Yes
-                        </button>
-                    </div>
-                );
-            }
-        });
-    }
 
     countryTreatmentCheck(code) {
         this.setState({
@@ -451,19 +389,6 @@ export default class MatchingPage extends React.Component {
         }
     }
     
-    filterCtCadreByFaType(faTypeCode){
-
-        let cadres = this.state.countryCadres;
-        
-        if(faTypeCode === "0"){
-            this.setState({countryCadres:cadres});
-        }else{
-
-            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
-
-            this.setState({filteredCountryCadres: filtered});
-        }
-    }
     render() {
 
         return (
@@ -477,7 +402,7 @@ export default class MatchingPage extends React.Component {
 
                     <TabPanel>
                         <div className="tab-main-container">
-                            <div className="scrollable-container">
+                            
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
@@ -570,7 +495,7 @@ export default class MatchingPage extends React.Component {
                                         <hr />
                                     </div>
                                 }
-
+                            <div className="div-table">
                                 <table className="table-list">
                                     <thead>
                                         <tr>
@@ -614,7 +539,7 @@ export default class MatchingPage extends React.Component {
                     {/*******Facilities matching tab************/}
                     <TabPanel>
                         <div className="tab-main-container">
-                            <div className="scrollable-container">
+                            
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
@@ -649,6 +574,7 @@ export default class MatchingPage extends React.Component {
                                     </table>
                                 </div>
                                 <br/>
+                                <div className="div-table">
                                 <table className="table-list" cellSpacing="10">
                                     <thead>
                                         <th>Parent</th>
@@ -688,91 +614,10 @@ export default class MatchingPage extends React.Component {
                     </TabPanel>
 
                     <TabPanel>
-                    <div className="scrollable-container">
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={20}>
-                                <div className="div-title">
-                                    <b>Match cadres with iHRIS</b>
-                                </div>
-                                <hr />
-                            </Col>
-                        </FormGroup>
-                        <div>
-                            <table>
-                                <tr>
-                                    <td><b>Filter from facility type</b></td>
-                                    <td>
-                                        <FormGroup>
-                                            <Col sm={15}>
-                                                <FormControl
-                                                            componentClass="select"
-                                                            onChange={e => this.filterCtCadreByFaType(e.target.value)}>
-                                                            <option value="0" key="000">Filter by facility type</option>
-                                                            {this.state.facilityTypes.map(ft =>
-                                                                <option
-                                                                    key={ft.id}
-                                                                        value={ft.code}>
-                                                                        {ft.name_fr+'/'+ft.name_en}
-                                                                </option>
-                                                            )}
-                                                </FormControl>
-                                            </Col>
-                                        </FormGroup>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <br/>
-                        <table className="table-list" cellspacing="5">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Hris code</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {this.state.filteredCountryCadres.map(cadre =>
-                                    <tr key={cadre.std_code} >
-                                        <td>
-                                            {cadre.name}
-                                        </td>
-                                        <td>
-                                            <InlineEdit
-                                                    validate={this.validateTextValue}
-                                                    activeClassName="editing"
-                                                    text={(cadre.hris_code.length == 0 ? 'match hris code' : cadre.hris_code)}
-                                                    paramName={cadre.std_code + '-hris_code'}
-                                                    change={this.handleCadreChange}
-                                                    style={{
-                                                       minWidth: 50,
-                                                            display: 'inline-block',
-                                                            margin: 0,
-                                                            padding: 0,
-                                                            fontSize: 11,
-                                                            outline: 0,
-                                                            border: 0
-                                                        }}
-                                            />
-                                        </td>
-
-                                        <td>
-                                            <Col sm={10}>
-                                                <FormControl componentClass="select"
-                                                    onChange={e => this.matchCadres(cadre.std_code, e.target.value)}>
-                                                    <option key="000" value="000">Select value</option>
-                                                    {(this.state.ihrisCadres.map(c =>
-                                                        <option key={c.id} value={c.id} selected={(cadre.hris_code == c.id) ? true : false}>{c.name}</option>
-                                                    ))}
-                                                </FormControl>
-                                            </Col>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                        <br />
-                    </div>
+                        <MatchCadreComponent 
+                            countryCadres={this.state.countryCadres}
+                            ihrisCadres={this.state.ihrisCadres}
+                            facilityTypes={this.state.facilityTypes}/>
                     </TabPanel>
                 </Tabs>
             </Panel>

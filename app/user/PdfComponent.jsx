@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-import { CSVLink, CSVDownload } from "react-csv";
+//import Report from 'bv-react-data-report';
 
-export default class CsvComponent extends React.Component {
+import Report from 'react-data-report';
+
+export default class PdfComponent extends React.Component {
     constructor(props) {
 
         super(props);
@@ -11,7 +13,6 @@ export default class CsvComponent extends React.Component {
             cadreDict:props.cadreDict,
             results:props.results,
         }
-        this.csvLink=React.createRef();
 
         this.state={
             data:this.fetchData(props.results)
@@ -21,7 +22,7 @@ export default class CsvComponent extends React.Component {
     fetchData(results){
 
         let printable=[];
-
+        
         Object.keys(this.state.results).map(id => {
             
             let facility="";
@@ -36,22 +37,38 @@ export default class CsvComponent extends React.Component {
 
             let gap="0";
 
+            let currFacility="";
+
             Object.keys(results[id].workersNeeded).map(cadreId =>{
 
                 cadre=this.state.cadreDict[cadreId];
                 curr_workers=(results[id].currentWorkers[cadreId])?results[id].currentWorkers[cadreId].toString():'0';
-                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(0).toString():'0';
+                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(3).toString():'0';
                 pressure=(results[id].pressure[cadreId])?Number(results[id].pressure[cadreId]).toFixed(0).toString():'0';
                 gap=(results[id].currentWorkers[cadreId]-results[id].workersNeeded[cadreId]).toFixed(0).toString();
                 facility=results[id].facility.toString();
 
+                if(facility !== currFacility){
+
+                    currFacility = facility;
+
+                    printable.push({
+                        facility:`<b>`+currFacility+`</b>`,
+                        cadre:'',
+                        current:'',
+                        needed:'',
+                        difference:'',
+                        ratio:''
+                    });
+                }
+
                 printable.push({
-                    facility:facility,
+                    '':'',
                     cadre:cadre,
-                    currentWorkers:curr_workers,
-                    workersNeeded:needed_workers,
-                    gap:gap,
-                    pressure:pressure
+                    current:curr_workers,
+                    needed:needed_workers,
+                    difference:gap,
+                    ratio:pressure
                 });
             });
             //facility=this.state.results[id].facility; 
@@ -59,23 +76,10 @@ export default class CsvComponent extends React.Component {
         return printable;
     }
 
-    clicked(){
-        this.csvLink.current.link.click();
-    }
-
     render() {
         return (
-            <div>
-                {/*<button onClick={() => this.fetchData(this.props.results)}>Download to csv</button>*/}
-                <a href="#" onClick={() => this.clicked()}>Download to csv</a>
-                <br/>
-                <CSVLink 
-                    data={this.state.data} 
-                    filename="pressure_calculation.csv"
-                    className="hidden"
-                    ref={this.csvLink}
-                    target="_blank" /> 
-            </div>           
+            <Report data={this.state.data} 
+                    opening={(<h2>Workforce Pressure Calculator - Results</h2>)}/>           
         );
     }
 }

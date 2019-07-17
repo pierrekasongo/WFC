@@ -41,10 +41,14 @@
   flex-direction: row;
   padding:5px;
 }
-
 .form-div{
   width:300px;
 }
 .error{
+  font-weight: bold;
   color: #ee2742;
+  background: #ffb0bb;
+  padding: 2px;
+  font-size: 11px;
+  margin:5px;
 }

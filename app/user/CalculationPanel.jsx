@@ -16,6 +16,7 @@ export default class CalculationPanel extends React.Component {
         super(props);
 
         this.state = {
+            facilityTypes:[],
             facilitiesCombo: [],
             cadresCombo: [],
             cadres: [],
@@ -47,6 +48,14 @@ export default class CalculationPanel extends React.Component {
         };
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
         this.selectMultipleCadres = this.selectMultipleCadres.bind(this);
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
 
         axios.get(`/configuration/getCountryHolidays/${localStorage.getItem('countryId')}`,{
             headers :{
@@ -108,15 +117,13 @@ export default class CalculationPanel extends React.Component {
                 }
                 cadreDict[cadre.std_code] = cadre.name;
 
-                //let id = cadre.code + '|' + cadre.Hours + '|' + cadre.AdminTask
-
-                cadresCombo.push({ label: cadre.name, value: cadre.std_code });
+                //cadresCombo.push({ label: cadre.name, value: cadre.std_code });
             });
             this.setState({
                 cadres: cadres,
                 cadreDict: cadreDict,
                 cadreInputs: cadreInputs,
-                cadresCombo: cadresCombo,
+                //cadresCombo: cadresCombo,
             });
 
         }).catch(err => console.log(err));
@@ -143,15 +150,15 @@ export default class CalculationPanel extends React.Component {
                     }
                     facilityDict[fa.id] = fa.name;
 
-                    let id = fa.id + '|' + fa.code;
+                    /*let id = fa.id + '|' + fa.code;
 
-                    facilitiesCombo.push({ label: fa.name, value: id });
+                    facilitiesCombo.push({ label: fa.name, value: id });*/
                 });
                 this.setState({
                     facilities: facilities,
                     facilityDict: facilityDict,
                     facilityInputs: facilityInputs,
-                    facilitiesCombo: facilitiesCombo
+                    //facilitiesCombo: facilitiesCombo
                 });
             })
             .catch(err => console.log(err));
@@ -371,6 +378,45 @@ export default class CalculationPanel extends React.Component {
         setTimeout(() => toastr.error(msg), 300)
     }
 
+    filterCadreFacilitiesByFaType(faTypeCode){
+
+        let cadresCombo = [];
+
+        let facilitiesCombo = [];
+
+        if(faTypeCode === "0"){
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+
+        }else{
+
+            let cadres = this.state.cadres;
+
+            let filteredCadres = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            filteredCadres.forEach(cd =>{
+                cadresCombo.push({ label: cd.name, value: cd.std_code });
+            });
+
+            let filteredFacilities = this.state.facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
+
+            filteredFacilities.forEach(fa =>{
+
+                let id = fa.id + '|' + fa.code;
+
+                facilitiesCombo.push({ label: fa.name, value: id });
+            });
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+        }
+    }
+
     render() {
         return (
         <div>
@@ -379,21 +425,43 @@ export default class CalculationPanel extends React.Component {
                     <div className="calc-container-left">
                         <Form horizontal>
                             <div className="div-title">
-                                <b>Set calculation values</b>
+                                <b>Select calculation values</b>
                             </div>
                             <hr />
+
+                            
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={10}>
                                     <b>Year</b>
                                 </Col>
 
-                                <Col sm={15}>
+                                <Col sm={10}>
                                     <FormControl componentClass="select"
                                         onChange={e => this.setState({ selectedPeriod: e.target.value })}>
-                                        <option key="000" value="000">Select year </option>
+                                        <option key="000" value="0">Select year </option>
                                         {(this.state.years.map(yr =>
                                             <option key={yr.id} value={yr.year}>{yr.year}</option>
                                         ))}
+                                    </FormControl>
+                                </Col>
+                            </FormGroup>
+
+                            <FormGroup>
+                                <Col componentClass={ControlLabel} sm={10}>
+                                    <b>Select facility type</b>
+                                </Col>
+                                <Col sm={10}>
+                                    <FormControl
+                                        componentClass="select"
+                                        onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                        <option value="0" key="000">Filter by facility type</option>
+                                        {this.state.facilityTypes.map(ft =>
+                                            <option
+                                                key={ft.id}
+                                                value={ft.code}>
+                                                {ft.name_fr+'/'+ft.name_en}
+                                            </option>
+                                        )}
                                     </FormControl>
                                 </Col>
                             </FormGroup>
@@ -402,7 +470,7 @@ export default class CalculationPanel extends React.Component {
                                 <Col componentClass={ControlLabel} sm={10}>
                                     <b>Facilities({(this.state.facilitiesCombo.length)})</b>
                                 </Col>
-                                <Col sm={15}>
+                                <Col sm={10}>
                                     <div className="div-multiselect">
                                         <Multiselect
                                             options={this.state.facilitiesCombo}
@@ -414,9 +482,9 @@ export default class CalculationPanel extends React.Component {
                             
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={10}>
-                                    <b>Cadres</b>
+                                    <b>Cadres({(this.state.cadresCombo.length)})</b>
                                 </Col>
-                                <Col sm={15}>
+                                <Col sm={10}>
                                     <div className="div-multiselect">
                                         <Multiselect
                                             options={this.state.cadresCombo}
@@ -432,14 +500,10 @@ export default class CalculationPanel extends React.Component {
                         </Form>
                     </div>
                     <div className="calc-container-right">
-                        <FormGroup>
-                            <Col componentClass={ControlLabel} sm={20}>
-                                <div className="div-title">
-                                    <b>Workforce pressure calculation results</b>
-                                </div>
-                            </Col>
-                            <hr/>
-                        </FormGroup>
+                        <div className="div-title">
+                            <b>Workforce pressure calculation results</b>
+                        </div>
+                        <hr/>
                         {this.state.state == 'loading' &&
                             <div style={{ marginTop: 120, marginBottom: 65 }}>
                                 <div className="loader"></div>

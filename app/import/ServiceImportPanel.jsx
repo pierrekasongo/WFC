@@ -8,10 +8,13 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { FaTrash, FaCheck, FaCheckSquare,FaPlusSquare} from 'react-icons/fa';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ReactTooltip from 'react-tooltip';
 import Multiselect from 'react-multiselect-checkboxes';
 
-import CtNewTreatmentComponent from '../admin/ctNewTreatmentComponent';
+import CtNewServiceComponent from './CtNewServiceComponent';
+import CtNewSupportComponent from './CtNewSupportComponent';
+import CtNewIndividualComponent from './CtNewIndividualComponent';
 
 export default class ServiceImportPanel extends React.Component {
 
@@ -25,7 +28,15 @@ export default class ServiceImportPanel extends React.Component {
             filteredCountryCadres: [],
             stdTreatements: [],
             facilityTypes:[],
+
+            treatmentSupports:[],
+            treatmentIndividuals:[],
+            timeUnits:[],
+
             filteredCountryTreatments: [],
+            filteredCountrySupports: [],
+            filteredCountryIndividuals: [],
+
             countryTreatments: [],
             filteredStdTreatments: [],
             dhis2Treatments: [],
@@ -36,8 +47,16 @@ export default class ServiceImportPanel extends React.Component {
             treatmentToMatch: "",
             state:'done',
             treatmentMap: new Map(),
-            showingNew:false
+            showingNew:false,
+            showCountryFilters:false,
         };
+
+        axios.get('/configuration/time_units',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => this.setState({timeUnits: res.data}))
+          .catch(err => console.log(err));
 
         axios.get('/metadata/cadres',{
             headers :{
@@ -83,11 +102,36 @@ export default class ServiceImportPanel extends React.Component {
             res.data.forEach(tr => {
                 treatmentMap.set(tr.code, "");
             })
+            let treatments = res.data;
             this.setState({
 
-                countryTreatments: res.data,
+                countryTreatments: treatments,
                 filteredCountryTreatments: res.data,
                 treatmentMap: treatmentMap
+            });
+
+        }).catch(err => console.log(err));
+
+        axios.get(`/countrytreatment/treatment_supports/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({
+                treatmentSupports: res.data,
+                filteredCountrySupports: res.data,
+            });
+
+        }).catch(err => console.log(err));
+
+        axios.get(`/countrytreatment/treatment_individuals/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({
+                treatmentIndividuals: res.data,
+                filteredCountryIndividuals: res.data
             });
 
         }).catch(err => console.log(err));
@@ -389,35 +433,125 @@ export default class ServiceImportPanel extends React.Component {
 
     filterCountryTreatementByCadre(cadreCode) {
 
-        let treats = this.state.countryTreatments;
-        
-        if(cadreCode === "0"){
+        let countryTreatments =this.state.countryTreatments;
+        let countrySupports = this.state.treatmentSupports;
+        let countryIndividuals = this.state.treatmentIndividuals;
 
-            this.setState({
-                filteredCountryTreatments:treats,     
-            });
-        }else{
+        this.setState({
+            selectedCountryCadre:cadreCode,
+            filteredCountryTreatments: countryTreatments.filter(tr => tr.cadre_code.includes(cadreCode)),
+            filteredCountrySupports: countrySupports.filter(tr => tr.cadre_code.includes(cadreCode)),
+            filteredCountryIndividuals: countryIndividuals.filter(tr => tr.cadre_code.includes(cadreCode))
+        });
+    }
 
-            let filtered = treats.filter(tr => tr.cadre_code.includes(cadreCode));
+    newSupportTreatment(info){
 
-            this.setState({
-                filteredCountryTreatments: filtered,
-            });
+        if(this.state.selectedCountryCadre === ""){
+            this.launchToastr("No cadre selected. Please select a cadre before adding any activities");
+            return;
         }
+        let countryId = localStorage.getItem('countryId');
+        let cadre_code = this.state.selectedCountryCadre;
+        let code = info.code;
+        let name = info.name;
+        let duration = info.duration;
+        let time_unit = info.time_unit;
+
+        let data = {
+            code: code,
+            cadre_code: cadre_code,
+            name: name,
+            duration: duration,
+            time_unit: time_unit,
+            countryId:countryId
+        };
+
+        axios.post('/countrytreatment/insertSupportTreatment', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            this.setState({showingNew : false});
+
+            axios.get(`/countrytreatment/treatment_supports/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({
+                    treatmentSupports: res.data,
+                    filteredCountrySupports: res.data
+                });
+    
+            }).catch(err => console.log(err));
+
+        }).catch(err =>  console.log(err));
+    }
+
+    newIndividualTreatment(info){
+
+        if(this.state.selectedCountryCadre === ""){
+            this.launchToastr("No cadre selected. Please select a cadre before adding any activities");
+            return;
+        }
+        let countryId = localStorage.getItem('countryId');
+        let cadre_code = this.state.selectedCountryCadre;
+        let code = info.code;
+        let name = info.name;
+        let nb_staff = info.nb_staff;
+        let duration = info.duration;
+        let time_unit = info.time_unit;
+
+        let data = {
+            code: code,
+            cadre_code: cadre_code,
+            name: name,
+            nb_staff: nb_staff,
+            duration: duration,
+            time_unit: time_unit,
+            countryId:countryId
+        };
+
+        axios.post('/countrytreatment/insertIndividualTreatment', data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            this.setState({showingNew : false});
+
+            axios.get(`/countrytreatment/treatment_individuals/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({
+                    treatmentIndividuals: res.data,
+                    filteredCountryIndividuals: res.data
+                });
+    
+            }).catch(err => console.log(err));
+
+        }).catch(err =>  console.log(err));
     }
 
     newCountryTreatmentSave(info){
 
+        if(this.state.selectedCountryCadre === ""){
+            this.launchToastr("No cadre selected. Please select a cadre before adding any activities");
+            return;
+        }
+
+        let cadre_code = this.state.selectedCountryCadre;
         let code = info.code;
-        let facility_type = info.facility_type;
-        let cadre_code = info.cadre_code;
         let name = info.name;
         let duration = info.duration;
         let countryId = localStorage.getItem('countryId');
 
         let data = {
             code: code,
-            facility_type: facility_type,
             cadre_code: cadre_code,
             name: name,
             duration: duration,
@@ -453,13 +587,7 @@ export default class ServiceImportPanel extends React.Component {
     
             }).catch(err => console.log(err));
 
-        }).catch(err => {
-            if (err.response.status === 401) {
-                this.props.history.push(`/login`);
-            } else {
-                console.log(err);
-            }
-        });
+        }).catch(err =>  console.log(err));
     }
 
     filterStdCadreByFaType(faTypeCode){
@@ -600,17 +728,20 @@ export default class ServiceImportPanel extends React.Component {
                                 <FormGroup>
                                     <Col componentClass={ControlLabel} sm={20}>
                                         <div className="div-title">
-                                            <b>Country customized treatments</b> ({this.state.filteredCountryTreatments.length})
+                                            <b>Country customized treatments</b>
                                         </div>
                                         <hr />
                                     </Col>
                                 </FormGroup>
+                                <a href="#" onClick={() => this.setState({showCountryFilters : !this.state.showCountryFilters})} >
+                                        Show filter options
+                                </a>
+                                {this.state.showCountryFilters &&
                                 <table className="tbl-multiselect">
                                     <tr>
-                                        <td><b>Select facility type</b></td>
+                                        <td><b>Filter cadre by facility type</b></td>
                                         <td>
-                                            <FormGroup>
-                                                <Col sm={10}>
+                                            <div>
                                                     <FormControl
                                                         componentClass="select"
                                                         onChange={e => this.filterCtCadreByFaType(e.target.value)}>
@@ -623,8 +754,7 @@ export default class ServiceImportPanel extends React.Component {
                                                             </option>
                                                         )}
                                                     </FormControl>
-                                                </Col>
-                                            </FormGroup>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>
@@ -649,112 +779,204 @@ export default class ServiceImportPanel extends React.Component {
                                         
                                     </tr>
                                     <tr>
-                                        <td><b>Filter by treatment</b></td>
+                                        <td><b>Search treatment</b></td>
                                         <td>
                                             <div>
                                                 <FormGroup>
                                                     <Col sm={15}>
                                                         <input typye="text" className="form-control"
-                                                            placeholder="Filter by treatment" onChange={e => this.filterCountryTreatmentByName(e.target.value)} />
+                                                            placeholder="Search treatment" onChange={e => this.filterCountryTreatmentByName(e.target.value)} />
                                                     </Col>
                                                 </FormGroup>
                                             </div>
                                         </td>
                                     </tr>
                                 </table>
-
+                                }
                                 <hr />
-                                {this.state.state == 'loading' &&
-                                    <div style={{ marginTop: 120, marginBottom: 65 }}>
-                                        <div className="loader"></div>
-                                    </div>
-                                }
-                                {localStorage.getItem('role') !== 'viewer' &&
-                                    <div className="div-add-new-link">
-                                        <a href="#" className="add-new-link" onClick={() => this.setState({ showingNew: true})}>
-                                            <FaPlusSquare /> Add new
-                                        </a>
-                                    </div>
-                                }
-                                <br />
-            
-                                <table className="table-list">
-                                    <thead>
-                                        <tr>
-                                            <th>Standard name</th>
-                                            <th>Customized name</th>
-                                            <th>Duration (min)</th>
-                                        </tr>
-                                    </thead>
-                                    {
-                                        this.state.showingNew &&
-                                        <CtNewTreatmentComponent 
-                                            facilityTypes={this.state.facilityTypes}
-                                            cadres={this.state.countryCadres}
-                                            save={info => this.newCountryTreatmentSave(info)}
-                                            cancel={() => this.setState({ showingNew: false })}/>
-                                    }
-                                    <tbody>
-                                        {this.state.filteredCountryTreatments.map(treatment =>
-                                            <tr key={treatment.code} >
-                                                <td>
-                                                    {treatment.name_std}
-                                                </td>
-                                                <td>
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={(treatment.name_cust.length == 0) ? 'customize' : treatment.name_cust}
-                                                                paramName={treatment.code + '|name_customized'}
-                                                                change={this.handleTreatmentChange}
-                                                                style={{
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td align="center">
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={`` + treatment.duration}
-                                                                paramName={treatment.code + '|duration'}
-                                                                change={this.handleTreatmentChange}
-                                                                style={{
-                                                                    minWidth: 100,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
+                                <Tabs>
+                                    <TabList>
+                                        <Tab>Service activities</Tab>
+                                        <Tab>Support activities</Tab>
+                                        <Tab>Individual activities</Tab>
+                                    </TabList>
+                                    {/******** SERVICE ACTIVITIES ************/}
+                                    <TabPanel>
+                                        {this.state.state == 'loading' &&
+                                            <div style={{ marginTop: 120, marginBottom: 65 }}>
+                                                <div className="loader"></div>
+                                            </div>
+                                        }
+                                        {localStorage.getItem('role') !== 'viewer' &&
+                                            <div className="div-add-new-link">
+                                                <a href="#" className="add-new-link" onClick={() => this.setState({ showingNew: true})}>
+                                                    <FaPlusSquare /> Add new
+                                                </a>
+                                            </div>
+                                        }
+                                        <br />
+                    
+                                        <table className="table-list">
+                                            <thead>
+                                                <tr>
+                                                    <th>Standard name</th>
+                                                    <th>Customized name</th>
+                                                    <th>Duration (min)</th>
+                                                </tr>
+                                            </thead>
+                                            {
+                                                this.state.showingNew &&
+                                                <CtNewServiceComponent 
+                                                    save={info => this.newCountryTreatmentSave(info)}
+                                                    cancel={() => this.setState({ showingNew: false })}/>
+                                            }
+                                            <tbody>
+                                                {this.state.filteredCountryTreatments.map(treatment =>
+                                                    <tr key={treatment.code} >
+                                                        <td>
+                                                            {treatment.name_std}
+                                                        </td>
+                                                        <td>
+                                                            <div>
+                                                                <a href="#">
+                                                                    <InlineEdit
+                                                                        validate={this.validateTextValue}
+                                                                        activeClassName="editing"
+                                                                        text={(treatment.name_cust.length == 0) ? 'customize' : treatment.name_cust}
+                                                                        paramName={treatment.code + '|name_customized'}
+                                                                        change={this.handleTreatmentChange}
+                                                                        style={{
+                                                                            minWidth: 150,
+                                                                            display: 'inline-block',
+                                                                            margin: 0,
+                                                                            padding: 0,
+                                                                            fontSize: 11,
+                                                                            outline: 0,
+                                                                            border: 0
+                                                                        }}
+                                                                    />
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                        <td align="center">
+                                                            <div>
+                                                                <a href="#">
+                                                                    <InlineEdit
+                                                                        validate={this.validateTextValue}
+                                                                        activeClassName="editing"
+                                                                        text={`` + treatment.duration}
+                                                                        paramName={treatment.code + '|duration'}
+                                                                        change={this.handleTreatmentChange}
+                                                                        style={{
+                                                                            minWidth: 100,
+                                                                            display: 'inline-block',
+                                                                            margin: 0,
+                                                                            padding: 0,
+                                                                            fontSize: 11,
+                                                                            outline: 0,
+                                                                            border: 0
+                                                                        }}
+                                                                    />
+                                                                </a>
+                                                            </div>
+                                                        </td>
 
-                                                <td>
-                                                    <a href="#" onClick={() => this.deleteTreatment(`${treatment.code}`)}>
-                                                        <FaTrash />
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                                <br /><br />
+                                                        <td>
+                                                            <a href="#" onClick={() => this.deleteTreatment(`${treatment.code}`)}>
+                                                                <FaTrash />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                        <br /><br />
+                                    </TabPanel>
+                                    {/******** SUPPORT ACTIVITIES ************/}
+                                    <TabPanel>
+                                        {localStorage.getItem('role') !== 'viewer' &&
+                                            <div className="div-add-new-link">
+                                                <a href="#" className="add-new-link" onClick={() => this.setState({ showingNew: true})}>
+                                                    <FaPlusSquare /> Add new
+                                                </a>
+                                            </div>
+                                        }
+                                        <br />
+                    
+                                        <table className="table-list">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Duration</th>
+                                                </tr>
+                                            </thead>
+                                            {
+                                                this.state.showingNew &&
+                                                <CtNewSupportComponent 
+                                                    timeUnits={this.state.timeUnits}
+                                                    save={info => this.newSupportTreatment(info)}
+                                                    cancel={() => this.setState({ showingNew: false })}/>
+                                            }
+                                            <tbody>
+                                                {this.state.filteredCountrySupports.map(treatment =>
+                                                    <tr key={treatment.code} >
+                                                        <td>{treatment.name}</td>
+                                                        <td>{treatment.duration} {treatment.time_unit}</td>
+                                                        <td>
+                                                            <a href="#" onClick={() => this.deleteTreatment(`${treatment.code}`)}>
+                                                                <FaTrash />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                        <br /><br />
+                                    </TabPanel>
+                                    {/******** INDIVIDUAL ACTIVITIES ************/}
+                                    <TabPanel>
+                                        {localStorage.getItem('role') !== 'viewer' &&
+                                            <div className="div-add-new-link">
+                                                <a href="#" className="add-new-link" onClick={() => this.setState({ showingNew: true})}>
+                                                    <FaPlusSquare /> Add new
+                                                </a>
+                                            </div>
+                                        }
+                                        <br />
+                    
+                                        <table className="table-list">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th># staff</th>
+                                                    <th>Duration</th>
+                                                </tr>
+                                            </thead>
+                                            {
+                                                this.state.showingNew &&
+                                                <CtNewIndividualComponent 
+                                                    timeUnits={this.state.timeUnits}
+                                                    save={info => this.newIndividualTreatment(info)}
+                                                    cancel={() => this.setState({ showingNew: false })}/>
+                                            }
+                                            <tbody>
+                                                {this.state.filteredCountryIndividuals.map(treatment =>
+                                                    <tr key={treatment.code} >
+                                                        <td>{treatment.name}</td>
+                                                        <td>{treatment.nb_staff}</td>
+                                                        <td>{treatment.duration} {treatment.time_unit}</td>
+                                                        <td>
+                                                            <a href="#" onClick={() => this.deleteTreatment(`${treatment.code}`)}>
+                                                                <FaTrash />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                        <br /><br />
+                                    </TabPanel>
+                                </Tabs>
                             </div>
                         </div>
                     </div>
