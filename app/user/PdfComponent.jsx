@@ -43,9 +43,9 @@ export default class PdfComponent extends React.Component {
 
                 cadre=this.state.cadreDict[cadreId];
                 curr_workers=(results[id].currentWorkers[cadreId])?results[id].currentWorkers[cadreId].toString():'0';
-                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(3).toString():'0';
-                pressure=(results[id].pressure[cadreId])?Number(results[id].pressure[cadreId]).toFixed(0).toString():'0';
-                gap=(results[id].currentWorkers[cadreId]-results[id].workersNeeded[cadreId]).toFixed(0).toString();
+                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(1).toString():'0';
+                pressure=results[id].pressure[cadreId].toString();
+                gap=(results[id].currentWorkers[cadreId]-results[id].workersNeeded[cadreId]).toFixed(1).toString();
                 facility=results[id].facility.toString();
 
                 if(facility !== currFacility){
