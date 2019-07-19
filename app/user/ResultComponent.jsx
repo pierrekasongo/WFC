@@ -62,9 +62,9 @@ export default class ResultComponent extends React.Component {
 
                 cadre=cadreDict[cadreId];
                 curr_workers=(results[id].currentWorkers[cadreId])?results[id].currentWorkers[cadreId].toString():'0';
-                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(3).toString():'0';
-                pressure=(results[id].pressure[cadreId])?Number(results[id].pressure[cadreId]).toFixed(0).toString():'0';
-                gap=(results[id].currentWorkers[cadreId]-results[id].workersNeeded[cadreId]).toFixed(0).toString();
+                needed_workers=(results[id].workersNeeded[cadreId])?results[id].workersNeeded[cadreId].toFixed(1).toString():'0';
+                pressure=results[id].pressure[cadreId].toString();
+                gap=(results[id].currentWorkers[cadreId]-results[id].workersNeeded[cadreId]).toFixed(1).toString();
                 facility=results[id].facility.toString();
 
                 if(facility !== currFacility){
@@ -176,7 +176,7 @@ export default class ResultComponent extends React.Component {
                                                     <h4 key={cadreId + 'current'}>{this.state.results[id].currentWorkers[cadreId]}</h4>
                                                 </td>
                                                 <td>
-                                                    <h4 key={cadreId + 'needed'}>{Number(this.state.results[id].workersNeeded[cadreId]).toFixed(3)}</h4>
+                                                    <h4 key={cadreId + 'needed'}>{Number(this.state.results[id].workersNeeded[cadreId]).toFixed(1)}</h4>
                                                 </td>
                                                 <td>
                                                     <h4 
@@ -190,12 +190,10 @@ export default class ResultComponent extends React.Component {
                                                         <h4
                                                             key={cadreId}
                                                             style={{ color: this.state.results[id].pressure[cadreId] < 1 ? "red" : "green" }}>
-                                                            {Number(this.state.results[id].pressure[cadreId]).toFixed(2)}x
+                                                            {Number(this.state.results[id].pressure[cadreId]).toFixed(1)}x
                                                         </h4>
                                                     }
-                                                    {!this.state.results[id].pressure[cadreId] &&
-                                                        <h4 key={cadreId} style={{ color: "gray" }}>N/A</h4>
-                                                    }
+                                    
                                                 </td>
                                                 <td>
                                                     <div className="div-add-new-link">
