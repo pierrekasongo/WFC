@@ -36,7 +36,10 @@ class LoginPage extends React.Component {
             <div className="child-left">
               <span className="title">Workforce Pressure Calculator</span>
               <hr/>
-              <p>What is Workforce Pressure Calculator...</p>
+              {/*<p>What is Workforce Pressure Calculator...</p>*/}
+              <div>
+                <img src="/img/workforce.jpg" alt=""/>
+              </div>
             </div>
 
             <div className="child-right">
