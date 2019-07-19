@@ -4,10 +4,10 @@ import { Button, Table, FormGroup } from 'react-bootstrap';
 import axios from 'axios';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
-
 import { CSVLink, CSVDownload } from "react-csv";
 import {FaFileCsv,FaFilePdf} from 'react-icons/fa';
 import PdfComponent from './PdfComponent';
+
 
 export default class ResultComponent extends React.Component {
 

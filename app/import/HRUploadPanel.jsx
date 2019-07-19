@@ -26,6 +26,10 @@ export default class HRUploadPanel extends React.Component {
 
             facilitiesCombo: [],
             cadresCombo: [],
+            cadres: [],
+            facilities: [],
+
+            facilityTypes: []
         };
 
         this.handleUploadHR = this.handleUploadHR.bind(this);
@@ -39,14 +43,22 @@ export default class HRUploadPanel extends React.Component {
         }).then(res => {
             this.setState({ staffs: res.data });
         }).catch(err => console.log(err));
+
+        axios.get('/metadata/facilityTypes',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({ facilityTypes: res.data });
+        }).catch(err => console.log(err));
         
     }
 
     componentDidMount(){
 
         this.setState({
-            facilitiesCombo : this.props.facilitiesCombo, 
-            cadresCombo : this.props.cadresCombo,
+            cadres : this.props.cadres, 
+            facilities : this.props.facilities,
         })
     }
 
@@ -237,45 +249,52 @@ export default class HRUploadPanel extends React.Component {
         });
     }
 
+    filterCadreFacilitiesByFaType(faTypeCode){
+
+        let cadresCombo = [];
+
+        let facilitiesCombo = [];
+
+        if(faTypeCode === "0"){
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+
+        }else{
+
+            let cadres = this.state.cadres;
+
+            let filteredCadres = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            filteredCadres.forEach(cd =>{
+                cadresCombo.push({ label: cd.name, value: cd.std_code });
+            });
+
+            let filteredFacilities = this.state.facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
+
+            filteredFacilities.forEach(fa =>{
+
+                let id = fa.id + '|' + fa.code;
+
+                facilitiesCombo.push({ label: fa.name, value: id });
+            });
+
+            this.setState({
+                cadresCombo: cadresCombo,
+                facilitiesCombo: facilitiesCombo
+            });
+        }
+    }
+
     render() {
         return (
             <div className="tab-main-container">
                 <Form horizontal>
                     <div>
-                        <div className="cadres-container">
-                            <div className="div-flex-table-left">
-                                {/*<FormGroup>
-                                    <Col componentClass={ControlLabel} sm={20}>
-                                        <div className="div-title">
-                                            <b>Uploading workforce data</b>
-                                        </div>
-                                        <hr />
-                                        <FormGroup>
-                                            <Col componentClass={ControlLabel} sm={20}>
-
-                                                <div class="alert alert-warning" role="alert">
-                                                    <p>Make sure it's a csv file with following headers and order.</p>
-                                                    <p><b>"Facility code","Facility name","Cadre code", "Cadre name", "Staff count"</b></p>
-                                                </div>
-
-                                                <form onSubmit={this.handleUploadHR}>
-                                                    <div class="upload-btn-wrapper">
-                                                        <button class="btn"><FaFolderOpen /> Choose file...</button>
-                                                        <input ref={(ref) => { this.uploadHRInput = ref; }} type="file" />
-                                                    </div>
-                                                    <br />
-                                                    <br />
-                                                    <div>
-                                                        <span>
-                                                            <button className="button"><FaCloudUploadAlt /> Upload file</button><span> {this.state.progress}</span>
-                                                        </span>
-                                                    </div>
-                                                </form>
-                                            </Col>
-                                        </FormGroup>
-                                    </Col>
-                                </FormGroup>
-                                <hr />*/}
+                        <div className="calc-container">
+                            <div className="calc-container-left">
                                 <div style={{ textAlign: "left", paddingTop: 10 }}>
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={20}>
@@ -285,6 +304,26 @@ export default class HRUploadPanel extends React.Component {
                                             <hr />
                                         </Col>
                                     </FormGroup>
+
+                                    <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Select facility type</b>
+                                        </Col>
+                                        <Col sm={15}>
+                                            <FormControl 
+                                                componentClass="select" 
+                                                onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                                <option value="0" key="000">Filter by facility type</option>
+                                                {this.state.facilityTypes.map(ft =>
+                                                    <option key={ft.id}
+                                                        value={ft.code}>
+                                                        {ft.name_fr+'/'+ft.name_en}
+                                                    </option>
+                                                )}
+                                            </FormControl>
+                                        </Col>
+                                    </FormGroup>
+
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={10}>
                                             <b>Facilities({(this.state.facilitiesCombo.length)})</b>
@@ -317,63 +356,65 @@ export default class HRUploadPanel extends React.Component {
                             </div>
                             <br/><br/>
 
-                            <div className="div-flex-table-right">
-                                <FormGroup>
-                                    <div className="div-title">
-                                        <b>Workforce</b>
-                                    </div>
-                                    <hr />
-                                </FormGroup>
-                                <table className="table-list">
-                                    <thead>
-                                        <tr>
-                                            <th>Facility</th>
-                                            <th>Cadre</th>
-                                            <th align="center"># staff</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {this.state.staffs.map(st =>
-                                            <tr key={st.id} >
-                                                <td>
-                                                    {st.facility}
-                                                </td>
-                                                <td>
-                                                    {st.cadre}
-                                                </td>
-                                                <td align="center">
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={`` + st.staff}
-                                                                paramName={st.id + '-staff'}
-                                                                change={this.handleStaffChange}
-                                                                style={{
-                                                                    minWidth: 150,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <a href="#" onClick={() => this.deleteStaff(`${st.id}`)}>
-                                                        <FaTrash />
-                                                    </a>
-                                                </td>
+                            <div className="calc-container-right">
+                                <div className="scrollable-container">
+                                    <FormGroup>
+                                        <div className="div-title">
+                                            <b>Workforce</b>
+                                        </div>
+                                        <hr />
+                                    </FormGroup>
+                                    <table className="table-list">
+                                        <thead>
+                                            <tr>
+                                                <th>Facility</th>
+                                                <th>Cadre</th>
+                                                <th align="center"># staff</th>
+                                                <th></th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                                <br /><br />
+                                        </thead>
+                                        <tbody>
+                                            {this.state.staffs.map(st =>
+                                                <tr key={st.id} >
+                                                    <td>
+                                                        {st.facility}
+                                                    </td>
+                                                    <td>
+                                                        {st.cadre}
+                                                    </td>
+                                                    <td align="center">
+                                                        <div>
+                                                            <a href="#">
+                                                                <InlineEdit
+                                                                    validate={this.validateTextValue}
+                                                                    activeClassName="editing"
+                                                                    text={`` + st.staff}
+                                                                    paramName={st.id + '-staff'}
+                                                                    change={this.handleStaffChange}
+                                                                    style={{
+                                                                        minWidth: 150,
+                                                                        display: 'inline-block',
+                                                                        margin: 0,
+                                                                        padding: 0,
+                                                                        fontSize: 11,
+                                                                        outline: 0,
+                                                                        border: 0
+                                                                    }}
+                                                                />
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <a href="#" onClick={() => this.deleteStaff(`${st.id}`)}>
+                                                            <FaTrash />
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                    <br /><br />
+                                </div>
                             </div>
                         </div>
                     </div>

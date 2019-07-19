@@ -12,13 +12,6 @@ import 'toastr/build/toastr.min.css';
 
 import HRUploadPanel from '../import/HRUploadPanel';
 
-/*const csvData = [
-    ["firstname", "lastname", "email"],
-    ["Ahmed", "Tomi", "ah@smthing.co.com"],
-    ["Raed", "Labes", "rl@smthing.co.com"],
-    ["Yezzi", "Min l3b", "ymin@cocococo.com"]
-];*/
-
 export default class StatisticsPage extends React.Component {
 
     constructor(props) {
@@ -45,8 +38,12 @@ export default class StatisticsPage extends React.Component {
 
             cadresCombo: [],
             facilityTypes: [],
+            selectedFacilities: [],
+            selectedCadres: [],
             csvData: []
         };
+        this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
+        this.selectMultipleCadres = this.selectMultipleCadres.bind(this);
 
         this.csvLink=React.createRef();
 
@@ -114,7 +111,7 @@ export default class StatisticsPage extends React.Component {
 
             res.data.forEach(cadre => {
 
-                cadresCombo.push({ label: cadre.name, value: cadre.hris_code });
+                cadresCombo.push({ label: cadre.name, value: cadre.std_code });
             });
             this.setState({
                 cadresCombo: cadresCombo,
@@ -199,22 +196,69 @@ export default class StatisticsPage extends React.Component {
     }
 
     generateCSV(){
-        let csvData = [];
+
+        let facilities = this.state.selectedFacilities;
+        let cadres = this.state.selectedCadres;
         let year = this.state.selectedPeriod;
-        let cadre = this.state.selectedCadres;
-        let facility = this.state.selectedFacilities;
+        let csvData = [];
+        let value="";
 
-        csvData.push({
-            year:year,
-            cadre:cadre,
-            facilicity:facility
-        });
+        if(!facilities.length > 0){
+            this.launchToastr("No facility selected.");
+            return;
+        }
+        if(!cadres.length > 0){
+            this.launchToastr("No cadre selected.");
+            return;
+        }if(year === ""){
+            this.launchToastr("No period selected.");
+            return;
+        }
 
-        this.setState({
-            csvData:csvData
-        });
+        let data = {
+            cadres: this.state.selectedCadres,
+            countryId: localStorage.getItem('countryId')
+        }
 
-        this.csvLink.current.link.click();
+        axios.post(`/countrytreatment/treatments`,data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            let treatments = res.data;
+
+            facilities.forEach(fa =>{
+
+                treatments.forEach(tr =>{
+
+                    let treat = tr;
+
+                    let tr_name =(treat.name_cust.length > 0)?treat.name_cust:treat.name_std;
+
+                    csvData.push({
+                        facility_code:fa.code,
+                        facilicity:fa.name,
+                        cadre_code:treat.cadre_code,
+                        cadre:treat.cadre_name,
+                        treatment_code:treat.code,
+                        treatment:tr_name,
+                        period:year,
+                        value:value
+                    });
+
+                });
+            });
+
+            this.setState({
+                csvData:csvData
+            });
+    
+            this.csvLink.current.link.click();
+
+        }).catch(err => console.log(err));
+
+        
     }
 
     importStatisticsFromDhis2() {
@@ -329,6 +373,33 @@ export default class StatisticsPage extends React.Component {
         }
     }
 
+    selectMultipleCadres(values) {
+
+        let selectedCadres = [];
+
+        values.forEach(val => {
+
+            selectedCadres.push({
+                code:val.value,
+                name:val.label
+            });
+        })
+        this.setState({ selectedCadres: selectedCadres });
+    }
+
+    selectMultipleFacilities(values) {
+
+        let selectedFacilities = [];
+
+        values.forEach(val => {
+            selectedFacilities.push({
+                code: val.value,
+                name:val.label
+            });
+        })
+        this.setState({ selectedFacilities: selectedFacilities });
+    }
+
     filterCadreFacilitiesByFaType(faTypeCode){
 
         let cadresCombo = [];
@@ -398,6 +469,7 @@ export default class StatisticsPage extends React.Component {
                                             </FormControl>
                                         </Col>
                                     </FormGroup>
+                                    <br/>
 
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={10}>
@@ -418,42 +490,30 @@ export default class StatisticsPage extends React.Component {
                                             </FormControl>
                                         </Col>
                                     </FormGroup>
-
+                                    <br/>
                                     <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Facilities({(this.state.facilitiesCombo.length)})</b>
+                                        </Col>
                                         <Col sm={15}>
-                                            <FormGroup>
-                                                <Col componentClass={ControlLabel} sm={10}>
-                                                    <b>Facilities ({(this.state.facilities.length)})</b>
-                                                </Col>
-                                                <Col sm={15}>
-                                                    <FormControl componentClass="select"
-                                                        onChange={e => this.setState({ selectedFacilities: e.target.value })}>
-                                                        <option key="000" value="000">Select value</option>
-                                                        {(this.state.facilities.map(fa =>
-                                                            <option key={fa.code} value={fa.code}>{fa.name}</option>
-                                                        ))}
-                                                    </FormControl>
-                                                </Col>
-                                            </FormGroup>
+                                            <div className="div-multiselect">
+                                                <Multiselect
+                                                    options={this.state.facilitiesCombo}
+                                                    onChange={this.selectMultipleFacilities} />
+                                            </div>
                                         </Col>
                                     </FormGroup>
-
+                                    <br/>
                                     <FormGroup>
+                                        <Col componentClass={ControlLabel} sm={10}>
+                                            <b>Cadres({(this.state.cadresCombo.length)})</b>
+                                        </Col>
                                         <Col sm={15}>
-                                            <FormGroup>
-                                                <Col componentClass={ControlLabel} sm={10}>
-                                                    <b>Cadres ({(this.state.cadres.length)})</b>
-                                                </Col>
-                                                <Col sm={15}>
-                                                    <FormControl componentClass="select"
-                                                        onChange={e => this.setState({ selectedCadres: e.target.value })}>
-                                                        <option key="000" value="0">Select value</option>
-                                                        {(this.state.cadres.map(cd =>
-                                                            <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
-                                                        ))}
-                                                    </FormControl>
-                                                </Col>
-                                            </FormGroup>
+                                            <div className="div-multiselect">
+                                                <Multiselect
+                                                    options={this.state.cadresCombo}
+                                                    onChange={this.selectMultipleCadres} />
+                                            </div>
                                         </Col>
                                     </FormGroup>
                                     <hr />
@@ -476,6 +536,7 @@ export default class StatisticsPage extends React.Component {
                                     </div>
                                 </Form>
                             </div>
+
                             <div className="calc-container-right">
                                 <div className="scrollable-container">
                                     <FormGroup>
@@ -598,8 +659,8 @@ export default class StatisticsPage extends React.Component {
 
                     <TabPanel>
                         <HRUploadPanel 
-                            cadresCombo ={this.state.cadresCombo}
-                            facilitiesCombo={this.state.facilitiesCombo} />
+                            cadres ={this.state.cadres}
+                            facilities={this.state.facilities} />
                     </TabPanel>
                 </Tabs>
             </Panel>
