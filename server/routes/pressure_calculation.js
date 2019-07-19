@@ -245,6 +245,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
                         workersNeededPerTreatment[cadreId] = {};
                     }
+                    
                     workersNeededPerTreatment[cadreId][treatmentId] = totalHoursForTreatment / hoursAYear;
 
                 });
@@ -264,7 +265,11 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                     workersNeeded[cadreId] += workersNeededPerTreatment[cadreId][treatmentId];
 
                 })
-                workersNeeded[cadreId] = (workersNeeded[cadreId] * CAF) + IAF;
+
+                if(workersNeeded[cadreId] > 0){
+
+                    workersNeeded[cadreId] = (workersNeeded[cadreId] * CAF) + IAF;
+                }
             });
 
             /******* calculate workforce pressure ***************/
@@ -318,7 +323,11 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
                 let needed = Number.parseFloat(workersNeeded[row['cadreCode']]);
 
-                pressure[row['cadreCode']] = (Number.parseFloat(row['StaffCount']) / needed).toFixed(3);
+                pressure[row['cadreCode']] = (Number.parseFloat(row['StaffCount']) / needed).toFixed(2);
+
+                if(!isFinite(pressure[row['cadreCode']])){
+                    pressure[row['cadreCode']] = 0;
+                }
             });
 
             obj = {
@@ -328,6 +337,8 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                 workersNeeded: workersNeeded,
                 pressure: pressure
             };
+            //console.log(obj);
+
             callback(obj);
             
         });//END QUERY CALL BACK 
