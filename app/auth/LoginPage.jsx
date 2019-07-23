@@ -7,6 +7,7 @@ import  { Redirect,withRouter } from 'react-router-dom';
 import Flag from "react-flags";
 
 import './login.css';
+import { Translation } from 'react-i18next';
 
 
 class LoginPage extends React.Component {
@@ -29,7 +30,9 @@ class LoginPage extends React.Component {
   };
 
   render() {
+
     return (
+ 
       <div className="login-container">
         <div className="login">
             {/*<form onSubmit={this.handleSubmit}>*/}
@@ -114,7 +117,9 @@ class LoginPage extends React.Component {
               </div>
         </div>*/}       
       </div>
+
     );
   }
 }
-export default LoginPage//withRouter(LoginPage)
+//export default LoginPage//withRouter(LoginPage)
+export default LoginPage;
