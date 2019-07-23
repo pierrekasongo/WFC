@@ -18,6 +18,8 @@ import TreatmentComponent from './TreatmentComponent';
 import CountryComponent from './CountryComponent';
 import FacilityTypeComponent from './FacilityTypeComponent';
 
+import { Translation } from 'react-i18next';
+
 export default class MetadataComponent extends React.Component {
 
     constructor(props) {
@@ -330,13 +332,17 @@ export default class MetadataComponent extends React.Component {
 
     render() {
         return (
-            <Panel bsStyle="primary" header="Metadata configuration">
+            <Panel bsStyle="primary" header="">
                 <Tabs>
                     <TabList>
-                        <Tab><FaUserMd /> Standard cadres</Tab>
-                        <Tab><FaClinicMedical /> Standard facility types</Tab>
-                        <Tab><FaCapsules /> Standard treatments</Tab>                      
-                        <Tab><FaGlobe /> Countries</Tab>
+                        <Tab>
+                            <Translation>
+                                {t => <span><FaUserMd /> {t("metadata_std_cadre_tab")}</span>}
+                            </Translation>
+                        </Tab>
+                        <Tab><Translation>{t => <span><FaClinicMedical /> {t("metadata_std_fa_type_tab")}</span>}</Translation></Tab>
+                        <Tab><Translation>{t => <span><FaCapsules /> {t("metadata_std_treatment_tab")}</span>}</Translation></Tab>                      
+                        <Tab><Translation>{t => <span><FaGlobe /> {t("metadata_std_countries_tab")}</span>}</Translation></Tab>
                     </TabList>
 
                     <TabPanel>
