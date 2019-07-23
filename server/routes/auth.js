@@ -97,12 +97,12 @@ router.post('/login', async function(req, res, next){
 });
 
 
-router.get('/get_user/:userId', withAuth, function(req, res){
+router.get('/get_user/:userId',withAuth, function(req, res){
 
     let userId = req.params.userId;
     
     db.query(`SELECT u.id, u.name AS name, u.login, u.email, u.countryId, r.id AS roleId, 
-                r.name AS role, u.languageCode, u.last_login, l.name as language 
+                r.name AS role, u.languageCode AS languageCode, u.last_login, l.name as language 
                 FROM users u, user_roles r, system_languages l WHERE u.id =${userId} AND 
                 u.roleId = r.id AND u.languageCode=l.code;`,function(error,results,fields){
 
