@@ -7,9 +7,10 @@ import decode from 'jwt-decode';
 
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
-axios.defaults.baseURL = 'http://127.0.0.1:3000/api';
-
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n";
 
 import LoginPage from './auth/LoginPage';
 import Cookies from 'js-cookie';
@@ -18,7 +19,10 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import Menu from './Menu';
 import Main from './Main';
 
-import 'react-confirm-alert/src/react-confirm-alert.css';
+
+
+axios.defaults.baseURL = 'http://127.0.0.1:3000/api';
+
 
 class App extends React.Component {
 
