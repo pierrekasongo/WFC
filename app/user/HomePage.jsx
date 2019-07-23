@@ -5,7 +5,9 @@ import axios from 'axios';
 import {FaStethoscope,FaUserMd,FaClinicMedical,FaCapsules,FaCheck,FaTable,FaRegChartBar} from 'react-icons/fa';
 import  { withRouter } from 'react-router-dom';
 import Multiselect from 'react-multiselect-checkboxes';
-import {BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts'
+import {BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts';
+
+import { Translation } from 'react-i18next';
 
 class HomePage extends React.Component {
 
@@ -24,8 +26,11 @@ class HomePage extends React.Component {
             showTable:false,
             dashboards:[],
             facilityTypes:[],
-            filteredFacilities:[]
+            filteredFacilities:[],
+            value:'en_us',
+            
         };
+
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
 
         //this.fillLists();
@@ -79,6 +84,10 @@ class HomePage extends React.Component {
             });           
         }).catch(err => console.log(err));
     }
+
+    /*componentDidMount() {
+        this.props.i18n.changeLanguage(this.state.value);
+    }*/
 
     selectMultipleFacilities(values) {
 
@@ -162,9 +171,10 @@ class HomePage extends React.Component {
             this.setState({facilitiesCombo: facilitiesCombo});
         }
     }
-
-    renderDashboard() {
+    
+    render() {
         return (
+            
             <div className="intro-screen">
                 <div className="welcome-box">
                     <p>Welcome <b>{localStorage.getItem('username')}</b>, logedin as <b>{localStorage.getItem('role')}</b></p>
@@ -177,7 +187,11 @@ class HomePage extends React.Component {
                         <div class="col-md-4 col-xl-3">
                                 <div class="card bg-c-pink order-card">
                                     <div class="card-block">
-                                        <h6 class="m-b-20"><b>Cadres</b></h6>
+                                        <Translation>
+                                        {
+                                            t => <h6 class="m-b-20"><b>{t("cadre")}</b></h6>
+                                        }
+                                        </Translation>
                                         <h2 class="text-right">
                                             <FaUserMd />
                                             <span>
@@ -212,7 +226,11 @@ class HomePage extends React.Component {
                             <div class="col-md-4 col-xl-3">
                                 <div class="card bg-c-blue order-card">
                                     <div class="card-block">
-                                        <h6 class="m-b-20"><b>Treatments</b></h6>
+                                        <Translation>
+                                        {
+                                            t => <h6 class="m-b-20"><b>{t("treatment")}</b></h6>
+                                        }
+                                        </Translation>
                                         <h2 class="text-right"><FaCapsules /><span>{this.state.activitiesCount}</span></h2>
                                         {/*<p class="m-b-0">Completed Orders<span class="f-right">351</span></p>*/}
                                     </div>
@@ -222,7 +240,11 @@ class HomePage extends React.Component {
                             <div class="col-md-4 col-xl-3">
                                 <div class="card bg-c-green order-card">
                                     <div class="card-block">
-                                        <h6 class="m-b-20"><b>Facilities</b></h6>
+                                        <Translation>
+                                        {
+                                            t => <h6 class="m-b-20"><b>{t("facility")}</b></h6>
+                                        }
+                                        </Translation>
                                         <h2 class="text-right"><FaClinicMedical /><span>{this.state.facilitiesCount}</span></h2>
                                         {/*<p class="m-b-0">Completed Orders<span class="f-right">351</span></p>*/}
                                     </div>
@@ -337,15 +359,11 @@ class HomePage extends React.Component {
                     </div>
                     <br/>
                 </Panel>
-                
             </div>
-        );
-    }
-    render() {
-        return (
-            this.renderDashboard()
         );
     }
 
 };
-export default withRouter(HomePage)
+export default withRouter(HomePage);
+
+
