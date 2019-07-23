@@ -21,6 +21,7 @@ export default class StatisticsPage extends React.Component {
             results: [],
             cadres: [],
             filteredCadres: [],
+            filteredCadresLeft:[],
             facilities: [],
             years: [],//Save years to db
             regions: [],
@@ -28,6 +29,7 @@ export default class StatisticsPage extends React.Component {
             selectedPeriod: "",
             selectedFacility: "",
             selectedCadre: "",
+            selectedCadreLeft:'',
             filteredFacility: "",
             filteredCadre: "",
             statistics: [],
@@ -91,7 +93,7 @@ export default class StatisticsPage extends React.Component {
 
             facilities.forEach(fa => {
 
-                let code = fa.ihrisCode;
+                let code = fa.code;
 
                 facilitiesCombo.push({ label: fa.name, value: code });
             });
@@ -107,14 +109,8 @@ export default class StatisticsPage extends React.Component {
             }
         }).then(res => {
 
-            let cadresCombo = [];
-
-            res.data.forEach(cadre => {
-
-                cadresCombo.push({ label: cadre.name, value: cadre.std_code });
-            });
             this.setState({
-                cadresCombo: cadresCombo,
+                filteredCadresLeft:res.data,
                 cadres:res.data
             });
 
@@ -197,26 +193,23 @@ export default class StatisticsPage extends React.Component {
 
     generateCSV(){
 
-        let facilities = this.state.selectedFacilities;
-        let cadres = this.state.selectedCadres;
-        let year = this.state.selectedPeriod;
         let csvData = [];
         let value="";
 
-        if(!facilities.length > 0){
+        if(!this.state.selectedFacilities.length > 0){
             this.launchToastr("No facility selected.");
             return;
         }
-        if(!cadres.length > 0){
+        if(this.state.selectedCadre ==='' || this.state.selectedCadre === "0"){
             this.launchToastr("No cadre selected.");
             return;
-        }if(year === ""){
+        }if(this.state.selectedPeriod === ""){
             this.launchToastr("No period selected.");
             return;
         }
 
         let data = {
-            cadres: this.state.selectedCadres,
+            selectedCadre: this.state.selectedCadre,
             countryId: localStorage.getItem('countryId')
         }
 
@@ -276,7 +269,7 @@ export default class StatisticsPage extends React.Component {
             this.launchToastr("No facility selected.");
             return;
         }
-        if (typeof (this.state.selectedCadres) == 'undefined') {
+        if (typeof (this.state.selectedCadreLeft) === '' || this.state.selectedCadreLeft === '0') {
             this.launchToastr("No cadre selected.");
             return;
         }
@@ -284,7 +277,7 @@ export default class StatisticsPage extends React.Component {
         let data = {
             selectedPeriod: this.state.selectedPeriod,
             selectedFacilities: this.state.selectedFacilities,
-            selectedCadres: this.state.selectedCadres,
+            selectedCadreLeft: this.state.selectedCadreLeft,
             countryId : localStorage.getItem('countryId')
         };
 
@@ -460,13 +453,15 @@ export default class StatisticsPage extends React.Component {
                                         </Col>
 
                                         <Col sm={15}>
-                                            <FormControl componentClass="select"
-                                                onChange={e => this.setState({ selectedPeriod: e.target.value })}>
-                                                <option key="000" value="000">Select year </option>
-                                                {(this.state.years.map(yr =>
-                                                    <option key={yr.id} value={yr.year}>{yr.year}</option>
-                                                ))}
-                                            </FormControl>
+                                            <div className="div-multiselect">
+                                                <FormControl componentClass="select"
+                                                    onChange={e => this.setState({ selectedPeriod: e.target.value })}>
+                                                    <option key="000" value="000">Select year </option>
+                                                    {(this.state.years.map(yr =>
+                                                        <option key={yr.id} value={yr.year}>{yr.year}</option>
+                                                    ))}
+                                                </FormControl>
+                                            </div>
                                         </Col>
                                     </FormGroup>
                                     <br/>
@@ -476,18 +471,20 @@ export default class StatisticsPage extends React.Component {
                                             <b>Select facility type</b>
                                         </Col>
                                         <Col sm={15}>
-                                            <FormControl
-                                                componentClass="select"
-                                                onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
-                                                <option value="0" key="000">Filter by facility type</option>
-                                                {this.state.facilityTypes.map(ft =>
-                                                    <option
-                                                        key={ft.id}
-                                                        value={ft.code}>
-                                                        {ft.name_fr+'/'+ft.name_en}
-                                                    </option>
-                                                )}
-                                            </FormControl>
+                                            <div className="div-multiselect">
+                                                <FormControl
+                                                    componentClass="select"
+                                                    onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                                    <option value="0" key="000">Filter by facility type</option>
+                                                    {this.state.facilityTypes.map(ft =>
+                                                        <option
+                                                            key={ft.id}
+                                                            value={ft.code}>
+                                                            {ft.name_fr+'/'+ft.name_en}
+                                                        </option>
+                                                    )}
+                                                </FormControl>
+                                            </div>
                                         </Col>
                                     </FormGroup>
                                     <br/>
@@ -506,14 +503,24 @@ export default class StatisticsPage extends React.Component {
                                     <br/>
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Cadres({(this.state.cadresCombo.length)})</b>
+                                            <b>Cadres({(this.state.filteredCadresLeft.length)})</b>
                                         </Col>
                                         <Col sm={15}>
                                             <div className="div-multiselect">
+                                                <FormControl
+                                                    componentClass="select"
+                                                    onChange={e => this.setState({selectedCadreLeft: e.target.value})}>
+                                                    <option key="000" value="0">Filter by cadre</option>
+                                                        {this.state.filteredCadresLeft.map(cd =>
+                                                            <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
+                                                    )}
+                                                </FormControl>
+                                            </div>
+                                            {/*<div className="div-multiselect">
                                                 <Multiselect
                                                     options={this.state.cadresCombo}
                                                     onChange={this.selectMultipleCadres} />
-                                            </div>
+                                            </div>*/}
                                         </Col>
                                     </FormGroup>
                                     <hr />
