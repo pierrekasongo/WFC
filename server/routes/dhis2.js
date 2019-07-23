@@ -368,15 +368,22 @@ function makeSum(value) {
     return global.sum;
 }
 
-router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
+router.post('/import_statistics',withAuth,async function (req, res) {
 
-    let countryId = req.params.countryId;
+    let countryId = req.body.countryId;
 
     let year = req.body.selectedPeriod;
 
     let selectedFacilities = req.body.selectedFacilities;
 
-    let selectedCadres = req.body.selectedCadres;
+    let facilityIds=[];
+
+    selectedFacilities.forEach(fa =>{
+
+        facilityIds.push(`'`+fa.code+`'`);
+    })
+
+    let selectedCadre = req.body.selectedCadreLeft;
 
     let sql = "";
 
@@ -390,24 +397,13 @@ router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
 
     let password = params.pwd;
 
-    let resource = "dataElements/";
-
-    let url = dhis2_url + "/api/" + resource;
-
-    let results=[];
-
     db.query(`SELECT dhis2_code as code, treatment_code, dhis2_dataset as dataset FROM country_treatment_dhis2 
-                     WHERE treatment_code IN 
-                     (SELECT std_code FROM country_treatment WHERE cadre_code ="${selectedCadres}" AND countryId=${countryId})`, 
-                     function (error, results, fields) {
+                WHERE treatment_code IN (SELECT std_code FROM country_treatment WHERE 
+                cadre_code="${selectedCadre}" AND countryId=${countryId})`,function (error, results, fields) {
             if (error) throw error;
 
-            let treatments = {};
-
-            let activityId = 0;
-
-            sql = `DELETE FROM activity_stats WHERE facilityCode ="${selectedFacilities}" AND year="${year}" AND 
-                AND cadreCode="${selectedCadres}";`
+            sql = `DELETE FROM activity_stats WHERE facilityCode IN(${facilityIds}) AND year="${year}"  
+                AND cadreCode="${selectedCadre}";`;
 
             results.forEach(row => {
 
@@ -421,41 +417,49 @@ router.post('/import_statistics/:countryId',withAuth,async function (req, res) {
 
                 sum = 0;
 
-                for (i = 0; i < months.length; i++) {
+                selectedFacilities.forEach(fa =>{
 
-                            let period = year + months[i];
+                    let facilityCode = fa.code;
 
-                            let count = i;
+                    for (i = 0; i < months.length; i++) {
 
-                            let req_url = "dataValues?dataSet=" + dataset + "&de=" + de + "&pe=" + period + "&ou=" + selectedFacilities;
+                                let period = year + months[i];
 
-                            requestTest(dhis2_url+"/api/"+req_url, user_name, password, function (body) {
+                                let count = i;
 
-                                if (body.indexOf("HTTP Status 401 - Bad credentials") > -1) {
-                                    res.send("FAILED");
-                                } else {
-                                    var data = JSON.parse(body);
+                                let req_url = "dataValues?dataSet=" + dataset + "&de=" + de + "&pe=" + period + "&ou=" + facilityCode;
 
-                                    sum += tryparse.int(data);
+                                requestTest(dhis2_url+"/api/"+req_url, user_name, password, function (body) {
 
-                                    if(count == 11){
+                                    if (body.indexOf("HTTP Status 401 - Bad credentials") > -1) {
 
-                                        sql+= `INSERT INTO activity_stats (facilityCode,year,activityCode,cadreCode,caseCount) 
-                                                VALUES("${selectedFacilities}","${year}","${treatment_code}","${selectedCadres}",${sum});`;
+                                        res.send("FAILED");
 
-                                        db.query(sql,function(error,res){
-                                            if(error)throw error;
-                                            //res.status(200);
-                                        })
+                                    } else {
+
+                                        var data = JSON.parse(body);
+
+                                        sum += tryparse.int(data);
+
+                                        if(count === 11){
+
+                                            sql+= `INSERT INTO activity_stats (facilityCode,year,activityCode,cadreCode,caseCount) 
+                                                    VALUES("${facilityCode}","${year}","${treatment_code}","${selectedCadre}",${sum});`;
+                                            
+                                           db.query(sql,function(error,res){
+                                                if(error)throw error;
+                                                
+                                            })
+                                        }
                                     }
-                                }
 
-                            }, function (err) {
-                                //console.log(err);
-                                //res.send("ERROR");
-                            });
-                            //console.log("SOMME " + sum);
-                }
+                                }, function (err) {
+                                    //console.log(err);
+                                    //res.send("ERROR");
+                                });
+                                //console.log("SOMME " + sum);
+                    }
+                })
 
             });
         });
