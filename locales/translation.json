@@ -1,0 +1,50 @@
+{
+    "en": {
+
+        "translation": {
+
+            "menu_logout":"Logout",
+            "menu_dashboard":"Dashboard",
+            "menu_start":"Start",
+            "menu_metadata":"Metadata",
+            "menu_users":"Users",
+            "menu_config":"Config",
+            "menu_account":"Account",
+
+            "metadata_header":"Metadata configuration",
+            "metadata_std_cadre_tab":"Standard cadres",
+            "metadata_std_fa_type_tab":"Standard facility types",
+            "metadata_std_treatment_tab":"Standard treatments",
+            "metadata_std_countries_tab":"Countries",
+
+
+            "cadre": "All cadres",
+            "facility":"All facilities",
+            "treatment":"All service treatments"
+        }
+    },
+    "fr": {
+
+        "translation": {
+
+            "menu_logout":"Déconnexion",
+            "menu_dashboard":"Tableau de bord",
+            "menu_start":"Démarrer",
+            "menu_metadata":"Métadonnées",
+            "menu_users":"Utilisateurs",
+            "menu_config":"Configuration",
+            "menu_account":"Mon compte",
+
+            "metadata_header":"Configuration des métadonnées",
+            "metadata_std_cadre_tab":"Catégories standard",
+            "metadata_std_fa_type_tab":"Type des structures",
+            "metadata_std_treatment_tab":"Activités de service",
+            "metadata_std_countries_tab":"Pays",
+
+
+            "cadre": "Catégories",
+            "facility":"Structure",
+            "treatment":"Activités de service"
+        }
+    }
+}
