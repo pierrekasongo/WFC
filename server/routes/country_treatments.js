@@ -313,23 +313,17 @@ router.get('/treatments/:cadreCode/:countryId',withAuth, function (req, res) {
 
 router.post('/treatments',withAuth, function (req, res) {
 
-    let cadres = req.body.cadres;
+    let selectedCadre = req.body.selectedCadre;
 
     let countryId = req.body.countryId;
-
-    let cadreIds = [];
-
-    cadres.forEach(cd =>{
-        cadreIds.push(cd.code);
-    });
 
     let sql = `SELECT t.std_code AS code, c.std_code as cadre_code,CONCAT(c_std.name_fr,"/",c_std.name_en) as cadre_name,
                 t.name_customized AS name_cust,t.name_std AS name_std   
                 FROM  country_treatment t, country_cadre c, std_cadre c_std 
                 WHERE c.std_code = t.cadre_code AND c.std_code = c_std.code AND 
-                t.cadre_code IN(?) AND t.countryId=${countryId}`;
+                t.cadre_code ="${selectedCadre}" AND t.countryId=${countryId}`;
 
-    db.query(`${sql}`,[cadreIds], function (error, results, fields) {
+    db.query(`${sql}`, function (error, results, fields) {
         if (error) throw error;
         res.json(results);
     });
