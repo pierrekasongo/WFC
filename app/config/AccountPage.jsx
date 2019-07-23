@@ -5,6 +5,7 @@ import { FaTrash,FaArrowRight } from 'react-icons/fa';
 import InlineEdit from 'react-edit-inline2';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
+import Flag from "react-flags";
 
 import PasswordComponent from './PasswordComponent';
 
@@ -79,7 +80,7 @@ export default class AccountPage extends React.Component {
             }
         }).then(res => {
 
-            this.launchToastr("Language changed successfully. Please logout and login again to see change.")
+            this.launchToastr("Language changed successfully. Please logout and login again.")
             this.setState({editLanguage:false});
 
             axios.get(`/auth/get_user/${localStorage.getItem('userId')}`,{
@@ -150,7 +151,9 @@ export default class AccountPage extends React.Component {
                                     <td><b>Language</b></td>
                                     {!this.state.editLanguage &&
                                         <td>
-                                            <a href="#" onClick={() => this.setState({editLanguage:true})}>{this.state.user.language}</a>
+                                            <a href="#" onClick={() => this.setState({editLanguage:true})}>
+                                                {this.state.user.language}
+                                            </a>
                                         </td>
                                     }
                                     {this.state.editLanguage && 
