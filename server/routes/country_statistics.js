@@ -88,18 +88,20 @@ router.delete('/deleteStatistics/:facility/:cadre/:source',withAuth, function (r
     });
 });
 
-
-router.get('/statistics/:countryId',withAuth, (req, res) => {
+router.get('/statistics/:countryId/:facilityCode',withAuth, (req, res) => {
     
     let countryId = req.params.countryId;
 
-    let sql = `SELECT act_st.id as id, fa.name as facility,act_st.cadreCode AS cadre_code, CONCAT(cd.name_fr,'/',cd.name_en) as cadre,
-                 ct.name_std as treatment, act_st.caseCount as patients FROM facility fa, activity_stats act_st,
+    let facilityCode = req.params.facilityCode;
+
+    let sql = `SELECT act_st.id as id,act_st.activityCode as activityCode, fa.name as facility,act_st.cadreCode AS cadre_code, CONCAT(cd.name_fr,'/',cd.name_en) as cadre,
+                 ct.name_std as treatment, SUM(act_st.caseCount) as patients FROM facility fa, activity_stats act_st,
                  country_treatment ct, std_cadre cd WHERE act_st.facilityCode=fa.code AND 
-                 act_st.activityCode=ct.std_code AND cd.code=act_st.cadreCode AND fa.countryId=${countryId}`;
+                 act_st.activityCode=ct.std_code AND cd.code=act_st.cadreCode AND act_st.facilityCode="${facilityCode}" AND fa.countryId=${countryId} GROUP BY facility,activityCode`;
 
     db.query(sql, function (error, results, fields) {
         if (error) throw error;
+        console.log(results);
         res.json(results);
     });
 });
