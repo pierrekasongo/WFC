@@ -21,6 +21,7 @@ export default class StatisticsPage extends React.Component {
             results: [],
             cadres: [],
             filteredCadres: [],
+            filteredFacilities:[],
             filteredCadresLeft:[],
             facilities: [],
             years: [],//Save years to db
@@ -57,17 +58,6 @@ export default class StatisticsPage extends React.Component {
             }
         }).then(res => {
             this.setState({ facilityTypes: res.data });
-        }).catch(err => console.log(err));
-
-        axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}`,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-            this.setState({
-                statistics: res.data,
-                filteredStats: res.data
-            })
         }).catch(err => console.log(err));
 
         axios.get('/configuration/getYears',{
@@ -172,22 +162,38 @@ export default class StatisticsPage extends React.Component {
 
     filterStatByFacility(facility) {
 
-        let stats = this.state.statistics;
-
-        this.setState({ filteredStats: stats.filter(st => st.facility.toLowerCase().includes(facility.toLowerCase())) });
+        axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}/${facility}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({statistics: res.data,})
+        }).catch(err => console.log(err));
 
     }
 
-    filterStatByCadre(cadreCode) {
+    filterFacilityByType(faType) {
 
-        let stats = this.state.statistics;
+        let facilities = this.state.facilities;
 
-        if (cadreCode === "0") {
-            this.setState({filteredStats: stats});
-        }else{
-            let filtered = stats.filter(st => st.cadre_code.includes(cadreCode));
+        if (faType !== "0") {
 
-            this.setState({filteredStats: filtered});
+            let filtered = facilities.filter(fa => fa.faTypeCode.includes(faType));
+
+            this.setState({filteredFacilities: filtered});
+        }
+
+    }
+
+    filterCadreByFaType(faType) {
+
+        let cadres = this.state.cadres;
+
+        if (faType !== "0") {
+
+            let filtered = cadres.filter(ca => ca.facility_type_code.includes(faType));
+
+            this.setState({filteredCadres: filtered});
         }
     }
 
@@ -363,6 +369,8 @@ export default class StatisticsPage extends React.Component {
             let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
 
             this.setState({filteredCadres: filtered});
+
+            this.filterFacilityByType(faTypeCode);
         }
     }
 
@@ -582,10 +590,28 @@ export default class StatisticsPage extends React.Component {
                                                             <Col sm={10}>
                                                                 <FormControl
                                                                     componentClass="select"
-                                                                    onChange={e => this.filterStatByCadre(e.target.value)}>
+                                                                    onChange={e => this.filterFacilityByType(e.target.value)}>
                                                                     <option key="000" value="0">Filter by cadre</option>
                                                                     {this.state.filteredCadres.map(cd =>
                                                                         <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
+                                                                    )}
+                                                                </FormControl>
+                                                            </Col>
+                                                        </FormGroup>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td><b>Filter by facility</b></td>
+                                                    <td>
+                                                        <FormGroup>
+                                                            <Col sm={10}>
+                                                                <FormControl
+                                                                    componentClass="select"
+                                                                    onChange={e => this.filterStatByFacility(e.target.value)}>
+                                                                    <option key="000" value="0">Filter by facility</option>
+                                                                    {this.state.filteredFacilities.map(fa =>
+                                                                        <option key={fa.code} value={fa.code}>{fa.name}</option>
                                                                     )}
                                                                 </FormControl>
                                                             </Col>
