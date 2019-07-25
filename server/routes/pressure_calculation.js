@@ -86,7 +86,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
     let treatmentsQuery = `SELECT std_code AS id,ratio FROM country_treatment WHERE cadre_code IN(?) AND countryId=${countryId}`;
     //let treatmentsQuery = `SELECT id, ratio FROM activities WHERE id IN (SELECT activityId FROM activity_time WHERE cadreId IN(?) )`;
     let patientCountQuery = `SELECT activityCode  AS id, SUM(caseCount) AS PatientCount FROM activity_stats
-                           WHERE year="${period}" AND facilityCode="${facilityCode}" GROUP BY activityCode`;
+                           WHERE year="${period}" AND facilityCode="${facilityCode}" GROUP BY activityCode,facilityCode`;
 
     //let timePerTreatmentQuery = `SELECT activityId, cadreId, minutesPerPatient AS TreatmentTime FROM 
                            //activity_time WHERE cadreId IN(?) GROUP BY activityId, cadreId`;
