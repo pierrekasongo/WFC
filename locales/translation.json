@@ -16,6 +16,14 @@
             "metadata_std_fa_type_tab":"Standard facility types",
             "metadata_std_treatment_tab":"Standard treatments",
             "metadata_std_countries_tab":"Countries",
+            "metadata_available_cadres":"Available standard cadres",
+            
+
+            "metadata_filter_by_facilityType":"Filter by facility type",
+            "metadata_add_new":"Add new",
+            "metadata_import_from_csv":"Import from csv file",
+            "metadata_choose_file":"Choose a file...",
+            "metadata_upload_file":"Upload file",
 
 
             "cadre": "All cadres",
@@ -40,6 +48,16 @@
             "metadata_std_fa_type_tab":"Type des structures",
             "metadata_std_treatment_tab":"Activités de service",
             "metadata_std_countries_tab":"Pays",
+            "metadata_available_cadres":"Catégories disponibles",
+            
+            
+
+            "metadata_filter_by_facilityType":"Filtrer par type de structures",
+            "metadata_add_new":"Ajouter",
+            "metadata_import_from_csv":"Importer un fichier csv",
+            "metadata_choose_file":"Chosir un fichier...",
+            "metadata_upload_file":"Charger le fichier",
+
 
 
             "cadre": "Catégories",
