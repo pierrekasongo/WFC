@@ -348,20 +348,32 @@ export default class MetadataComponent extends React.Component {
                     <TabPanel>
                         <div className="tab-main-container">
                             <div className="div-title">
-                                Available standard cadres ({this.state.filteredCadres.length})
+                                <Translation>
+                                    {t => {t("metadata_available_cadres")}}({this.state.filteredCadres.length})
+                                </Translation>
+                                 
                             </div>
                             <hr />
                             <div>
                             <table>
                                 <tr>
-                                    <td><b>Filter by facility type</b></td>
+                                    <td>
+                                        <b></b>
+                                        <Translation>
+                                            {t => <b>{t("metadata_filter_by_facilityType")}</b>}
+                                        </Translation>
+                                    </td>
                                     <td>
                                         <FormGroup>
                                             <Col sm={15}>
                                                 <FormControl
                                                     componentClass="select"
                                                     onChange={e => this.filterCadreByFaType(e.target.value)}>
-                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        <option value="0" key="000">
+                                                            <Translation>
+                                                                {t => {t("metadata_filter_by_facilityType")}}
+                                                            </Translation>
+                                                        </option>
                                                         {this.state.facilityTypes.map(ft =>
                                                             <option
                                                                     key={ft.id}
@@ -380,7 +392,10 @@ export default class MetadataComponent extends React.Component {
                             <div className="div-table">
                                 <div className="div-add-new-link">
                                     <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewCadre: true, isEditCadre: false, selectedCadre: '' })}>
-                                        <FaPlusSquare /> Add new
+                                        
+                                        <Translation>
+                                            {t => <span><FaPlusSquare /> {t("metadata_add_new")}</span>}
+                                        </Translation>
                                     </a>
                                 </div>
                                 <br />
@@ -612,7 +627,9 @@ export default class MetadataComponent extends React.Component {
                             <Form horizontal>
                                 <div>
                                     <div className="div-title">
-                                        Import from csv file
+                                        <Translation>
+                                            {t => {t("metadata_import_from_csv")}}
+                                        </Translation>
                                     </div>
                                     <div class="alert alert-warning" role="alert">
                                         Make sure it's a csv file with following headers and order. <br />
@@ -620,20 +637,29 @@ export default class MetadataComponent extends React.Component {
                                         <b>"Code", "Name fr", "Name en", "Days per week", "Hours per day",
                                              "Annual leave", "Sick leave", " Other leave", "Admin. task (%)"
                                         </b>
+          
                                     </div>
                                     <form onSubmit={this.handleUploadCadre}>
                                         {/*<div>
                                             <input ref={(ref) => { this.uploadCadreInput = ref; }} type="file" />
                                         </div>*/}
                                         <div class="upload-btn-wrapper">
-                                            <button class="btn"><FaCloudUploadAlt /> Choose file...</button>
+                                            <button class="btn">
+                                                <Translation>
+                                                    {t => <span><FaCloudUploadAlt /> {t("metadata_choose_file")}</span>}
+                                                </Translation>
+                                            </button>
                                             <input ref={(ref) => { this.uploadCadreInput = ref; }} type="file" />
                                         </div>
                                         <br />
                                         <br />
                                         <div>
                                             <span>
-                                                <button className="button"><FaCheck /> Upload file</button><span> {this.state.progress}</span>
+                                                <button className="button">
+                                                    <Translation>
+                                                        {t => <span><FaCheck /> {t("metadata_upload_file")}</span>}
+                                                    </Translation>
+                                                </button><span> {this.state.progress}</span>
                                             </span>
                                         </div>
                                     </form>
