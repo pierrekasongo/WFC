@@ -88,20 +88,21 @@ router.delete('/deleteStatistics/:facility/:cadre/:source',withAuth, function (r
     });
 });
 
-router.get('/statistics/:countryId/:facilityCode',withAuth, (req, res) => {
-    
-    let countryId = req.params.countryId;
+router.get('/statistics/:facilityCode/:cadreCode',withAuth, (req, res) => {
 
     let facilityCode = req.params.facilityCode;
 
-    let sql = `SELECT act_st.id as id,act_st.activityCode as activityCode, fa.name as facility,act_st.cadreCode AS cadre_code, CONCAT(cd.name_fr,'/',cd.name_en) as cadre,
-                 ct.name_std as treatment, SUM(act_st.caseCount) as patients FROM facility fa, activity_stats act_st,
-                 country_treatment ct, std_cadre cd WHERE act_st.facilityCode=fa.code AND 
-                 act_st.activityCode=ct.std_code AND cd.code=act_st.cadreCode AND act_st.facilityCode="${facilityCode}" AND fa.countryId=${countryId} GROUP BY facility,activityCode`;
+    let cadreCode = req.params.cadreCode;
+
+    let sql = `SELECT act_st.id as id,act_st.activityCode as treatment, 
+                act_st.cadreCode AS cadre_code,act_st.caseCount as patients, 
+                act_st.year as year, ct_treat.name_std, ct_treat.name_customized 
+                FROM  activity_stats act_st, country_treatment_dhis2 tr_dhis, 
+                country_treatment ct_treat WHERE act_st.activityCode = tr_dhis.dhis2_code AND 
+                tr_dhis.treatment_code = ct_treat.std_code  AND act_st.facilityCode="${facilityCode}" AND act_st.cadreCode="${cadreCode}"`;
 
     db.query(sql, function (error, results, fields) {
         if (error) throw error;
-        console.log(results);
         res.json(results);
     });
 });
@@ -119,4 +120,5 @@ router.patch('/editPatientsCount',withAuth, (req, res) => {
         res.json(results);
     });
 });
+
 module.exports = router;
