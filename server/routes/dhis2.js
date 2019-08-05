@@ -116,7 +116,8 @@ router.get('/ping/:countryId',withAuth,async function(req,res){
     });
 })
 
-router.post('/import_statistics',withAuth,async function (req, res) {
+
+router.post('/import_statistics_from_dhis2',withAuth,async function (req, res) {
 
     let countryId = req.body.countryId;
 
@@ -128,13 +129,12 @@ router.post('/import_statistics',withAuth,async function (req, res) {
 
     selectedFacilities.forEach(fa =>{
 
-        facilityIds.push(fa.code);
+        let cd = fa.code.split('|');
+
+        facilityIds.push(cd[1]);
     })
 
     let selectedCadre = req.body.selectedCadreLeft;
-
-    let sql = "";
-
 
     let params = await config.dhis2Credentials(countryId);
 
@@ -144,9 +144,7 @@ router.post('/import_statistics',withAuth,async function (req, res) {
 
     let password = params.pwd;
 
-    let dataValues =[];
-
-    let dataSets = await getDataSets(countryId,selectedCadre);
+    let dhis2_sqlView = params.sqlview;
 
     let treatments = await getTreatments(countryId,selectedCadre);
 
@@ -161,26 +159,14 @@ router.post('/import_statistics',withAuth,async function (req, res) {
         }
     });
 
-    let dsArray= [];
-
-    dataSets.forEach(row => {
-
-        let ds = row['dataset'];
-
-        if(!dsArray.includes(ds)){
-            dsArray.push(ds);
-        }
-    });
-
-    let dataSetString = dsArray.join("&dataSet=");
-
-    let orgUnitString = facilityIds.join("&orgUnit=");
-
     let startDate=`${year}-01-01`;
 
-    let endDate=`${year}-07-31`;
+    let endDate=`${year}-12-31`;
+ 
+    let mapData = new Map();
 
-    let req_url = `dataValueSets.json?dataSet=${dataSetString}&startDate=${startDate}&endDate=${endDate}&orgUnit=${orgUnitString}`;
+    let req_url=`sqlViews/${dhis2_sqlView}/data.json?filter=orgunit_uuid:in:[${facilityIds}]&filter=de_uid:in:[${deArray}]&var=start:${startDate}&var=end:${endDate}`;
+
 
     requestTest(dhis2_url+"/api/"+req_url, user_name, password, function (body) {
 
@@ -190,26 +176,56 @@ router.post('/import_statistics',withAuth,async function (req, res) {
 
         } else {
 
-            var data = JSON.parse(body);
+            let data = JSON.parse(body);
 
-            let sql=`DELETE FROM activity_stats WHERE year="${year}" AND facilityCode ="${facilityIds}" AND cadreCode ="${selectedCadre}";`;
+            let fa_codes = [];
 
-            data.dataValues.forEach(d =>{
+            facilityIds.forEach(id =>{
 
-                if(deArray.includes(d.dataElement)){
+                fa_codes.push(`"${id}"`);
+            });
 
-                    console.log(d.dataElement);
+            let sql=`DELETE FROM activity_stats WHERE year="${year}" AND facilityCode 
+                        IN(${fa_codes}) AND cadreCode ="${selectedCadre}";`;
 
-                    sql+=`INSERT INTO activity_stats(facilityCode,year,activityCode,cadreCode,caseCount) 
-                            VALUES("${d.orgUnit}","${year}","${d.dataElement}","${selectedCadre}",${d.value});`;
-                    
-                    db.query(sql,function(error,result){
-                            if(error)throw error;
-                            //res.status(200);     
-                    });
+            data.rows.forEach(d => {
+
+                let de = d[0];
+                let ou = d[2];
+                let value = parseInt(d[7]);
+
+                let key = de+'_'+ou;
+
+                let old_value = mapData.get(key);
+
+                if(old_value >= 0){
+
+                    let new_value = old_value + value;
+
+                    mapData.set(key,new_value);
+
+                }else{
+                    mapData.set(key,value);
                 }
-                
             })
+
+            for (var [k, v] of mapData) {
+
+                let keys = k.split("_");
+
+                let _de = keys[0];
+
+                let _ou = keys[1];
+
+                let _v = v;
+
+                sql+=`INSERT INTO activity_stats(facilityCode,year,activityCode,cadreCode,caseCount) 
+                            VALUES("${_ou}","${year}","${_de}","${selectedCadre}",${_v});`;
+            }
+            db.query(sql,function(error,result){
+                if(error)throw error;
+                //res.status(200);     
+            });
         }
 
     }, function (err) {
@@ -219,107 +235,6 @@ router.post('/import_statistics',withAuth,async function (req, res) {
     res.status(200);
 });
 
-router.post('/import_statistics_from_dhis2',withAuth,async function (req, res) {
-
-    let countryId = req.body.countryId;
-
-    let year = req.body.selectedPeriod;
-
-    let selectedFacilities = req.body.selectedFacilities;
-
-    let facilityIds=[];
-
-    selectedFacilities.forEach(fa =>{
-
-        facilityIds.push(`'`+fa.code+`'`);
-    })
-
-    let selectedCadre = req.body.selectedCadreLeft;
-
-    let sql = "";
-
-    let months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-
-    let params = await config.dhis2Credentials(countryId);
-
-    let dhis2_url = params.url;
-
-    let user_name = params.user;
-
-    let password = params.pwd;
-
-    db.query(`SELECT dhis2_code as code, treatment_code, dhis2_dataset as dataset FROM country_treatment_dhis2 
-                WHERE treatment_code IN (SELECT std_code FROM country_treatment WHERE 
-                cadre_code="${selectedCadre}" AND countryId=${countryId})`,function (error, results, fields) {
-            if (error) throw error;
-
-            sql = `DELETE FROM activity_stats WHERE facilityCode IN(${facilityIds}) AND year="${year}"  
-                AND cadreCode="${selectedCadre}";`;
-
-            results.forEach(row => {
-
-                let de = row['code'];
-
-                let dataset = row['dataset'];
-
-                let treatment_code = row['treatment_code'];
-
-                let i = 0;
-
-                sum = 0;
-
-                selectedFacilities.forEach(fa =>{
-
-                    let facilityCode = fa.code;
-
-                    for (i = 0; i < months.length; i++) {
-
-                                let period = year + months[i];
-
-                                let count = i;
-
-                                let req_url = "dataValues?dataSet=" + dataset + "&de=" + de + "&pe=" + period + "&ou=" + facilityCode;
-
-                                //console.log(dhis2_url+"/api/"+req_url);
-
-                                requestTest(dhis2_url+"/api/"+req_url, user_name, password, function (body) {
-
-                                    if (body.indexOf("HTTP Status 401 - Bad credentials") > -1) {
-
-                                        res.send("FAILED");
-
-                                    } else {
-
-                                        var data = JSON.parse(body);
-
-                                        sum += tryparse.int(data);
-
-                                        if(count === 11){
-
-                                            sql+= `INSERT INTO activity_stats (facilityCode,year,activityCode,cadreCode,caseCount) 
-                                                    VALUES("${facilityCode}","${year}","${treatment_code}","${selectedCadre}",${sum});`;
-                                            
-                                           db.query(sql,function(error,result){
-                                                if(error)throw error;
-                                                res.status(200);
-                                                
-                                            })
-                                        }
-                                    }
-
-                                }, function (err) {
-                                    //console.log(err);
-                                    //res.send("ERROR");
-                                });
-                                //console.log("SOMME " + sum);
-                    }
-                })
-
-            });
-        });
-
-        res.status(200);
-});
 
 
 router.get('/count_facilities/:countryId',withAuth,(req, res) => {
@@ -601,22 +516,9 @@ router.get(`/getDhis2_treatments/:countryId`,withAuth, async function (req, res)
 
             data.dataElements.forEach(row =>{
 
-                let dataset = row.dataSetElements;
-
-                let datasetId="";
-
-                if(dataset){
-
-                    dataset.forEach(obj =>{
-                        let ds = obj.dataSet;
-                        datasetId = ds.id
-                    });
-                }
-
                 dataElement.push({
                     code:row.id,
-                    name:row.displayName,
-                    dataset:datasetId
+                    name:row.displayName
                 })
             });
             res.json(dataElement);
@@ -627,13 +529,6 @@ router.get(`/getDhis2_treatments/:countryId`,withAuth, async function (req, res)
     });
 
 });
-
-function makeSum(value) {
-
-    global.sum += value;
-    return global.sum;
-}
-
 
 router.post('/import/:sql',withAuth, (req, res) => {
 
