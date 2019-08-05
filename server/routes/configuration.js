@@ -77,7 +77,7 @@ let ihrisCredentials = async function (countryId) {
 let dhis2Credentials = async function (countryId) {
 
     let sql = `SELECT id, parameter, value FROM  config WHERE parameter 
-                IN("URL_DHIS2","DHIS2_USER","DHIS_PWD") AND country_id =${countryId}`;
+                IN("URL_DHIS2","DHIS2_USER","DHIS_PWD","DHIS2_SQLVIEW") AND country_id =${countryId}`;
 
     let results = await new Promise((resolve, reject) => db.query(sql, function (error, results) {
         if (error) {
@@ -97,9 +97,11 @@ let makeObject = async (results) => {
     let url = "";
     let user = "";
     let pwd = "";
+    let sqlview = "";
     let db = "";
 
     results.forEach(p => {
+        
         let prm = p.parameter;
         let value = p.value;
 
@@ -109,6 +111,8 @@ let makeObject = async (results) => {
             user = value;
         } else if(prm.includes("DB")){
             db = value;
+        }else if(prm.includes("DHIS2_SQLVIEW")){
+            sqlview = value;
         }
         else {
             pwd = value;
@@ -118,6 +122,7 @@ let makeObject = async (results) => {
             user: user,
             pwd: pwd,
             db : db,
+            sqlview: sqlview
         };
     });
     return cred; 
