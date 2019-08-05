@@ -104,7 +104,6 @@ export default class MatchingPage extends React.Component {
                 dhis2TreatmentInput[tr.code] = {
                     code: tr.code,
                     name: tr.name,
-                    dataset: tr.dataset
                 };
                 dhis2TreatmentCombo.push({ label: tr.name, value: tr.code });
 
@@ -259,7 +258,6 @@ export default class MatchingPage extends React.Component {
             selectedDhis2Treatments.push({
                 code: code,
                 name: name,
-                dataset: this.state.dhis2TreatmentInput[code].dataset
             });
         })
         this.setState({ selectedDhis2Treatments: selectedDhis2Treatments });
