@@ -11,6 +11,7 @@ import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 
 import HRUploadPanel from '../import/HRUploadPanel';
+import StatisticsContentComponent from './StatisticsContentComponent';
 
 export default class StatisticsPage extends React.Component {
 
@@ -29,7 +30,7 @@ export default class StatisticsPage extends React.Component {
             districts: [],
             selectedPeriod: "",
             selectedFacility: "",
-            selectedCadre: "",
+            selectedCadreRight: "",
             selectedCadreLeft:'',
             filteredFacility: "",
             filteredCadre: "",
@@ -162,27 +163,15 @@ export default class StatisticsPage extends React.Component {
 
     filterStatByFacility(facility) {
 
-        axios.get(`/countrystatistics/statistics/${localStorage.getItem('countryId')}/${facility}`,{
+        let selectedCadre = this.state.selectedCadreRight;
+
+        axios.get(`/countrystatistics/statistics/${facility}/${selectedCadre}`,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({statistics: res.data,})
+            this.setState({statistics: res.data})
         }).catch(err => console.log(err));
-
-    }
-
-    filterFacilityByType(faType) {
-
-        let facilities = this.state.facilities;
-
-        if (faType !== "0") {
-
-            let filtered = facilities.filter(fa => fa.faTypeCode.includes(faType));
-
-            this.setState({filteredFacilities: filtered});
-        }
-
     }
 
     filterCadreByFaType(faType) {
@@ -206,7 +195,7 @@ export default class StatisticsPage extends React.Component {
             this.launchToastr("No facility selected.");
             return;
         }
-        if(this.state.selectedCadre ==='' || this.state.selectedCadre === "0"){
+        if(this.state.selectedCadreLeft ==='' || this.state.selectedCadreLeft === "0"){
             this.launchToastr("No cadre selected.");
             return;
         }if(this.state.selectedPeriod === ""){
@@ -215,7 +204,7 @@ export default class StatisticsPage extends React.Component {
         }
 
         let data = {
-            selectedCadre: this.state.selectedCadre,
+            selectedCadre: this.state.selectedCadreLeft,
             countryId: localStorage.getItem('countryId')
         }
 
@@ -289,7 +278,7 @@ export default class StatisticsPage extends React.Component {
 
         this.setState({ state: 'loading' });
 
-        axios.post(`/dhis2/import_statistics`, data,{
+        axios.post(`/dhis2/import_statistics_from_dhis2`, data,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
@@ -358,22 +347,6 @@ export default class StatisticsPage extends React.Component {
         }).catch(err => console.log(err));
 
     }
-    filterCtCadreByFaType(faTypeCode){
-
-        let cadres = this.state.cadres;
-        
-        if(faTypeCode === "0"){
-            this.setState({cadres:cadres});
-        }else{
-
-            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
-
-            this.setState({filteredCadres: filtered});
-
-            this.filterFacilityByType(faTypeCode);
-        }
-    }
-
     selectMultipleCadres(values) {
 
         let selectedCadres = [];
@@ -554,135 +527,11 @@ export default class StatisticsPage extends React.Component {
 
                             <div className="calc-container-right">
                                 <div className="scrollable-container">
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={20}>
-                                            <div className="div-title">
-                                                <b>Annual treatment statistics - </b>({this.state.filteredStats.length})
-                                            </div>
-                                        </Col>
-                                        <FormGroup>
-                                            <table className="tbl-multiselect">
-                                                <tr>
-                                                    <td><b>Select facility type</b></td>
-                                                    <td>
-                                                        <FormGroup>
-                                                            <Col sm={10}>
-                                                                <FormControl
-                                                                    componentClass="select"
-                                                                    onChange={e => this.filterCtCadreByFaType(e.target.value)}>
-                                                                    <option value="0" key="000">Filter by facility type</option>
-                                                                    {this.state.facilityTypes.map(ft =>
-                                                                        <option
-                                                                            key={ft.id}
-                                                                            value={ft.code}>
-                                                                            {ft.name_fr+'/'+ft.name_en}
-                                                                        </option>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Col>
-                                                        </FormGroup>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><b>Filter by cadre</b></td>
-                                                    <td>
-                                                        <FormGroup>
-                                                            <Col sm={10}>
-                                                                <FormControl
-                                                                    componentClass="select"
-                                                                    onChange={e => this.filterFacilityByType(e.target.value)}>
-                                                                    <option key="000" value="0">Filter by cadre</option>
-                                                                    {this.state.filteredCadres.map(cd =>
-                                                                        <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Col>
-                                                        </FormGroup>
-                                                    </td>
-                                                </tr>
-
-                                                <tr>
-                                                    <td><b>Filter by facility</b></td>
-                                                    <td>
-                                                        <FormGroup>
-                                                            <Col sm={10}>
-                                                                <FormControl
-                                                                    componentClass="select"
-                                                                    onChange={e => this.filterStatByFacility(e.target.value)}>
-                                                                    <option key="000" value="0">Filter by facility</option>
-                                                                    {this.state.filteredFacilities.map(fa =>
-                                                                        <option key={fa.code} value={fa.code}>{fa.name}</option>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Col>
-                                                        </FormGroup>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><b>Filter by facility</b></td>
-                                                    <td>
-                                                        <FormGroup>
-                                                            <Col sm={15}>
-                                                                <input typye="text" className="form-control"
-                                                                    placeholder="Filter by facility" onChange={e => this.filterStatByFacility(e.target.value)} />
-                                                            </Col>
-                                                        </FormGroup>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </FormGroup>
-                                        <hr />
-                                    </FormGroup>
-                                    <hr />
-                                    {this.state.state == 'loading' &&
-                                        <div style={{ marginTop: 120, marginBottom: 65 }}>
-                                            <div className="loader"></div>
-                                        </div>
-                                    }
-                                    <table className="table-list">
-                                        <thead>
-                                            <tr>
-                                                <th>Facility</th>
-                                                <th>Cadre</th>
-                                                <th>Treatment</th>
-                                                <th># patients</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {this.state.filteredStats.map(st =>
-                                                <tr key={st.id}>
-                                                    <td>{st.facility}</td>
-                                                    <td>{st.cadre}</td>
-                                                    <td>{st.treatment}</td>
-                                                    <td>
-                                                        <div>
-                                                            <a href="#">
-                                                                <InlineEdit
-                                                                    validate={this.validateTextValue}
-                                                                    activeClassName="editing"
-                                                                    text={`` + st.patients}
-                                                                    paramName={st.id + '-caseCount'}
-                                                                    change={this.handlePatientsChange}
-                                                                    style={{
-                                                                        minWidth: 150,
-                                                                        display: 'inline-block',
-                                                                        margin: 0,
-                                                                        padding: 0,
-                                                                        fontSize: 11,
-                                                                        outline: 0,
-                                                                        border: 0
-                                                                    }}
-                                                                />
-                                                            </a>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                    
-                                    <br/>
-                                
+                                        <StatisticsContentComponent 
+                                                years={this.state.years}
+                                                cadres={this.state.cadres}
+                                                facilities={this.state.facilities}
+                                                facilityTypes={this.state.facilityTypes}/>
                                 </div>
                             </div>
                             <br />
