@@ -83,7 +83,9 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
     // queries
     //let concernedTreatmentsQuery= `SELECT id, ratio FROM activities WHERE `;
-    let treatmentsQuery = `SELECT std_code AS id,ratio FROM country_treatment WHERE cadre_code IN(?) AND countryId=${countryId}`;
+    let treatmentsQuery = `SELECT ct_dhis.dhis2_code as id,ct_treat.ratio FROM country_treatment ct_treat,
+                             country_treatment_dhis2 ct_dhis 
+                             WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND countryId=${countryId}`;
     //let treatmentsQuery = `SELECT id, ratio FROM activities WHERE id IN (SELECT activityId FROM activity_time WHERE cadreId IN(?) )`;
     let patientCountQuery = `SELECT activityCode  AS id, SUM(caseCount) AS PatientCount FROM activity_stats
                            WHERE year="${period}" AND facilityCode="${facilityCode}" GROUP BY activityCode,facilityCode`;
@@ -91,8 +93,9 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
     //let timePerTreatmentQuery = `SELECT activityId, cadreId, minutesPerPatient AS TreatmentTime FROM 
                            //activity_time WHERE cadreId IN(?) GROUP BY activityId, cadreId`;
 
-    let timePerTreatmentQuery = `SELECT std_code AS activityId, cadre_code AS cadreId, duration AS TreatmentTime FROM 
-                                    country_treatment WHERE cadre_code IN(?) AND countryId=${countryId}`;//Select only for selected cadres
+    let timePerTreatmentQuery = `SELECT ct_dhis.dhis2_code AS activityId, ct_treat.cadre_code AS cadreId, ct_treat.duration AS TreatmentTime 
+                                     FROM  country_treatment ct_treat, country_treatment_dhis2 ct_dhis  
+                                     WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND countryId=${countryId}`;//Select only for selected cadres
     
     let facilityStaffCountQuery = `SELECT id, cadreCode, staffCount AS StaffCount FROM staff
                                     WHERE  facilityCode="${facilityCode}" AND cadreCode IN(?)`;
@@ -149,8 +152,6 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                 let workDays = cadres[cadreId].days;
                 
                 let weeklyWorkHours = workHours * workDays;
-
-                let cadreAdminPercentage = cadres[cadreId].adminPercentage;
                     
                 //Non working days
                 let holidays = parseInt(publicHolidays);
@@ -337,8 +338,6 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                 workersNeeded: workersNeeded,
                 pressure: pressure
             };
-            //console.log(obj);
-
             callback(obj);
             
         });//END QUERY CALL BACK 
