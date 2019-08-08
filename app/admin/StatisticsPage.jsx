@@ -419,7 +419,7 @@ export default class StatisticsPage extends React.Component {
                 <Tabs>
                     <TabList>
                         <Tab>Treatments statistics</Tab>
-                        <Tab>Workforce statistics</Tab>
+                        <Tab>Staff</Tab>
                     </TabList>
                     <TabPanel>
                         <div className="calc-container">
