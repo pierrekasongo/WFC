@@ -4,7 +4,9 @@ const dbiHRIS = require('../dbconn_ihris');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const csv = require('csv');
+const request = require('request');
 const mkfhir = require("fhir.js");
+
 
 let config = require('./configuration.js');
 
@@ -100,13 +102,26 @@ router.post('/match_cadre', withAuth, function (req, res) {
 
 router.get('/getiHRIS_cadres/:countryId',withAuth,async function(req,res){
 
-    let countryId = req.params.countryId;
+    /*let countryId = req.params.countryId;
 
     let cn = await dbiHRIS.connect(countryId);
     
     cn.query(`SELECT * FROM hippo_cadre`, function (error, results, fields) {
         if (error) throw error;
         res.json(results);
+    });*/
+
+    let countryId = req.params.countryId;
+
+    let params = await config.ihrisCredentials(countryId);
+
+    let ihris_url = params.url;
+
+    request(`${ihris_url}index.php?action=cadres`, function (error, response, body) {
+
+        if (!error && response.statusCode == 200) {
+            res.send(response.body);
+        }
     });
     
 })
@@ -114,7 +129,7 @@ router.get('/getiHRIS_cadres/:countryId',withAuth,async function(req,res){
 
 router.post('/getiHRIS_staffs',withAuth,async function(req,res){
 
-    let countryId = req.body.countryId;
+    /*let countryId = req.body.countryId;
 
     let facilities = req.body.facilities;
 
@@ -145,20 +160,59 @@ router.post('/getiHRIS_staffs',withAuth,async function(req,res){
             if (error) throw error;
             res.json(results);
         });
-    }
+    }*/
+    let facilities = [];
+    let cadres = [];
+    let selectedFacilities = req.body.facilities;
+
+    let selectedCadres = req.body.cadres;
+
+    selectedFacilities.forEach(fa =>{
+        
+        let codes = fa.split('-');
+
+        facilities.push(codes[0]);
+    });
+
+    selectedCadres.forEach(ca =>{
+        
+        let codes = ca.split('-');
+
+        cadres.push(codes[0]);
+    })
+
+    let countryId = req.body.countryId;
+
+    let params = await config.ihrisCredentials(countryId);
+
+    let ihris_url = params.url;
+
+    request(`${ihris_url}index.php?action=staffs&facilities=${facilities}&cadres=${cadres}`, function (error, response, body) {
+
+        if (!error && response.statusCode == 200) {
+
+            console.log(response.body);
+
+            return;
+
+            //res.send(response.body);
+        }
+    });
 })
 
-router.get('/getiHRIS_facilities/:countryId',withAuth, async function (req, res) {
+router.get('/getiHRIS_facilities/:countryId',withAuth,async  function (req, res) {
 
     let countryId = req.params.countryId;
 
-    let cn = await dbiHRIS.connect(countryId);
+    let params = await config.ihrisCredentials(countryId);
 
-    let sql = `SELECT id as code,code as uuid,name FROM hippo_facility`;
+    let ihris_url = params.url;
 
-    cn.query(sql, function(error, results, fields){
-        if(error) throw error;
-        res.json(results);
+    request(`${ihris_url}index.php?action=facilities`, function (error, response, body) {
+
+        if (!error && response.statusCode == 200) {
+            res.send(response.body);
+        }
     });
 })
 
