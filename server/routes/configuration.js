@@ -60,7 +60,7 @@ router.get('/getCountryHolidays/:countryId',withAuth,function (req, res) {
 let ihrisCredentials = async function (countryId) {
 
     let sql = `SELECT id, parameter, value FROM  config WHERE parameter 
-                IN("URL_iHRIS","iHRIS_USER","iHRIS_PWD", "iHRIS_DB") AND country_id =${countryId}`;
+                = "URL_iHRIS" AND country_id =${countryId}`;
 
     let results = await new Promise((resolve, reject) => db.query(sql, function (error, results) {
         if (error) {
