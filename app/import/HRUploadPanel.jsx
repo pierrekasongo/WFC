@@ -269,14 +269,15 @@ export default class HRUploadPanel extends React.Component {
             let filteredCadres = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
 
             filteredCadres.forEach(cd =>{
-                cadresCombo.push({ label: cd.name, value: cd.std_code });
+                let val = cd.hris_code+'-'+cd.std_code;
+                cadresCombo.push({ label: cd.name, value: val });
             });
 
             let filteredFacilities = this.state.facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
 
             filteredFacilities.forEach(fa =>{
 
-                let id = fa.id + '|' + fa.code;
+                let id = fa.ihrisCode + '-' + fa.code;
 
                 facilitiesCombo.push({ label: fa.name, value: id });
             });
@@ -369,7 +370,7 @@ export default class HRUploadPanel extends React.Component {
                                             <tr>
                                                 <th>Facility</th>
                                                 <th>Cadre</th>
-                                                <th align="center"># staff</th>
+                                                <th align="center">#Staff</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
