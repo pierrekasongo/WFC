@@ -68,6 +68,7 @@ export default class MatchingPage extends React.Component {
             }
         }).then(res => this.setState({ ihrisCadres: res.data }))
             .catch(err => console.log(err));
+            
         axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
