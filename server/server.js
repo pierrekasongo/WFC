@@ -4,12 +4,6 @@ const path = require('path');
 const cookieParser=require('cookie-parser');
 const cors = require('cors');
 
-// start db
-//const db=require('./dbconn');
-
-// import our routes
-//const user=require('./routes/user');
-//const admin = require('./routes/admin');
 const dhis2=require('./routes/dhis2');
 const hris=require('./routes/hris');
 const configuration=require('./routes/configuration');
@@ -19,6 +13,8 @@ const countrycadre=require('./routes/country_cadres');
 const countrytreatment=require('./routes/country_treatments');
 const countrystatistics=require('./routes/country_statistics');
 const dashboard=require('./routes/dashboard');
+
+require('custom-env').env(true);
 // create app server
 let app = express();
 
@@ -32,7 +28,7 @@ app.use((req, res, next) => {
     next();
 })
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: `${process.env.SERVER_LISTEN_PORT}`,
     credentials: true
   }));
 // middleware to parse request info into JSON
@@ -60,7 +56,8 @@ app.use('*', (req, res) => {
     res.sendFile(path.join(__dirname, "../", "public", "index.html"));
 })
 
-// start listening for requests
-app.listen(3000,"127.0.0.1", () => {
-    console.log("Listening on port 3000");
+let PORT = process.env.SERVER_LISTEN_PORT || 3000;
+
+app.listen(PORT,process.env.SERVER_LISTEN_ADDRESS, () => {
+    console.log(`Listening on ${process.env.SERVER_LISTEN_ADDRESS}:${PORT}`);
 });
