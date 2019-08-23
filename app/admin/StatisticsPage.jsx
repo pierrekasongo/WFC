@@ -415,7 +415,7 @@ export default class StatisticsPage extends React.Component {
 
     render() {
         return (
-            <Panel bsStyle="primary" header="Import yearly treatments statistics from DHIS2">
+            <Panel bsStyle="primary" header="Import data from iHRIS/DHIS2">
                 <Tabs>
                     <TabList>
                         <Tab>Treatments statistics</Tab>
