@@ -157,7 +157,7 @@ export default class CountryComponent extends React.Component {
         return (
             <div className="tab-main-container">
                  <div className="div-title">
-                    Available countries ({this.state.countries.length})
+                    <b>Available countries ({this.state.countries.length})</b>
                  </div>
                 <hr />
                 <div className="div-table">
