@@ -1,11 +1,12 @@
 {
-  "name": "intrahealth-webserver",
+  "name": "workforce-pressure-calculator",
   "version": "1.0.0",
-  "description": "Intrahealth - DRC",
+  "description": "Intrahealth - Int",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
-    "build-app": "node_modules/.bin/webpack",
+    "start-app": "NODE_ENV=dev node server/server.js",
+    "start": "NODE_ENV=production node server/server.js",
+    "build-app": "NODE_ENV=production node_modules/.bin/webpack",
     "dev-app": "node_modules/.bin/webpack -w"
   },
   "repository": {
@@ -36,6 +37,7 @@
     "csv-react-table": "^1.0.14",
     "csv-stringify": "^3.1.1",
     "csv-write-stream": "^2.0.0",
+    "custom-env": "^1.0.2",
     "d2": "^30.0.0",
     "download-csv": "^1.1.1",
     "express": "^4.16.2",
