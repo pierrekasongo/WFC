@@ -223,7 +223,7 @@ export default class TreatmentComponent extends React.Component {
         return (
                     <div className="tab-main-container">
                             <div className="div-title">
-                                Available standard treatments ({this.state.filteredTreatments.length})
+                                <b>Available standard treatments ({this.state.filteredTreatments.length})</b>
                             </div>
                             <br/>
                             <FormGroup>
