@@ -161,25 +161,41 @@ router.post('/getiHRIS_staffs',withAuth,async function(req,res){
             res.json(results);
         });
     }*/
-    let facilities = [];
-    let cadres = [];
+    let facilities = "";
+    let cadres = "";
     let selectedFacilities = req.body.facilities;
 
     let selectedCadres = req.body.cadres;
 
+    let count = 0;
+
     selectedFacilities.forEach(fa =>{
+
+        count++;
         
         let codes = fa.split('-');
 
-        facilities.push(codes[0]);
+        facilities+=codes[0];
+
+        if(count < selectedFacilities.length){
+            facilities+='--';
+        }
     });
 
+    count = 0;
+
     selectedCadres.forEach(ca =>{
-        
+
+        count++;
+
         let codes = ca.split('-');
 
-        cadres.push(codes[0]);
-    })
+        cadres+=codes[0];
+
+        if(count < selectedCadres.length){
+            cadres+='--';
+        }
+    });
 
     let countryId = req.body.countryId;
 
@@ -187,11 +203,12 @@ router.post('/getiHRIS_staffs',withAuth,async function(req,res){
 
     let ihris_url = params.url;
 
-    request(`${ihris_url}index.php?action=staffs&facilities=${facilities}&cadres=${cadres}`, function (error, response, body) {
+    request(`${ihris_url}index.php?action=staffs&facilities="${facilities}"&cadres="${cadres}"`, 
+        function (error, response, body) {
 
         if (!error && response.statusCode == 200) {
 
-            console.log(response.body);
+            console.log(response);
 
             return;
 
@@ -388,7 +405,7 @@ router.get('/workforce/:countryId',withAuth, (req, res) => {
 
     let countryId = req.params.countryId;
 
-    db.query(`SELECT s.id AS id,s.staffCount AS staff,
+    db.query(`SELECT s.id AS id,s.staffCount AS staff,cadreCode AS cadreCode,
             fa.name AS facility,CONCAT(cstd.name_fr,'/',cstd.name_en) AS cadre  FROM 
                 staff s,country_cadre ca,std_cadre cstd, facility fa WHERE 
                 s.facilityCode=fa.code AND s.cadreCode=ca.std_code 
