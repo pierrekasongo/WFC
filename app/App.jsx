@@ -19,8 +19,6 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 import Menu from './Menu';
 import Main from './Main';
 
-
-
 axios.defaults.baseURL = 'http://127.0.0.1:3000/api';
 
 
