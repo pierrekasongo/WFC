@@ -18,18 +18,22 @@ export default class HRUploadPanel extends React.Component {
         this.state = {
             progress: '',
             staffs: [],
+            filteredStaffs:[],
             
             staffToDelete: '',
 
             selectedFacilities: [],
             selectedCadres: [],
+            filteredCountryCadres:[],
 
             facilitiesCombo: [],
             cadresCombo: [],
             cadres: [],
             facilities: [],
 
-            facilityTypes: []
+            facilityTypes: [],
+
+            showFilters:false,
         };
 
         this.handleUploadHR = this.handleUploadHR.bind(this);
@@ -41,7 +45,10 @@ export default class HRUploadPanel extends React.Component {
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({ staffs: res.data });
+            this.setState({
+                staffs: res.data,
+                filteredStaffs: res.data
+             });
         }).catch(err => console.log(err));
 
         axios.get('/metadata/facilityTypes',{
@@ -58,6 +65,7 @@ export default class HRUploadPanel extends React.Component {
 
         this.setState({
             cadres : this.props.cadres, 
+            filteredCadres:this.props.cadres,
             facilities : this.props.facilities,
         })
     }
@@ -96,7 +104,10 @@ export default class HRUploadPanel extends React.Component {
             .then((result) => {
                 this.setState({ progress: result.data });
                 axios.get('/hris/workforce').then(res => {
-                    this.setState({ staffs: res.data });
+                    this.setState({
+                        staffs: res.data,
+                        filteredStaffs: res.data
+                    });
                 }).catch(err => console.log(err));
 
             }).catch(err => {
@@ -195,7 +206,10 @@ export default class HRUploadPanel extends React.Component {
                     Authorization : 'Bearer '+localStorage.getItem('token')
                 }
             }).then(res => {
-                this.setState({ staffs: res.data });
+                this.setState({
+                    staffs: res.data,
+                    filteredStaffs: res.data
+                });
             }).catch(err => console.log(err));
         });
     }
@@ -247,6 +261,52 @@ export default class HRUploadPanel extends React.Component {
                 );
             }
         });
+    }
+
+    filterCtCadreByFaType(faTypeCode){
+
+        let cadres = this.state.cadres;
+        
+        if(faTypeCode === "0"){
+            this.setState({filteredCadres:cadres});
+        }else{
+
+            let filtered = cadres.filter(cd => cd.facility_type_code.includes(faTypeCode));
+
+            this.setState({filteredCountryCadres: filtered});
+        }
+    }
+
+    filterStaffByFacility(name) {
+
+        let staffs = this.state.filteredStaffs;
+
+        if(name.length == 0){
+
+            staffs = this.state.staffs;
+
+            this.setState({filteredStaffs: staffs});
+        }else{
+            this.setState({ filteredStaffs: staffs.filter(st => st.facility.toLowerCase().includes(name.toLowerCase())) });
+        } 
+    }
+
+    filterStaffByCadre(cadreCode) {
+
+        let staffs = this.state.staffs;
+
+        if(cadreCode != "0"){
+
+            this.setState({
+
+                filteredStaffs:staffs.filter(st => st.cadreCode.includes(cadreCode))
+            });
+        }else{
+            this.setState({
+
+                filteredStaffs:staffs
+            });
+        }
     }
 
     filterCadreFacilitiesByFaType(faTypeCode){
@@ -363,8 +423,67 @@ export default class HRUploadPanel extends React.Component {
                                         <div className="div-title">
                                             <b>Workforce</b>
                                         </div>
-                                        <hr />
+                                        <hr />                                      
                                     </FormGroup>
+                                    <a href="#" onClick={() => this.setState({showFilters : !this.state.showFilters})} >
+                                        Show filter options
+                                    </a>
+                                    {this.state.showFilters &&
+                                    <table className="tbl-multiselect">
+                                        <tr>
+                                            <td><b>Filter cadre by facility type</b></td>
+                                            <td>
+                                                <div>
+                                                        <FormControl
+                                                            componentClass="select"
+                                                            onChange={e => this.filterCtCadreByFaType(e.target.value)}>
+                                                            <option value="0" key="000">Filter by facility type</option>
+                                                            {this.state.facilityTypes.map(ft =>
+                                                                <option
+                                                                    key={ft.id}
+                                                                    value={ft.code}>
+                                                                    {ft.name_fr+'/'+ft.name_en}
+                                                                </option>
+                                                            )}
+                                                        </FormControl>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Filter by cadre</b></td>
+                                            <td>
+                                                <div>
+                                                    <FormControl
+                                                            componentClass="select"
+                                                            onChange={e => this.filterStaffByCadre(e.target.value)}>
+                                                            <option value="0" key="000">Filter by cadre</option>
+                                                            {this.state.filteredCadres.map(cadre =>
+                                                                <option
+                                                                    key={cadre.std_code}
+                                                                    value={cadre.std_code}>
+                                                                    {cadre.name}
+                                                                </option>
+                                                            )}
+                                                    </FormControl>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>Filter by facility</b></td>
+                                            <td>
+                                                <div>
+                                                    <FormGroup>
+                                                        <Col sm={15}>
+                                                            <input typye="text" className="form-control"
+                                                                placeholder="Facility name" onChange={e => this.filterStaffByFacility(e.target.value)} />
+                                                        </Col>
+                                                    </FormGroup>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    }
+                                    <hr />
                                     <table className="table-list">
                                         <thead>
                                             <tr>
@@ -375,7 +494,7 @@ export default class HRUploadPanel extends React.Component {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {this.state.staffs.map(st =>
+                                            {this.state.filteredStaffs.map(st =>
                                                 <tr key={st.id} >
                                                     <td>
                                                         {st.facility}
