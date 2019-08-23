@@ -18,8 +18,6 @@ import TreatmentComponent from './TreatmentComponent';
 import CountryComponent from './CountryComponent';
 import FacilityTypeComponent from './FacilityTypeComponent';
 
-import { Translation } from 'react-i18next';
-
 export default class MetadataComponent extends React.Component {
 
     constructor(props) {
@@ -332,36 +330,35 @@ export default class MetadataComponent extends React.Component {
 
     render() {
         return (
+            <div>
             <Panel bsStyle="primary" header="">
                 <Tabs>
                     <TabList>
                         <Tab>
-                            <Translation>
-                                {t => <span><FaUserMd /> {t("metadata_std_cadre_tab")}</span>}
-                            </Translation>
+                            <h6 class="m-b-20"><FaUserMd /> Standard cadres</h6>
                         </Tab>
-                        <Tab><Translation>{t => <span><FaClinicMedical /> {t("metadata_std_fa_type_tab")}</span>}</Translation></Tab>
-                        <Tab><Translation>{t => <span><FaCapsules /> {t("metadata_std_treatment_tab")}</span>}</Translation></Tab>                      
-                        <Tab><Translation>{t => <span><FaGlobe /> {t("metadata_std_countries_tab")}</span>}</Translation></Tab>
+                        <Tab>
+                            <h6 class="m-b-20"><FaClinicMedical /> Standard facility types</h6>
+                        </Tab>
+                        <Tab>
+                            <h6 class="m-b-20"><FaCapsules /> Standard treatments</h6>
+                        </Tab>                      
+                        <Tab>
+                             <h6 class="m-b-20"><FaGlobe /> Countries</h6>
+                        </Tab>
                     </TabList>
 
                     <TabPanel>
                         <div className="tab-main-container">
                             <div className="div-title">
-                                <Translation>
-                                    {t => {t("metadata_available_cadres")}}({this.state.filteredCadres.length})
-                                </Translation>
-                                 
+                                <b>Available standard cadres</b>
                             </div>
                             <hr />
                             <div>
                             <table>
                                 <tr>
                                     <td>
-                                        <b></b>
-                                        <Translation>
-                                            {t => <b>{t("metadata_filter_by_facilityType")}</b>}
-                                        </Translation>
+                                        <b>Filter by facility type</b>
                                     </td>
                                     <td>
                                         <FormGroup>
@@ -370,9 +367,7 @@ export default class MetadataComponent extends React.Component {
                                                     componentClass="select"
                                                     onChange={e => this.filterCadreByFaType(e.target.value)}>
                                                         <option value="0" key="000">
-                                                            <Translation>
-                                                                {t => {t("metadata_filter_by_facilityType")}}
-                                                            </Translation>
+                                                            Filter by facility type
                                                         </option>
                                                         {this.state.facilityTypes.map(ft =>
                                                             <option
@@ -391,14 +386,12 @@ export default class MetadataComponent extends React.Component {
                             <br/>
                             <div className="div-table">
                                 <div className="div-add-new-link">
-                                    <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewCadre: true, isEditCadre: false, selectedCadre: '' })}>
-                                        
-                                        <Translation>
-                                            {t => <span><FaPlusSquare /> {t("metadata_add_new")}</span>}
-                                        </Translation>
+                                    <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewCadre: true, isEditCadre: false, selectedCadre: '' })}> 
+                                        <FaPlusSquare /> Add new
                                     </a>
                                 </div>
                                 <br />
+                                
                                 <table className="table-list">
                                     <thead>
                                         <tr>
@@ -627,9 +620,7 @@ export default class MetadataComponent extends React.Component {
                             <Form horizontal>
                                 <div>
                                     <div className="div-title">
-                                        <Translation>
-                                            {t => {t("metadata_import_from_csv")}}
-                                        </Translation>
+                                        Import from csv file
                                     </div>
                                     <div class="alert alert-warning" role="alert">
                                         Make sure it's a csv file with following headers and order. <br />
@@ -645,9 +636,7 @@ export default class MetadataComponent extends React.Component {
                                         </div>*/}
                                         <div class="upload-btn-wrapper">
                                             <button class="btn">
-                                                <Translation>
-                                                    {t => <span><FaCloudUploadAlt /> {t("metadata_choose_file")}</span>}
-                                                </Translation>
+                                                <FaCloudUploadAlt /> Choose a file...
                                             </button>
                                             <input ref={(ref) => { this.uploadCadreInput = ref; }} type="file" />
                                         </div>
@@ -656,9 +645,7 @@ export default class MetadataComponent extends React.Component {
                                         <div>
                                             <span>
                                                 <button className="button">
-                                                    <Translation>
-                                                        {t => <span><FaCheck /> {t("metadata_upload_file")}</span>}
-                                                    </Translation>
+                                                    <FaCheck /> Upload file
                                                 </button><span> {this.state.progress}</span>
                                             </span>
                                         </div>
@@ -688,6 +675,7 @@ export default class MetadataComponent extends React.Component {
                 <br />
                 <br />
             </Panel>
+            </div>
         )
     }
 };
