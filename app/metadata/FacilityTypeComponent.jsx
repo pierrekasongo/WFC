@@ -155,7 +155,7 @@ export default class FacilityTypeComponent extends React.Component {
         return (
             <div className="tab-main-container">
                 <div className="div-title">
-                    Available facility types ({this.state.facilityTypes.length})
+                    <b>Available facility types ({this.state.facilityTypes.length})</b>
                  </div>
                 <hr />
                 <div className="div-table">
