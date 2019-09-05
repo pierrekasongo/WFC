@@ -306,7 +306,7 @@ export default class CadreTimePage extends React.Component {
                                     <th>Annual leave</th>
                                     <th>Sick leave</th>
                                     <th>Other leave</th>
-                                    <th>Admin task (%)</th>
+                                    <th>Salary (average)</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -426,14 +426,15 @@ export default class CadreTimePage extends React.Component {
                                                 </a>
                                             </div>
                                         </td>
+                                        
                                         <td align="center">
                                             <div>
                                                 <a href="#">
                                                     <InlineEdit
                                                         validate={this.validateTextValue}
                                                         activeClassName="editing"
-                                                        text={"" + cadre.admin_task}
-                                                        paramName={cadre.std_code + '-admin_task'}
+                                                        text={"" + cadre.average_salary}
+                                                        paramName={cadre.std_code + '-average_salary'}
                                                         change={this.handleCadreChange}
                                                         style={{
                                                             minWidth: 50,
