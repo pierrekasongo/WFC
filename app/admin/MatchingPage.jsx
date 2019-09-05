@@ -10,6 +10,7 @@ import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MatchCadreComponent from './MatchCadreComponent';
+import MatchedItemsComponent from './MatchedItemsComponent';
 
 export default class MatchingPage extends React.Component {
 
@@ -23,10 +24,10 @@ export default class MatchingPage extends React.Component {
             dhis2TreatmentComboSelected: [],
             dhis2TreatmentInput: [],
             selectedDhis2Treatments: {},
-
+            showFilters:false,
             countryTreatments: [],
             filteredCountryTreatments: [],
-
+            countryTreatmentTemp:[],
             countryCadres: [], 
             filteredCountryCadres:[],
 
@@ -127,6 +128,7 @@ export default class MatchingPage extends React.Component {
             this.setState({
                 countryTreatments: res.data,
                 filteredCountryTreatments: res.data,
+                countryTreatmentTemp:res.data
             });
         }).catch(err => console.log(err));
 
@@ -213,6 +215,7 @@ export default class MatchingPage extends React.Component {
                                         this.setState({
                                             countryTreatments: res.data,
                                             filteredCountryTreatments: res.data,
+                                            countryTreatmentTemp:res.data
                                         });
                                     }).catch(err => console.log(err));
 
@@ -235,10 +238,15 @@ export default class MatchingPage extends React.Component {
 
         if(cadreCode === "0"){
             
-            this.setState({filteredCountryTreatments : treats});
+            this.setState({
+                filteredCountryTreatments : treats,
+                countryTreatmentTemp : treats
+            });
             return;
         }
-        this.setState({ filteredCountryTreatments: treats.filter(tr => tr.cadre_code.includes(cadreCode)) });
+        this.setState({ filteredCountryTreatments: treats.filter(tr => tr.cadre_code.includes(cadreCode)),
+            countryTreatmentTemp:treats.filter(tr => tr.cadre_code.includes(cadreCode))
+         });
     }
 
     filterDHIS2Treatment() {
@@ -387,7 +395,20 @@ export default class MatchingPage extends React.Component {
             this.setState({filteredCountryFacilities: filtered});
         }
     }
-    
+
+    filterTreatmentByName(name) {
+
+        if(name.length > 0){
+
+            let treats = this.state.filteredCountryTreatments;
+
+            this.setState({ filteredCountryTreatments: treats.filter(tr => tr.name_std.toLowerCase().includes(name.toLowerCase()) || 
+                    tr.name_cust.toLowerCase().includes(name.toLowerCase()) ) });
+
+        }else{
+            this.setState({filteredCountryTreatments: this.state.countryTreatmentTemp});
+        }   
+    }
     render() {
 
         return (
@@ -411,6 +432,10 @@ export default class MatchingPage extends React.Component {
                                     </Col>
                                 </FormGroup>
                                 <FormGroup>
+                                <a href="#" onClick={() => this.setState({showFilters : !this.state.showFilters})} >
+                                    Show/Hide filters
+                                </a>
+                                {this.state.showFilters && 
                                     <table className="tbl-multiselect">
                                             <tr>
                                                 <td><b>Select facility type</b></td>
@@ -454,7 +479,21 @@ export default class MatchingPage extends React.Component {
                                                     </FormGroup>
                                                 </td>
                                             </tr>
+                                            <tr>
+                                                <td><b>Search treatment</b></td>
+                                                <td>
+                                                    <div>
+                                                        <FormGroup>
+                                                            <Col sm={15}>
+                                                                <input typye="text" className="form-control"
+                                                                    placeholder="Treatment name" onChange={e => this.filterTreatmentByName(e.target.value)} />
+                                                            </Col>
+                                                        </FormGroup>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         </table>
+                                    }
                                 </FormGroup>
                                 <hr />
                                 
@@ -501,7 +540,7 @@ export default class MatchingPage extends React.Component {
                                             <th></th>
                                             <th>Standard name</th>
                                             <th>Customized name</th>
-                                            <th>Dhis2</th>
+                                            <th>Dhis2 elements</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -518,14 +557,21 @@ export default class MatchingPage extends React.Component {
                                                     {treatment.name_cust}
                                                 </td>
                                                 <td>
+                                                    <MatchedItemsComponent 
+                                                        dhis2Codes={treatment.dhis2_codes}
+                                                        delete={id => this.deleteCode(id)}
+                                                        />
+                                                </td>
+                                                {/*<td>
+                                                    
                                                     <ul>
                                                         {treatment.dhis2_codes.map(c =>
                                                             <li>
-                                                                <a className="match-delete" href="#" onClick={() => this.deleteCode(c.id)}>{c.name}</a>
+                                                                <a className="match-delete" href="#" onClick={() => this.deleteCode(c.id)}>{c.name}</a>                                                 
                                                             </li>
                                                         )}
                                                     </ul>
-                                                </td>
+                                                </td>*/}
 
                                             </tr>
                                         )}
