@@ -734,7 +734,7 @@ export default class ServiceImportPanel extends React.Component {
                                     </Col>
                                 </FormGroup>
                                 <a href="#" onClick={() => this.setState({showCountryFilters : !this.state.showCountryFilters})} >
-                                        Show filter options
+                                        Show/Hide filters
                                 </a>
                                 {this.state.showCountryFilters &&
                                 <table className="tbl-multiselect">
