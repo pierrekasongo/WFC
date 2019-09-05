@@ -136,10 +136,8 @@ router.post('/insertCadre',withAuth, (req, res) => {
 
     let worktime=req.body.worktime;
 
-    let admin_task=req.body.admin_task;
-
-    db.query(`INSERT INTO std_cadre(code,name_fr,name_en,worktime,admin_task) 
-            VALUES("${code}","${name_fr}","${name_en}",${worktime},${admin_task})`, 
+    db.query(`INSERT INTO std_cadre(code,name_fr,name_en,worktime) 
+            VALUES("${code}","${name_fr}","${name_en}",${worktime})`, 
         function (error, results) {
         if (error) throw error;
         res.json(results);
@@ -157,11 +155,9 @@ router.post('/updateCadre',withAuth, (req, res) => {
 
     let worktime=req.body.worktime;
 
-    let admin_task=req.body.admin_task;
-
     db.query(`UPDATE std_cadre SET name_fr="${name_fr}", 
-                name_en="${name_en}", worktime=${worktime},
-                admin_task=${admin_task} WHERE code="${code}"`, 
+                name_en="${name_en}", worktime=${worktime}
+                 WHERE code="${code}"`, 
         function (error, results) {
         if (error) throw error;
         res.json(results);
@@ -368,15 +364,13 @@ router.post('/uploadCadres',withAuth, function (req, res) {
 
                     let other_leave=data[index][7];
 
-                    let admin_task=data[index][8];
-
                     sql += `INSERT INTO std_cadre(code,name_fr,name_en,work_days,work_hours,
-                            annual_leave, sick_leave, other_leave, admin_task) VALUES("${code}",
+                            annual_leave, sick_leave, other_leave) VALUES("${code}",
                             "${name_fr}","${name_en}",${days},${hours},${annual_leave},${sick_leave},
                              ${other_leave},${adminTask}) 
                             ON DUPLICATE KEY UPDATE name_fr="${name_fr}",name_en = "${name_en}",work_days=${days},
                             work_hours=${hours},annual_leave=${annual_leave},
-                            sick_leave=${sick_leave},other_leave=${other_leave},admin_task=${admin_task};`;
+                            sick_leave=${sick_leave},other_leave=${other_leave};`;
                 }
 
                 db.query(sql, function (error, results) {
