@@ -20,19 +20,6 @@ router.patch('/cadre/hours/:id',withAuth,(req, res) => {
     });
 });
 
-//Update hours per week for a cadre
-router.patch('/cadre/admin_work/:id',withAuth, (req, res) => {
-
-    var id=parseInt(req.params.id.toString());
-
-    var value=parseInt(req.body.admin_task.toString());
-
-    db.query(`UPDATE cadre SET adminTask =`+value+` WHERE id =`+id,function(error,results){
-                    if(error)throw error;
-                    res.json(results);
-    });
-});
-
 router.post('/insertCadre',withAuth,(req, res) => {
 
     var stdCode=req.body.stdCode;
@@ -46,15 +33,13 @@ router.post('/insertCadre',withAuth,(req, res) => {
     var sick_leave=req.body.sickLeave;
 
     var other_leave=req.body.otherLeave
-    
-    var admin_task=req.body.adminTask;
 
     var countryId=req.body.countryId;
 
     db.query(`INSERT INTO country_cadre (std_code,work_days,work_hours,
-                annual_leave,sick_leave,other_leave,admin_task, country_id) 
+                annual_leave,sick_leave,other_leave, country_id) 
                 VALUES("${stdCode}",${work_days},${work_hours},${annual_leave},
-            ${sick_leave},${other_leave},${admin_task},${countryId})`,function(error,results){
+            ${sick_leave},${other_leave},${countryId})`,function(error,results){
                     if(error)throw error;
                     res.json(results);
     });
@@ -88,7 +73,7 @@ router.get('/cadres/:countryId',withAuth, (req, res) => {
     let countryId = req.params.countryId;
 
     db.query(`SELECT ct.std_code,ct.facility_type_code, CONCAT(st.name_fr,"/",st.name_en) AS name,
-                ct.work_days AS work_days,ct.work_hours AS work_hours,ct.admin_task AS admin_task,
+                ct.work_days AS work_days,ct.work_hours AS work_hours,ct.average_salary AS average_salary,
                 ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
                 ct.other_leave AS other_leave, ct.hris_code AS hris_code  FROM country_cadre ct, std_cadre st 
                 WHERE ct.std_code=st.code AND country_id=${countryId}`, function (error, results, fields) {
@@ -114,7 +99,7 @@ router.get('/getCadre/:cadreCode',withAuth, function(req,res){
     db.query(`SELECT ct.std_code AS std_code, ct.hris_code AS hris_code,
     ct.work_days AS work_days, ct.work_hours AS work_hours,
                 ct.annual_leave AS annual_leave, ct.sick_leave AS sick_leave,
-                ct.other_leave AS other_leave,ct.admin_task AS admin_task, std.name_fr
+                ct.other_leave AS other_leave,ct.average_salary AS average_salary, std.name_fr
                 AS name_fr, std.name_en AS name_en FROM country_cadre ct, std_cadre std 
                 WHERE ct.std_code=std.code AND std_code="${cadreCode}"`, function (error, results) {
         if (error) throw error;
