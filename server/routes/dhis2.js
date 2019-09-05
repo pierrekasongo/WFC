@@ -488,6 +488,18 @@ router.delete('/deleteDhis2Code/:id',withAuth,function (req, res) {
     });
 });
 
+router.patch('/updateDhis2CodeShare',withAuth,function (req, res) {
+
+    let id = req.body.id;
+
+    let share=parseInt(req.body.value.toString());
+
+    db.query(`UPDATE country_treatment_dhis2 SET share=${share} WHERE id=${id}`, function (error, results, fields) {
+        if (error) throw error;
+        res.status(200).send("Share updated successfully!");
+    });
+});
+
 router.get(`/getDhis2_treatments/:countryId`,withAuth, async function (req, res) {
 
     let countryId = req.params.countryId;
