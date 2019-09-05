@@ -35,6 +35,7 @@ export default class MetadataComponent extends React.Component {
             selectedCadre: {},
             isEditCadre: false,
             facilityTypes: [],
+            showFilters:false
         };
         this.handleUploadCadre = this.handleUploadCadre.bind(this);
         this.deleteCadre = this.deleteCadre.bind(this);
@@ -243,14 +244,12 @@ export default class MetadataComponent extends React.Component {
         let name_fr = info.name_fr;
         let name_en = info.name_en;
         let worktime = info.worktime;
-        let admin_task = info.admin_task;
 
         let data = {
             code: code,
             name_fr: name_fr,
             name_en: name_en,
-            worktime: worktime,
-            admin_task: admin_task
+            worktime: worktime
         };
         //Insert cadre in the database
         axios.post('/metadata/insertCadre', data,{
@@ -295,8 +294,7 @@ export default class MetadataComponent extends React.Component {
                 code: cadre.code,
                 name_fr: cadre.name_fr,
                 name_en: cadre.name_en,
-                worktime: cadre.worktime,
-                admin_task: cadre.admin_task
+                worktime: cadre.worktime
             }
             this.setState({
                 isEditCadre: true,
@@ -355,7 +353,11 @@ export default class MetadataComponent extends React.Component {
                             </div>
                             <hr />
                             <div>
-                            <table>
+                            <a href="#" onClick={() => this.setState({showFilters : !this.state.showFilters})} >
+                                Show/Hide filters
+                            </a>
+                            {this.state.showFilters && 
+                             <table className="tbl-multiselect">
                                 <tr>
                                     <td>
                                         <b>Filter by facility type</b>
@@ -382,6 +384,7 @@ export default class MetadataComponent extends React.Component {
                                     </td>
                                 </tr>
                                 </table>
+                                }
                             </div>
                             <br/>
                             <div className="div-table">
@@ -391,7 +394,6 @@ export default class MetadataComponent extends React.Component {
                                     </a>
                                 </div>
                                 <br />
-                                
                                 <table className="table-list">
                                     <thead>
                                         <tr>
@@ -403,7 +405,6 @@ export default class MetadataComponent extends React.Component {
                                             <th>Annual leave</th>
                                             <th>Sick leave</th>
                                             <th>Other leave</th>
-                                            <th>Admin task (%)</th>
                                             <th colSpan="2"></th>
                                         </tr>
                                     </thead>
@@ -579,28 +580,7 @@ export default class MetadataComponent extends React.Component {
                                                         </a>
                                                     </div>
                                                 </td>
-                                                <td align="center">
-                                                    <div>
-                                                        <a href="#">
-                                                            <InlineEdit
-                                                                validate={this.validateTextValue}
-                                                                activeClassName="editing"
-                                                                text={"" + cadre.admin_task}
-                                                                paramName={cadre.code + '|admin_task'}
-                                                                change={this.handleCadreChange}
-                                                                style={{
-                                                                    minWidth: 50,
-                                                                    display: 'inline-block',
-                                                                    margin: 0,
-                                                                    padding: 0,
-                                                                    fontSize: 11,
-                                                                    outline: 0,
-                                                                    border: 0
-                                                                }}
-                                                            />
-                                                        </a>
-                                                    </div>
-                                                </td>
+                                                
                                                 <td colSpan="3">
                                                     <a href="#" onClick={() => this.deleteCadre(`"${cadre.code}"`)}>
                                                         <FaTrash />
@@ -626,7 +606,7 @@ export default class MetadataComponent extends React.Component {
                                         Make sure it's a csv file with following headers and order. <br />
                                         Also note that every duplicate code will update the existing value.<br />
                                         <b>"Code", "Name fr", "Name en", "Days per week", "Hours per day",
-                                             "Annual leave", "Sick leave", " Other leave", "Admin. task (%)"
+                                             "Annual leave", "Sick leave", " Other leave"
                                         </b>
           
                                     </div>
