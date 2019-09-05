@@ -626,6 +626,7 @@ input[type=select]{
   margin-left:5px;
   margin-left:3px;
 }
+
 .table-list{
   border-spacing: 0px;
 }
@@ -657,6 +658,27 @@ input[type=select]{
 .table-list tr:hover {
   background-color: #a8f1a8;
 }
+/****Sub table*****/
+
+.table-list-sub{
+  border-spacing: 0px;
+}
+.table-list-sub tr{
+  border-bottom: 1px dotted #ccc;
+}
+.table-list-sub td{
+  font-size: 11px;
+  padding-left: 1px;
+  padding-right: 1px;
+  border: 1px dotted #ccc;
+}
+.table-list-sub th{
+  font-size: 11px;
+  padding-left: 5px;
+  background: #e0ecdd;
+}
+/******End sub table*****/
+
 .tab-main-container{
   margin:5px;
 }
