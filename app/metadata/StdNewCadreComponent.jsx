@@ -11,8 +11,7 @@ export default class StdNewCadreComponent extends React.Component {
             code:'',
             name_fr:'',
             name_en:'',
-            worktime:'',
-            admin_task:''
+            worktime:''
         }
     }
     render() {
@@ -41,12 +40,6 @@ export default class StdNewCadreComponent extends React.Component {
                             placeholder="Worktime"
                             value={this.props.cadre.worktime}
                             onChange={e => this.setState({ worktime: e.target.value })} />
-                </td>
-                <td style={{fontSize:14}}>
-                    <input type="text"
-                            placeholder="Admin. Task(%)"
-                            value={this.props.cadre.admin_task}
-                            onChange={e => this.setState({ admin_task: e.target.value })} />
                 </td>
                 <td>
                     <a href="#" className="add-new-link" onClick={() => this.props.cancel()}><FaTimes /></a>
