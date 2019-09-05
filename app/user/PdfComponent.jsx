@@ -5,6 +5,7 @@ import * as React from 'react';
 import Report from 'react-data-report';
 
 export default class PdfComponent extends React.Component {
+    
     constructor(props) {
 
         super(props);
