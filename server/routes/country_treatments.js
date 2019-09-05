@@ -198,12 +198,14 @@ router.get('/treatments/:countryId',withAuth, function (req, res) {
             results[0].forEach(tr => {
 
                 let subRes = [];
+
                 results[1].forEach(dc => {
                     if (tr.code == dc.treatment_code) {
                         subRes.push({
                             id: dc.id,
                             code: dc.dhis2_code,
-                            name: dc.dhis2_name
+                            name: dc.dhis2_name,
+                            share: dc.share
                         })
                     }
                 });
@@ -275,8 +277,8 @@ router.post('/match_dhis2_codes', withAuth,function (req, res) {
     let sql = ``;
 
     selectedDhis2Treatments.map(dhis2 => {
-        sql += `INSERT INTO country_treatment_dhis2(treatment_code,dhis2_code,dhis2_dataset,dhis2_name) 
-                VALUES("${treatmentCode}","${dhis2.code}","${dhis2.dataset}","${dhis2.name}");`;
+        sql += `INSERT INTO country_treatment_dhis2(treatment_code,dhis2_code,dhis2_name) 
+                VALUES("${treatmentCode}","${dhis2.code}","${dhis2.name}");`;
     });
  
     db.query(sql, function (error, results, fields) {
