@@ -24,6 +24,8 @@ router.post('/',withAuth, (req, res) => {
 
     let facilities = req.body.selectedFacilities;
 
+    let includeSalary = req.body.includeSalary;
+
     //Getting cadre ids 
     let cadreIds = [];
 
@@ -97,8 +99,8 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                                      FROM  country_treatment ct_treat, country_treatment_dhis2 ct_dhis  
                                      WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND countryId=${countryId}`;//Select only for selected cadres
     
-    let facilityStaffCountQuery = `SELECT id, cadreCode, staffCount AS StaffCount FROM staff
-                                    WHERE  facilityCode="${facilityCode}" AND cadreCode IN(?)`;
+    let facilityStaffCountQuery = `SELECT st.id, st.cadreCode, st.staffCount AS StaffCount FROM staff st 
+                                        WHERE  facilityCode="${facilityCode}" AND cadreCode IN(?)`;
 
     let supportActivityQuery = `SELECT t.id, t.code, t.cadre_code, t.name, t.duration,tu.name as time_unit 
                                     FROM country_treatment_support t, time_unit tu WHERE countryId=${countryId} 
@@ -303,21 +305,7 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
 
             let currentWorkers = {};
 
-            /*Object.keys(workersPerTreatment).forEach(cadreId => {
-
-                let workers = 0;
-
-                treatmentIds.forEach(treatmentId => {
-                    workers += workersPerTreatment[cadreId][treatmentId];
-                });
-                //workers=2;
-                //currentWorkers[cadreId] = 2;
-                currentWorkers[cadreId] = parseInt(workers);
-
-                pressure[cadreId] = Number.parseFloat(workers).toFixed(2) / Number.parseFloat(workersNeeded[cadreId]).toFixed(2);
-            });*/
-
-            //Current workers: suggested by Pierre; simply select the available workers for the cadre
+            //Current workers
             facilityStaffCountQueryResult.forEach(row => {
 
                 currentWorkers[row['cadreCode']] = row['StaffCount'];
