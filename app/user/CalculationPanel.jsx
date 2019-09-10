@@ -40,6 +40,7 @@ export default class CalculationPanel extends React.Component {
             treatmentToggle: true,
             cadreToggle: true,
             facilityToggle: true,
+            includeSalary:false,
             state: 'form',
             results: [],
             printable: [],
@@ -115,7 +116,10 @@ export default class CalculationPanel extends React.Component {
                     sickLeave: sick_leave,
                     otherLeave: other_leave
                 }
-                cadreDict[cadre.std_code] = cadre.name;
+                cadreDict[cadre.std_code] = {
+                   name: cadre.name,
+                   average_salary: cadre.average_salary
+                }
 
                 //cadresCombo.push({ label: cadre.name, value: cadre.std_code });
             });
@@ -289,7 +293,8 @@ export default class CalculationPanel extends React.Component {
                     holidays: this.state.config.value,
                     selectedFacilities: {},
                     selectedPeriod: this.state.selectedPeriod,
-                    countryId : localStorage.getItem('countryId')
+                    countryId : localStorage.getItem('countryId'),
+                    includeSalary: this.state.includeSalary
                 };
 
                 datas.selectedCadres = this.state.selectedCadres;
@@ -492,6 +497,20 @@ export default class CalculationPanel extends React.Component {
                                     </div>
                                 </Col>
                             </FormGroup>
+
+                            <FormGroup>
+                                
+                                <Col sm={10}>
+                                    <label>
+                                        <Checkbox
+                                            checked={this.state.includeSalary}
+                                            onChange={this.state.includeSalary = !this.state.includeSalary}
+                                            />
+                                            <span>Include salary estimate</span>
+                                    </label>
+                                </Col>
+                            </FormGroup>
+
                             <hr />
                             <div style={{ textAlign: "right", paddingTop: 10 }}>
                                 <Button bsStyle="warning" bsSize="medium" onClick={() => this.calculateClicked()}>Calculate pressure</Button>
