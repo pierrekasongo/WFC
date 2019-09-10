@@ -105,7 +105,7 @@ export default class ResultComponent extends React.Component {
         setTimeout(() => toastr.error(msg), 300)
     }
 
-    addToDashboard(facilityId, cadreId, current,needed){
+    addToFavorite(facilityId, cadreId, current,needed){
 
         let data = {
             facilityCode :facilityId,
@@ -114,7 +114,7 @@ export default class ResultComponent extends React.Component {
             needed : needed
         };
 
-        axios.post(`/dashboard/insert`,data,{
+        axios.post(`/dashboard/insert_favorite`,data,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
@@ -164,13 +164,15 @@ export default class ResultComponent extends React.Component {
                                             <th>B. Workers Needed </th>
                                             <th>Gap(A-B)</th>
                                             <th>Ratio(A/B)</th>
+                                            <th>Current salary</th>
+                                            <th>Needed salary</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {Object.keys(this.state.results[id].workersNeeded).map(cadreId =>
                                             <tr key={cadreId}>
                                                 <td>
-                                                    <h4 key={cadreId + 'cadre'}>{this.state.cadreDict[cadreId]}</h4>
+                                                    <h4 key={cadreId + 'cadre'}>{this.state.cadreDict[cadreId].name}</h4>
                                                 </td>
                                                 <td>
                                                     <h4 key={cadreId + 'current'}>{this.state.results[id].currentWorkers[cadreId]}</h4>
@@ -196,8 +198,14 @@ export default class ResultComponent extends React.Component {
                                     
                                                 </td>
                                                 <td>
+                                                    <h4 key={cadreId + 'current_salary'}><b>{(this.state.results[id].currentWorkers[cadreId])*(this.state.cadreDict[cadreId].average_salary)}</b></h4>
+                                                </td>
+                                                <td>
+                                                    <h4 key={cadreId + 'needed_salary'} style={{color:"red"}}><b>{(Number(this.state.results[id].workersNeeded[cadreId]).toFixed(1))*(this.state.cadreDict[cadreId].average_salary)}</b></h4>
+                                                </td>
+                                                <td>
                                                     <div className="div-add-new-link">
-                                                        <a href="#" className="add-new-link" onClick={() => this.addToDashboard(this.state.results[id].facilityId,
+                                                        <a href="#" className="add-new-link" onClick={() => this.addToFavorite(this.state.results[id].facilityId,
                                                             cadreId,
                                                             this.state.results[id].currentWorkers[cadreId],
                                                             Math.round(this.state.results[id].workersNeeded[cadreId]))}>
