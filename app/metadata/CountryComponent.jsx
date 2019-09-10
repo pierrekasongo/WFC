@@ -164,7 +164,7 @@ export default class CountryComponent extends React.Component {
                     <div className="div-add-new-link">
                         <a href="#" className="add-new-link" onClick={() => this.setState({ showingNewCountry: true })}>
                             <FaPlusSquare /> Add new
-                                    </a>
+                        </a>
                     </div>
                     <br />
                     <table className="table-list">
