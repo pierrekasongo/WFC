@@ -31,6 +31,7 @@ export default class StatisticsContentComponent extends React.Component {
             filteredStatistics:[],
             state: 'done',
             facilityTypes: [],
+            showFilters:false,
         };
     }
 
@@ -211,6 +212,10 @@ export default class StatisticsContentComponent extends React.Component {
                                                 </div>
                                             </Col>
                                             <FormGroup>
+                                            <a href="#" onClick={() => this.setState({showFilters : !this.state.showFilters})} >
+                                                Show/Hide filters
+                                            </a>
+                                            {this.state.showFilters &&
                                                 <table className="tbl-multiselect">
                                                     <tr>
                                                         <td><b>Select facility type</b></td>
@@ -280,6 +285,7 @@ export default class StatisticsContentComponent extends React.Component {
                                                         </td>
                                                     </tr>
                                                 </table>
+                                            }
                                             </FormGroup>
                                             <hr />
                                         </FormGroup>
