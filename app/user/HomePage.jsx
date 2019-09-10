@@ -2,12 +2,16 @@ import * as React from 'react';
 import Collapsible from 'react-collapsible';
 import { Panel, Form, FormGroup, ControlLabel, FormControl, Col, Checkbox,PanelGroup,Accordion } from 'react-bootstrap';
 import axios from 'axios';
-import {FaStethoscope,FaUserMd,FaClinicMedical,FaCapsules,FaCheck,FaTable,FaRegChartBar} from 'react-icons/fa';
+import {FaPlusSquare,FaStethoscope,FaUserMd,FaClinicMedical,FaCapsules,FaCheck,FaTable,FaRegChartBar, FaCog} from 'react-icons/fa';
 import  { withRouter } from 'react-router-dom';
 import Multiselect from 'react-multiselect-checkboxes';
 import {BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts';
-
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
 import { Translation } from 'react-i18next';
+
+import DashboardManager from '../dashboard/DashboarManagerComponent';
+import DashboardList from '../dashboard/DashboarListComponent';
 
 class HomePage extends React.Component {
 
@@ -25,10 +29,14 @@ class HomePage extends React.Component {
             showChart:true,
             showTable:false,
             dashboards:[],
+            dashboardsList:[],
             facilityTypes:[],
             filteredFacilities:[],
-            value:'en_us',
-            
+            favorites:[],
+            fovoritesCombo:[],
+            showManageDashboard:false,
+            value:'en_us', 
+            selectedDashboard:{},         
         };
 
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
@@ -44,6 +52,25 @@ class HomePage extends React.Component {
                 filteredFacilities : res.data
             })
         }).catch(err => console.log(err));
+
+        axios.get(`/dashboard/get_dashboard/${localStorage.getItem('countryId')}/0`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({
+                dashboards : res.data
+            });
+        }).catch(err => console.log(err));
+
+        axios.get(`/dashboard/dashboards/${localStorage.getItem('countryId')}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({dashboardsList : res.data});
+        }).catch(err => console.log(err));
+
 
         axios.get('/dhis2/facilityTypes',{
             headers :{
@@ -82,6 +109,25 @@ class HomePage extends React.Component {
             this.setState({
                 cadreCount: res.data[0].nb
             });           
+        }).catch(err => console.log(err));
+
+        axios.get(`/dashboard/get_favorites/${localStorage.getItem('countryId')}`,{
+
+            headers :{
+
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+
+            this.setState({favorites: res.data});
+
+            let favoritesCombo = [];
+
+            res.data.forEach(fv => {
+
+                favoritesCombo.push({ label: fv.label, value: fv.id });
+            });
+            this.setState({favoritesCombo: favoritesCombo});       
         }).catch(err => console.log(err));
     }
 
@@ -171,7 +217,49 @@ class HomePage extends React.Component {
             this.setState({facilitiesCombo: facilitiesCombo});
         }
     }
-    
+
+    showDashboard(id,name,detail){
+
+        let dash = {
+            id:id,
+            name:name,
+            detail:detail
+        }
+
+        this.setState({selectedDashboard:dash});
+
+        axios.get(`/dashboard/get_dashboard/${localStorage.getItem('countryId')}/${id}`,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            this.setState({dashboards : res.data});
+        }).catch(err => console.log(err));
+    }
+
+    showManageDashboard(id){
+
+        if(this.state.selectedDashboard.id > 0){
+
+            this.setState({
+                showManageDashboard:true
+            })
+        }else{
+            //You have to select a dashboard first
+            this.launchToastr("No dashboard selected. Please select the dashboard you want to manage.");
+        }
+    }
+
+    launchToastr(msg) {
+        toastr.options = {
+            positionClass: 'toast-top-full-width',
+            hideDuration: 15,
+            timeOut: 6000
+        }
+        toastr.clear()
+        setTimeout(() => toastr.error(msg), 300)
+    }
+
     render() {
         return (
             
@@ -180,9 +268,38 @@ class HomePage extends React.Component {
                     <p>Welcome <b>{localStorage.getItem('username')}</b>, logedin as <b>{localStorage.getItem('role')}</b></p>
                 </div>
                 <Panel bsStyle="primary" header="Home">
-                <br/>
+
+                <div className="panel-dashboard-command">
+                    <div className="panel-dashboard-command-items">
+                        <div>
+                            <a href="#" className="add-new-link" onClick={() => this.setState({ showManageDashboard: true })}>
+                                <FaPlusSquare /> Add new dashboard
+                            </a>
+                        </div>
+                        <div>
+                            <a href="#" className="add-new-link" onClick={() => this.showManageDashboard()}>
+                                <FaCog /> Manage
+                            </a>
+                        </div>                       
+                    </div>
+                    <DashboardList 
+                        dashboards={this.state.dashboardsList}
+                        showDashboard={(id,name,detail) => this.showDashboard(id,name,detail)}                   
+                    />
+                </div>
                 
-                <div class="container">
+                <br/>
+                <div class="container">              
+                    {this.state.showManageDashboard && 
+                        <div>
+                            <DashboardManager 
+                                dashboard={this.state.selectedDashboard}
+                                favoritesCombo={this.state.favoritesCombo}
+                            />
+                        </div>
+                    }
+                    {!this.state.showManageDashboard && 
+                    <div>
                     <div class="row">
                         <div class="col-md-4 col-xl-3">
                                 <div class="card bg-c-pink order-card">
@@ -253,6 +370,7 @@ class HomePage extends React.Component {
                             
                         </div>
                         <hr/>
+
                         <Col componentClass={ControlLabel} sm={20}>
                             <div className="div-title">
                                 <b>Archived workforce pressure</b>
@@ -312,53 +430,66 @@ class HomePage extends React.Component {
                                 </td>
                             </tr>
                         </table>
-                        {this.state.showChart &&
-                            <div className="chart-container">
-                                {this.state.dashboards.map(dashData =>
-                                    <div className="chart-div">
-                                        <div className="graph-title">{dashData.facility}</div>
-                                        <div>
-                                            <BarChart width={500} height={250} data={dashData.dash}
-                                                                        margin={{top: 10, right: 10, left: 10, bottom: 5}}>
-                                                <CartesianGrid strokeDasharray="3 3"/>
-                                                <XAxis dataKey="cadre"/>
-                                                <YAxis/>
-                                                <Tooltip/>
-                                                <Legend />
-                                                <Bar dataKey="current" fill="#8884d8" />
-                                                <Bar dataKey="needed" fill="#82ca9d" />
-                                            </BarChart>
+                            {this.state.showChart && 
+                                <div className="chart-container">
+                                    {this.state.dashboards.map(dashData =>
+                                        <div className="chart-div">
+                                            <div className="graph-title">{dashData.facility}</div>
+                                            <div>
+                                                <BarChart width={600} height={300} data={dashData.dash}
+                                                        margin={{top: 5, right: 30, left: 20, bottom: 5}}>
+                                                    <CartesianGrid strokeDasharray="3 3"/>
+                                                    <XAxis dataKey="cadre"/>
+                                                    <YAxis/>
+                                                    <Tooltip/>
+                                                    <Legend />
+                                                    <Bar dataKey="current" fill="#8884d8" />
+                                                    <Bar dataKey="needed" fill="#82ca9d" />
+                                                </BarChart>
+                                                {/*<BarChart width={500} height={250} data={dashData.dash}
+                                                                            margin={{top: 10, right: 10, left: 10, bottom: 5}}>
+                                                    <CartesianGrid strokeDasharray="3 3"/>
+                                                    <XAxis dataKey="cadre"/>
+                                                    <YAxis/>
+                                                    <Tooltip/>
+                                                    <Legend />
+                                                    <Bar dataKey="current" fill="#8884d8" />
+                                                    <Bar dataKey="needed" fill="#82ca9d" />
+                                                </BarChart>*/}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        }
-                        {this.state.showTable && 
-                            <div className="chart-container">
-                                {this.state.dashboards.map(dashData =>
-                                    <div className="chart-div">
-                                        <div className="graph-title">{dashData.facility}</div>
-                                        <div>
-                                            <table className="table-list">
-                                                <th>Cadre</th>
-                                                <th>Current</th>
-                                                <th>Needed</th>
-                                                {dashData.dash.map(d =>
-                                                    <tr>
-                                                        <td>{d.cadre}</td>
-                                                        <td>{d.current}</td>
-                                                        <td>{d.needed}</td>
-                                                    </tr>
-                                                )}
-                                            </table>
+                                    )}
+                                </div>
+                            }
+                            {this.state.showTable && 
+                                <div className="chart-container">
+                                    {this.state.dashboards.map(dashData =>
+                                        <div className="chart-div">
+                                            <div className="graph-title">{dashData.facility}</div>
+                                            <div>
+                                                <table className="table-list">
+                                                    <th>Cadre</th>
+                                                    <th>Current</th>
+                                                    <th>Needed</th>
+                                                    {dashData.dash.map(d =>
+                                                        <tr>
+                                                            <td>{d.cadre}</td>
+                                                            <td>{d.current}</td>
+                                                            <td>{d.needed}</td>
+                                                        </tr>
+                                                    )}
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            }
+                        </div>
                         }
                     </div>
                     <br/>
                 </Panel>
+              
             </div>
         );
     }
