@@ -673,6 +673,7 @@ input[type=select]{
   font-size: 12px;
   padding-left: 5px;
   background: #a8f1a8;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .table-list tr:hover {
@@ -704,6 +705,12 @@ input[type=select]{
 }
 .error{
   color:#FF5370;
+}
+
+.radio-table td{
+  color: #fd956b;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 #toast-container.toast-top-full-width>.toast {
@@ -807,14 +814,17 @@ input[type=select]{
     text-align: center;
     width: 500px;
     padding: 20px;
-    /*background: #28bae6;*/
-    background: #1abc42;
+    /*background: #1abc42;*/
+    background: #f64915;
     box-shadow: 0 20px 75px rgba(0, 0, 0, 0.23);
     color: #fff;
     border-radius: 5px;
 }
+.custom-ui h3{
+  font-weight: bold;
+}
 .custom-ui button{
-  background: #1abc42;
+  background: #f64915;
   border: 1px solid #fff;
   border-radius: 5px;
   color:#fff;
@@ -1011,9 +1021,9 @@ input[type=select]{
 }
 .dashboard-list-div{
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   padding:10px;
-  width: 150px;
+  /*width: 150px;*/
 }
 .dashboard-link{
   background:#fff;
@@ -1042,4 +1052,11 @@ input[type=select]{
 
 .dash-editable input[type=text]{
   border:1px solid #ccc;
+}
+.import-stat{
+  display: flex;
+  flex-direction: row;
+}
+.div-btn-no-dhis2{
+  margin:10px;
 }

@@ -300,7 +300,7 @@ export default class StatisticsContentComponent extends React.Component {
                                                 <tr>
                                                     <th>Treatment</th>
                                                     <th>Year</th>
-                                                    <th># patients</th>
+                                                    <th align="center"># patients</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -310,7 +310,7 @@ export default class StatisticsContentComponent extends React.Component {
                                                         <td>{st.year}</td>
                                 
                                                         <td>
-                                                            <div>
+                                                            <div align="center">
                                                                 <a href="#">
                                                                     <InlineEdit
                                                                         validate={this.validateTextValue}
@@ -336,7 +336,7 @@ export default class StatisticsContentComponent extends React.Component {
                                             </tbody>
                                         </table>
                                         <br/>      
-            </div>
+                </div>
         );
 
     }

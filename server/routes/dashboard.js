@@ -75,9 +75,11 @@ router.get('/get_dashboard/:countryId/:id',withAuth, (req, res) => {
         extra_param = `db.is_default=1`;
     }
 
-    let sql = `SELECT DISTINCT rr.facilityCode as faCode,fa.name as facility,db.id as dashId FROM dashboard db, dashboard_items di,results_record rr,
-                facility fa, std_cadre cd WHERE db.id = di.dashboard_id 
-                AND rr.facilityCode=fa.code AND rr.cadreCode=cd.code 
+    let sql = `SELECT DISTINCT rr.facilityCode as faCode,fa.name as facility,ft.code as type_code, 
+                CONCAT(ft.name_fr,'/',ft.name_en) as type_name,
+                db.id as dashId FROM dashboard db, dashboard_items di,results_record rr,
+                facility fa, std_cadre cd, std_facility_type ft WHERE db.id = di.dashboard_id 
+                AND rr.facilityCode=fa.code AND rr.cadreCode=cd.code AND fa.facilityType=ft.code 
                 AND di.item_id = rr.id AND db.countryId = ${countryId} AND ${extra_param}`;
 
     db.query(sql, function (error, results) {
@@ -97,6 +99,8 @@ router.get('/get_dashboard/:countryId/:id',withAuth, (req, res) => {
                 data.push({
 
                     facility : row.facility,
+
+                    facilityType : row.type_code,
 
                     dash : dash
                 });
@@ -123,12 +127,15 @@ router.get('/dashboards/:countryId',withAuth, (req, res) => {
 
 });
 
-router.get('/get_favorites/:countryId',withAuth, (req, res) => {
+router.get('/get_favorites/:countryId/:dashId',withAuth, (req, res) => {
 
     let countryId = req.params.countryId;
 
+    let dashId = req.params.dashId;
+
     let sql = `SELECT da.id as id,CONCAT(fa.name,'-',cd.name_en) as label, CONCAT(cd.name_en,'/',cd.name_fr) as cadre, 
               da.current, da.needed  FROM results_record da, facility fa, std_cadre cd WHERE 
+              da.id NOT IN (SELECT item_id FROM dashboard_items WHERE dashboard_id=${dashId}) AND 
               da.facilityCode=fa.code AND da.cadreCode=cd.code AND 
               fa.countryId = ${countryId}`;
 
@@ -140,20 +147,90 @@ router.get('/get_favorites/:countryId',withAuth, (req, res) => {
 
 });
 
-router.post('/insert_favorite',withAuth, (req, res) => {
+router.get('/get_dashboard_items/:countryId/:dashId',withAuth, (req, res) => {
 
-    let facilityCode = req.body.facilityCode;
+    let countryId = req.params.countryId;
 
-    let cadreCode = req.body.cadreCode;
+    let dashId = req.params.dashId;
 
-    let current = req.body.current;
+    let sql = `SELECT di.id as item_id, da.id as id,CONCAT(fa.name,'-',cd.name_en) as facility, 
+              CONCAT(cd.name_en,'/',cd.name_fr) as cadre, da.current, da.needed, da.curr_salary, 
+              da.need_salary  FROM dashboard_items di, results_record da, facility fa, std_cadre cd WHERE 
+              di.dashboard_id = ${dashId} AND di.item_id = da.id AND 
+              da.facilityCode=fa.code AND da.cadreCode=cd.code AND 
+              fa.countryId = ${countryId}`;
 
-    let needed = req.body.needed;
 
-    let sql = `DELETE FROM results_record WHERE cadreCode="${cadreCode}" AND facilityCode="${facilityCode}";
-                INSERT INTO results_record(cadreCode, facilityCode, current, needed) 
-                VALUES("${cadreCode}","${facilityCode}",${current},${needed})`;
+    db.query(sql, function (error, results) {
+        if (error) throw error;
+        res.json(results);
+    });
 
+});
+
+router.delete('/delete_dashboard/:id', withAuth,function(req, res){
+
+    let id = req.params.id; 
+
+    db.query(`DELETE FROM dashboard_items WHERE dashboard_id=${id};             
+              DELETE FROM  dashboard WHERE id=${id};
+              UPDATE users SET default_dashboard = 0 WHERE default_dashboard=${id}`,function(error,results,fields){
+        if(error) throw error;
+        res.status(200).send("Deleted successfully");
+    });
+});
+
+router.delete('/delete_dashboard_item/:id', withAuth,function(req, res){
+
+    let id = req.params.id; 
+
+    db.query(`DELETE FROM  dashboard_items WHERE id=${id}`,function(error,results,fields){
+        if(error) throw error;
+        res.status(200).send("Deleted successfully");
+    });
+});
+
+
+
+router.post('/add_dashboard/:countryId', withAuth,function(req, res){
+
+    let name = req.body.name; 
+
+    let description = req.body.description;
+
+    let countryId = req.params.countryId;
+
+    db.query(`INSERT INTO dashboard(name,detail,countryId) VALUES ("${name}","${description}",${countryId})`,
+        function(error,results,fields){
+            if(error) throw error;
+            res.status(200).send("Deleted successfully");
+    });
+});
+
+router.post('/save_as_favorite',withAuth, (req, res) => {
+
+    let datas = req.body.selectedData;
+
+    let sql=``;
+
+    Object.keys(datas).forEach(id => {
+
+        let cadreId = datas[id].cadreId;
+
+        let facilityId = datas[id].facilityId;
+
+        let currentWorkers = datas[id].currentWorkers;
+
+        let neededWorkers = datas[id].neededWorkers;
+
+        let currentSalary = datas[id].currentSalary;
+
+        let neededSalary = datas[id].neededSalary;
+
+        sql+=`DELETE FROM results_record WHERE cadreCode="${cadreId}" AND facilityCode="${facilityId}";
+                INSERT INTO results_record(cadreCode, facilityCode, current, needed,curr_salary,need_salary) 
+                VALUES("${cadreId}","${facilityId}",${currentWorkers},${neededWorkers},${currentSalary},${neededSalary})`;
+    });
 
     db.query(sql, function (error, results) {
         if (error) throw error;
@@ -179,6 +256,34 @@ router.patch('/edit',withAuth, (req, res) => {
 
 });
 
+
+router.post('/addItems',withAuth, (req,res) =>{
+
+    let selectedItems = req.body.selectedItems;
+
+    let dashId = req.body.dashId;
+
+    let size=Object.keys(selectedItems).length;
+
+    let sql = ``;
+
+    let count = 0;
+
+    Object.keys(selectedItems).forEach(id => {
+
+        count++;
+
+        sql+=`INSERT INTO dashboard_items (dashboard_id,item_id) VALUES(${dashId},${id});`;
+
+        if(count === size){
+
+            db.query(sql, function (error, results) {
+                if (error) throw error;
+                res.json(results);
+            });
+        }
+    });
+})
 
 module.exports = router;
 

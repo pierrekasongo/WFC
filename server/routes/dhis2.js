@@ -74,7 +74,7 @@ let getDataSets = async function (countryId,selectedCadre) {
 
 let getTreatments = async function (countryId,selectedCadre) {
 
-    let sql =`SELECT dhis2_code as code, treatment_code FROM country_treatment_dhis2 
+    let sql =`SELECT dhis2_code as code, treatment_code,share FROM country_treatment_dhis2
                 WHERE treatment_code IN (SELECT std_code FROM country_treatment WHERE 
                 cadre_code="${selectedCadre}" AND countryId=${countryId})`;
     
@@ -148,16 +148,30 @@ router.post('/import_statistics_from_dhis2',withAuth,async function (req, res) {
 
     let treatments = await getTreatments(countryId,selectedCadre);
 
-    let deArray =[];
+    let deArray = [];
+
+    let treatmentShares = [];
 
     treatments.forEach(row => {
 
         let de = row['code'];
 
+        let share  = row['share'];
+
+        let treatCode = row['treatment_code'];
+
         if(!deArray.includes(de)){
+
             deArray.push(de);
+
+            treatmentShares[de]={
+                share:share,
+                treatment_code:treatCode
+            }
         }
     });
+
+
 
     let startDate=`${year}-01-01`;
 
@@ -217,14 +231,19 @@ router.post('/import_statistics_from_dhis2',withAuth,async function (req, res) {
 
                 let _ou = keys[1];
 
-                let _v = v;
+                let _v = 0;
 
-                sql+=`INSERT INTO activity_stats(facilityCode,year,activityCode,cadreCode,caseCount) 
-                            VALUES("${_ou}","${year}","${_de}","${selectedCadre}",${_v});`;
+                let code = treatmentShares[_de].treatment_code;
+
+                let share = treatmentShares[_de].share;
+
+                _v = v * (share/100);
+
+                sql+=`INSERT INTO activity_stats(facilityCode,treatmentCode,year,dhis2Code,cadreCode,caseCount) 
+                            VALUES("${_ou}","${code}","${year}","${_de}","${selectedCadre}",${_v});`;
             }
             db.query(sql,function(error,result){
-                if(error)throw error;
-                //res.status(200);     
+                if(error)throw error;    
             });
         }
 
@@ -267,21 +286,25 @@ router.post('/insert_facilities',withAuth, (req,res) => {
     });
 })
 
-router.post('/upload',withAuth, function (req, res) {
+router.post('/upload/:type/:countryId',withAuth, function (req, res) {
 
     if (!req.files)
         return res.status(400).send('No file was uploaded');
+
+    let upload_dir = process.env.FILE_UPLOAD_DIR;
     //The name of the input field
     let file = req.files.file;
 
+    let countryId = req.params.countryId;
+
     //let filename=file.name;
 
-    let type = req.body.type;
+    let type = req.params.type;
 
-    let filename = (type == 'FAC') ? 'facilities.csv' : 'services.csv';
+    let filename = (type == 'FAC') ? `${countryId}_facilities.csv` : `${countryId}_services.csv`;
 
     //Use the mv() method to place the file somewhere on the server
-    file.mv(`${__dirname}` + path.sep + 'uploads' + path.sep + 'dhis2' + path.sep + `${filename}`, function (err) {
+    file.mv(`${path.sep}${upload_dir}${path.sep}${filename}`, function (err) {
         if (err)
             return res.status(500).send(err);
         res.status(200).send('File uploaded successfully');
@@ -290,74 +313,27 @@ router.post('/upload',withAuth, function (req, res) {
 
     let sql = "";
 
-    let regionsMap = new Map();
-    let districtsMap = new Map();
-    let facilitiesMap = new Map();
-
-    let regions = [];
-    let districts = [];
-    let facilities = [];
-
     if (type == 'FAC') {
 
         var obj = csv();
 
-        obj.from.path(`${__dirname}` + path.sep + 'uploads' + path.sep + 'dhis2' + path.sep + `${filename}`).to.array(function (data) {
-            /*for (var index = 0; index < data.length; index++) {
-                facilities.push(new facility(data[index][0], data[index][1], data[index][2], data[index][3], data[index][4]));
-            }*/
-            //sql = `TRUNCATE region; TRUNCATE district;TRUNCATE facility;`;
-            sql = `DELETE FROM facility WHERE districtCode IN (SELECT code FROM district WHERE regionCode IN(SELECT code FROM region WHERE countryId =` + countryId + `) );`;
-
-            let countryId = 52;
+        obj.from.path(`${path.sep}${upload_dir}${path.sep}${filename}`).to.array(function (data) {
 
             for (var index = 1; index < data.length; index++) {
 
-                let regionCode = data[index][0];
+                let parentCode = data[index][0];
 
-                let regionName = data[index][1];
+                let parentName = data[index][1];
 
-                let districtCode = data[index][2];
+                let facilityCode = data[index][2]; 
 
-                let districtName = data[index][3];
+                let facilityName = data[index][3];
 
-                let facilityCode = data[index][4];
-
-                let facilityName = data[index][5];
-
-                if (!regionsMap.has(regionCode)) {
-
-                    regionsMap.set(regionCode, regionName);
-                    regions.push({
-                        code: regionCode,
-                        name: regionName,
-                        country: countryId
-                    });
-                    sql += `INSERT INTO region (code,countryCode,name) VALUES("` + regionCode + `","` + countryId + `","` + regionName + `");`;
-                }
-
-                if (!districtsMap.has(districtCode)) {
-                    districtsMap.set(districtCode, districtName);
-                    districts.push({
-                        code: districtCode,
-                        name: districtName,
-                        region: regionCode
-                    });
-                    sql += `INSERT INTO district (code,regionCode,name) VALUES("` + districtCode + `","` + regionCode + `","` + districtName + `");`;
-                }
-                if (!facilitiesMap.has(facilityCode)) {
-                    facilitiesMap.set(facilityCode, facilityName);
-                    facilities.push({
-                        code: facilityCode,
-                        name: facilityName,
-                        district: districtCode
-                    });
-                    sql += `INSERT INTO facility (code,districtCode,name) VALUES("` + facilityCode + `","` + districtCode + `","` + facilityName + `");`;
-                }
-
-                //sql += `INSERT INTO facilities (id,countryId,regionName,districtName,facilityCode,facilityName) VALUES(`
-                //+ `,` + id + countryId + `,"` + region + `","` + district + `","` + facility_code + `","` + facility_name + `");`
+                sql += `DELETE FROM facility WHERE code ="${facilityCode}" AND countryId=${countryId};`;
+                    sql += `INSERT INTO facility (countryId,code,name,parentCode,parentName) 
+                            VALUES(${countryId},"${facilityCode}","${facilityName}","${parentCode}","${parentName}");`;
             }
+           
             db.query(sql, function (error, results) {
                 if (error) throw error;
                 res.status(200);
@@ -394,7 +370,7 @@ router.post('/upload',withAuth, function (req, res) {
     }
 })
 
-router.post('/match_facility', withAuth,function (req, res) {
+router.post('/match_facility_iHRIS', withAuth,function (req, res) {
 
     let code = req.body.facilityCode;
 
@@ -405,6 +381,24 @@ router.post('/match_facility', withAuth,function (req, res) {
         res.json(results);
     });
 });
+
+router.post('/match_facility_self', withAuth,function (req, res) {
+
+    let facilities = req.body.facilities;
+
+    let sql=``;
+
+    facilities.map(fa => {
+
+        sql+=`UPDATE facility SET ihrisCode="${fa.code}" WHERE code="${fa.code}";`;
+    });
+
+    db.query(sql, function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
 
 router.post('/setFacility_type',withAuth, function (req, res) {
 

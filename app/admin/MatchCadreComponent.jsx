@@ -19,26 +19,18 @@ export default class MatchCadreComponent extends React.Component {
             ihrisCadres: this.props.ihrisCadres,
             countryCadres:this.props.countryCadres,
             filteredCountryCadres: this.props.countryCadres,
-            facilityTypes:this.props.facilityTypes
+            facilityTypes:this.props.facilityTypes,
+            match_with_iHRIS:false,
+            match_with_self:true
         };
     
-        this.matchCadres = this.matchCadres.bind(this);
+        this.matchCadresToihris = this.matchCadresToihris.bind(this);
     }
 
-    launchToastr(msg) {
-        toastr.options = {
-            positionClass: 'toast-top-full-width',
-            hideDuration: 15,
-            timeOut: 6000
-        }
-        toastr.clear()
-        setTimeout(() => toastr.error(msg), 300)
-    }
-
-    matchCadres(stdCode, ihrisCode) {
+    matchCadresToihris(stdCode, ihrisCode) {
         
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.props.launchToastr("You don't have permission for this.","ERROR");
             return;
         }
         let data = {
@@ -55,7 +47,7 @@ export default class MatchCadreComponent extends React.Component {
                         <button
                             onClick={() => {
 
-                                axios.post(`/hris/match_cadre`, data,{
+                                axios.post(`/hris/match_cadre_ihris`, data,{
                                     headers :{
                                         Authorization : 'Bearer '+localStorage.getItem('token')
                                     }
@@ -65,8 +57,11 @@ export default class MatchCadreComponent extends React.Component {
                                             Authorization : 'Bearer '+localStorage.getItem('token')
                                         }
                                     })
-                                        .then(res => this.setState({ countryCadres: res.data }))
-                                        .catch(err => console.log(err));
+                                    .then(res => this.setState({
+                                        countryCadres: res.data,
+                                        match_with_iHRIS: false
+                                    }))
+                                    .catch(err => console.log(err));
                                 }).catch(err => console.log(err));
 
                                 onClose();
@@ -77,6 +72,35 @@ export default class MatchCadreComponent extends React.Component {
                 );
             }
         });
+    }
+
+    matchCadresToself() {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.propos.launchToastr("You don't have permission for this.","ERROR");
+            return;
+        }
+
+        let data = {
+            cadres: this.state.filteredCountryCadres,
+        }
+        axios.post(`/hris/match_cadre_self/${localStorage.getItem('countryId')}`,data,{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
+            axios.get(`/countrycadre/cadres/${localStorage.getItem('countryId')}`,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.setState({
+                countryCadres: res.data,
+                match_with_self: false
+            });
+            this.launchToastr("Treatments validated successfully!","SUCCESS");
+        }).catch(err => console.log(err));
+        }).catch(err => console.log(err));
     }
 
     filterCtCadreByFaType(faTypeCode){
@@ -93,6 +117,23 @@ export default class MatchCadreComponent extends React.Component {
         }
     }
 
+    setCadreMatchOption(event){
+
+        let value = event.target.value;
+
+        if(value === "IHRIS"){
+            this.setState({
+                match_with_iHRIS : true,
+                match_with_self :false
+            })
+        }else{
+            this.setState({
+                match_with_self : true,
+                match_with_iHRIS : false
+            })
+        }
+    }
+
     render() {
 
         return (
@@ -100,11 +141,21 @@ export default class MatchCadreComponent extends React.Component {
                         <FormGroup>
                             <Col componentClass={ControlLabel} sm={20}>
                                 <div className="div-title">
-                                    <b>Match cadres to iHRIS</b>
+                                    <b>Match cadres</b>
                                 </div>
                                 <hr />
                             </Col>
                         </FormGroup>
+                        <div onChange={this.setCadreMatchOption.bind(this)}>
+                            <table className="radio-table" cellspacing="10">
+                                <tr>
+                                    <td><input type="radio" value="IHRIS" name="cadre_match_option" /> Match to iHRIS</td>
+                                    <td><input type="radio" value="SELF" name="cadre_match_option"/> No iHRIS</td>
+                                </tr>
+                            
+                            </table>
+                        </div>
+                        <hr/>
                         <div>
                             <table>
                                 <tr>
@@ -131,13 +182,22 @@ export default class MatchCadreComponent extends React.Component {
                             </table>
                         </div>
                         <br/>
+                        {this.state.match_with_self && 
+                            <div className="div-btn-no-dhis2">
+                                 <button className="button" onClick = {() => this.matchCadresToself()}><FaCheck /> Validate</button>
+                            </div>
+                        }
                         <div className="div-table">
                             <table className="table-list" cellspacing="5">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
+                                        {this.state.match_with_iHRIS && 
                                         <th>Hris code</th>
+                                        }
+                                        {this.state.match_with_iHRIS && 
                                         <th></th>
+                                        }
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,6 +206,7 @@ export default class MatchCadreComponent extends React.Component {
                                             <td>
                                                 {cadre.name}
                                             </td>
+                                            {this.state.match_with_iHRIS && 
                                             <td>
                                                 <InlineEdit
                                                         validate={this.validateTextValue}
@@ -164,11 +225,12 @@ export default class MatchCadreComponent extends React.Component {
                                                             }}
                                                 />
                                             </td>
-
+                                            }
+                                            {this.state.match_with_iHRIS && 
                                             <td>
                                                 <Col sm={10}>
                                                     <FormControl componentClass="select"
-                                                        onChange={e => this.matchCadres(cadre.std_code, e.target.value)}>
+                                                        onChange={e => this.matchCadresToihris(cadre.std_code, e.target.value)}>
                                                         <option key="000" value="000">Select value</option>
                                                         {(this.state.ihrisCadres.map(c =>
                                                             <option key={c.id} value={c.id} selected={(cadre.hris_code == c.id) ? true : false}>{c.name}</option>
@@ -176,6 +238,7 @@ export default class MatchCadreComponent extends React.Component {
                                                     </FormControl>
                                                 </Col>
                                             </td>
+                                            }
                                         </tr>
                                     )}
                                 </tbody>

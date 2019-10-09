@@ -19,7 +19,7 @@ export default class DashboardListComponent extends React.Component {
 
     render() {
         return (
-            <div className="dashboard-list">
+            
                 <div className="dashboard-list-div">
                     {this.props.dashboards.map(db =>
                         <table>
@@ -33,7 +33,7 @@ export default class DashboardListComponent extends React.Component {
                         </table>
                     )}
                 </div>
-            </div>
+            
         )
     }
 

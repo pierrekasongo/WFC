@@ -40,7 +40,6 @@ export default class CalculationPanel extends React.Component {
             treatmentToggle: true,
             cadreToggle: true,
             facilityToggle: true,
-            includeSalary:false,
             state: 'form',
             results: [],
             printable: [],
@@ -294,7 +293,6 @@ export default class CalculationPanel extends React.Component {
                     selectedFacilities: {},
                     selectedPeriod: this.state.selectedPeriod,
                     countryId : localStorage.getItem('countryId'),
-                    includeSalary: this.state.includeSalary
                 };
 
                 datas.selectedCadres = this.state.selectedCadres;
@@ -421,6 +419,48 @@ export default class CalculationPanel extends React.Component {
             });
         }
     }
+    saveAsFavorite(map){
+
+        let data = {};
+
+        let count=0;
+
+        if(map.size > 0){
+
+            for (var [key, value] of map) {
+
+                let fa_cadre = key.split('-');
+
+                //Format: ${currentWorkers}|${neededWorkers}|${currentSalary}|${neededSalary}`;
+
+                let values = value.split('|');
+
+                data[count] = {
+
+                    facilityId: fa_cadre[0],
+                    cadreId: fa_cadre[1],
+                    currentWorkers: values[0],
+                    neededWorkers: values[1],
+                    currentSalary: values[2],
+                    neededSalary: values[3]
+                }
+                count++;
+            }
+            
+            let datas = {
+                selectedData:data
+            }
+            axios.post(`/dashboard/save_as_favorite`,datas,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+                this.launchToastr('Results successfully added to dashboard.');
+            }).catch(err => console.log(err));
+        }else{
+            this.launchToastr('No data selected. Please check the boxes for the record you want to save.');
+        }
+    }
 
     render() {
         return (
@@ -498,19 +538,6 @@ export default class CalculationPanel extends React.Component {
                                 </Col>
                             </FormGroup>
 
-                            <FormGroup>
-                                
-                                <Col sm={10}>
-                                    <label>
-                                        <Checkbox
-                                            checked={this.state.includeSalary}
-                                            onChange={this.state.includeSalary = !this.state.includeSalary}
-                                            />
-                                            <span>Include salary estimate</span>
-                                    </label>
-                                </Col>
-                            </FormGroup>
-
                             <hr />
                             <div style={{ textAlign: "right", paddingTop: 10 }}>
                                 <Button bsStyle="warning" bsSize="medium" onClick={() => this.calculateClicked()}>Calculate pressure</Button>
@@ -532,6 +559,7 @@ export default class CalculationPanel extends React.Component {
                             <ResultComponent
                                 results={this.state.results}
                                 cadreDict={this.state.cadreDict}
+                                saveAsFavorite={(data) => this.saveAsFavorite(data)}
                             />
                         }
                     </div>

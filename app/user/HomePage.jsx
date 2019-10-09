@@ -9,9 +9,11 @@ import {BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Le
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { Translation } from 'react-i18next';
+import { confirmAlert } from 'react-confirm-alert';
 
 import DashboardManager from '../dashboard/DashboarManagerComponent';
 import DashboardList from '../dashboard/DashboarListComponent';
+import NewDashboardComponent from '../dashboard/NewDashboardComponent';
 
 class HomePage extends React.Component {
 
@@ -23,20 +25,20 @@ class HomePage extends React.Component {
             facilitiesCount:0,
             staffCount:0,
             cadreCount:0,
-            facilitiesCombo: [],
             facilityInputs: {},
             selectedFacilities: {},
             showChart:true,
             showTable:false,
             dashboards:[],
+            filteredDashboards:[],
             dashboardsList:[],
             facilityTypes:[],
             filteredFacilities:[],
-            favorites:[],
-            fovoritesCombo:[],
             showManageDashboard:false,
             value:'en_us', 
-            selectedDashboard:{},         
+            selectedDashboard:{},
+            showNewDashboard : false,  
+            dashboardToDelete:0,
         };
 
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
@@ -53,13 +55,14 @@ class HomePage extends React.Component {
             })
         }).catch(err => console.log(err));
 
-        axios.get(`/dashboard/get_dashboard/${localStorage.getItem('countryId')}/0`,{
+        axios.get(`/dashboard/get_dashboard/${localStorage.getItem('countryId')}/${localStorage.getItem('defaultDashboard')}`,{
             headers :{
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
             this.setState({
-                dashboards : res.data
+                dashboards : res.data,
+                filteredDashboards:res.data
             });
         }).catch(err => console.log(err));
 
@@ -110,25 +113,6 @@ class HomePage extends React.Component {
                 cadreCount: res.data[0].nb
             });           
         }).catch(err => console.log(err));
-
-        axios.get(`/dashboard/get_favorites/${localStorage.getItem('countryId')}`,{
-
-            headers :{
-
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-
-            this.setState({favorites: res.data});
-
-            let favoritesCombo = [];
-
-            res.data.forEach(fv => {
-
-                favoritesCombo.push({ label: fv.label, value: fv.id });
-            });
-            this.setState({favoritesCombo: favoritesCombo});       
-        }).catch(err => console.log(err));
     }
 
     /*componentDidMount() {
@@ -158,28 +142,6 @@ class HomePage extends React.Component {
         });
     }
 
-    loadChart(){
-
-        let data = {
-            selectedFacilities : this.state.selectedFacilities
-        }
-        this.setState({
-            showChart: false,
-            showTable: false
-        });
-        axios.post(`/dashboard`,data,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
-            }
-        }).then(res => {
-            this.setState({
-                dashboards: res.data,
-                showChart:true
-            });
-                
-        }).catch(err => console.log(err));
-    }
-
     displayToggle(type){
 
         if(type === "TABLE"){
@@ -195,35 +157,12 @@ class HomePage extends React.Component {
         }
     }
 
-    filterFacilityByType(faTypeCode){
-
-        let facilities = this.state.facilities;
-        
-        if(faTypeCode === "0"){
-            this.setState({filteredFacilities:facilities});
-        }else{
-
-            let filtered = facilities.filter(fa => fa.faTypeCode.includes(faTypeCode));
-
-            //this.setState({filteredFacilities: filtered});
-            let facilitiesCombo = [];
-
-            filtered.forEach(fa => {
-
-                let id = fa.id+'|'+fa.code
-
-                facilitiesCombo.push({ label: fa.name, value: id });
-            });
-            this.setState({facilitiesCombo: facilitiesCombo});
-        }
-    }
-
     showDashboard(id,name,detail){
 
         let dash = {
             id:id,
             name:name,
-            detail:detail
+            detail:detail,
         }
 
         this.setState({selectedDashboard:dash});
@@ -233,7 +172,10 @@ class HomePage extends React.Component {
                 Authorization : 'Bearer '+localStorage.getItem('token')
             }
         }).then(res => {
-            this.setState({dashboards : res.data});
+            this.setState({
+                dashboards : res.data,
+                filteredDashboards : res.data
+            });
         }).catch(err => console.log(err));
     }
 
@@ -260,6 +202,125 @@ class HomePage extends React.Component {
         setTimeout(() => toastr.error(msg), 300)
     }
 
+    dashboardByFacilityType(type){
+
+        let dashboards = this.state.dashboards;
+
+        if(type === "0"){
+
+            this.setState({filteredDashboards : dashboards});
+
+        }else{
+        
+            let filtered = dashboards.filter(ds => ds.facilityType.includes(type));
+
+            this.setState({filteredDashboards : filtered});
+        }
+    }
+
+    saveDashboard(info){
+
+        if(info.name.length === 0 || info.description.length === 0){
+
+            this.launchToastr("Name and description can't be empty");
+        }else{
+            let data = {
+
+                name: info.name,
+                description : info.description
+            }
+            axios.post(`/dashboard/add_dashboard/${localStorage.getItem('countryId')}`,data,{
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            }).then(res => {
+
+                axios.get(`/dashboard/dashboards/${localStorage.getItem('countryId')}`,{
+                    headers :{
+                        Authorization : 'Bearer '+localStorage.getItem('token')
+                    }
+                }).then(res => {
+
+                    this.setState({
+                        dashboardsList : res.data,
+                        showNewDashboard:false
+                    });
+
+                }).catch(err => console.log(err));
+                
+            }).catch(err => console.log(err));
+        }
+    }
+
+    cancelSave(){
+        this.setState({showNewDashboard:false})
+    }
+
+    backFromManage(){
+        this.setState({showManageDashboard : false});
+    }
+
+    deleteDashboard(id) {
+
+        if(localStorage.getItem('role') === 'viewer'){
+            this.launchToastr("You don't have permission for this.");
+            return;
+        }
+
+        this.setState({
+            dashboardToDelete: id
+        });
+        confirmAlert({
+            customUI: ({ onClose }) => {
+                return (
+                    <div className='custom-ui'>
+                        <h3>Confirmation</h3>
+                        <p>Are you sure you want to delete this dashboard?</p>
+                        <button onClick={onClose}>No</button> &nbsp;&nbsp;
+                        <button
+                            onClick={() => {
+
+                                axios.delete(`/dashboard/delete_dashboard/${this.state.dashboardToDelete}`,{
+                                    headers :{
+                                        Authorization : 'Bearer '+localStorage.getItem('token')
+                                    }
+                                }).then((res) => {
+
+                                        axios.get(`/dashboard/dashboards/${localStorage.getItem('countryId')}`,{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
+                                            this.setState({
+                                                dashboardsList : res.data                                                
+                                            });
+                                        }).catch(err => console.log(err));
+
+                                        axios.get(`/dashboard/get_dashboard/${localStorage.getItem('countryId')}/${localStorage.getItem('defaultDashboard')}`,{
+                                            headers :{
+                                                Authorization : 'Bearer '+localStorage.getItem('token')
+                                            }
+                                        }).then(res => {
+                                            this.setState({
+                                                dashboards : res.data,
+                                                filteredDashboards:res.data,
+                                                showManageDashboard : false
+                                            });
+                                        }).catch(err => console.log(err));
+                                
+                                    }).catch(err => {
+                                        console.log(err);
+                                    });
+                                onClose();
+                            }}>
+                            Yes, Delete it!
+                  </button>
+                </div>
+                );
+            }
+        });
+    }
+
     render() {
         return (
             
@@ -268,37 +329,48 @@ class HomePage extends React.Component {
                     <p>Welcome <b>{localStorage.getItem('username')}</b>, logedin as <b>{localStorage.getItem('role')}</b></p>
                 </div>
                 <Panel bsStyle="primary" header="Home">
-
-                <div className="panel-dashboard-command">
-                    <div className="panel-dashboard-command-items">
-                        <div>
-                            <a href="#" className="add-new-link" onClick={() => this.setState({ showManageDashboard: true })}>
-                                <FaPlusSquare /> Add new dashboard
-                            </a>
+                {(!this.state.showNewDashboard && !this.state.showManageDashboard) &&
+                    <div className="panel-dashboard-command">
+                        <div className="panel-dashboard-command-items">
+                            <div>
+                                <a href="#" className="add-new-link" onClick={() => this.setState({showNewDashboard:true})}>
+                                    <FaPlusSquare /> Add new dashboard
+                                </a>
+                            </div>
+                            <div>
+                                <a href="#" className="add-new-link" onClick={() => this.showManageDashboard()}>
+                                    <FaCog /> Manage selected
+                                </a>
+                            </div>                       
                         </div>
-                        <div>
-                            <a href="#" className="add-new-link" onClick={() => this.showManageDashboard()}>
-                                <FaCog /> Manage
-                            </a>
-                        </div>                       
+                        <DashboardList 
+                            dashboards={this.state.dashboardsList}
+                            showDashboard={(id,name,detail) => this.showDashboard(id,name,detail)}                   
+                        />
                     </div>
-                    <DashboardList 
-                        dashboards={this.state.dashboardsList}
-                        showDashboard={(id,name,detail) => this.showDashboard(id,name,detail)}                   
-                    />
-                </div>
-                
+                }
                 <br/>
-                <div class="container">              
-                    {this.state.showManageDashboard && 
+                <div class="container">         
+                    {(this.state.showManageDashboard && !this.state.showNewDashboard) &&
                         <div>
                             <DashboardManager 
                                 dashboard={this.state.selectedDashboard}
-                                favoritesCombo={this.state.favoritesCombo}
+                                back={() => this.backFromManage()}
+                                delete={id => this.deleteDashboard(id)}
                             />
                         </div>
                     }
-                    {!this.state.showManageDashboard && 
+
+                    {this.state.showNewDashboard &&
+                        <div>
+                            <NewDashboardComponent 
+                                save = {info => this.saveDashboard(info)}
+                                cancel = {() => this.cancelSave()}
+                            />
+                        </div>
+                    }
+
+                    {(!this.state.showManageDashboard && !this.state.showNewDashboard) &&
                     <div>
                     <div class="row">
                         <div class="col-md-4 col-xl-3">
@@ -370,12 +442,6 @@ class HomePage extends React.Component {
                             
                         </div>
                         <hr/>
-
-                        <Col componentClass={ControlLabel} sm={20}>
-                            <div className="div-title">
-                                <b>Archived workforce pressure</b>
-                            </div>
-                        </Col>
                         <table cellpadding="15">
                             <tr>
                                 <td><b>Filter by facility type</b></td>
@@ -384,7 +450,7 @@ class HomePage extends React.Component {
                                     <Col sm={15}>
                                         <FormControl
                                             componentClass="select"
-                                            onChange={e => this.filterFacilityByType(e.target.value)}>
+                                            onChange={e => this.dashboardByFacilityType(e.target.value)}>
                                             <option value="0" key="000">Filter by facility type</option>
                                                 {this.state.facilityTypes.map(ft =>
                                                     <option
@@ -396,25 +462,6 @@ class HomePage extends React.Component {
                                         </FormControl>
                                     </Col>
                                  </FormGroup>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><b>Select facilities</b></td>
-                                <td>
-                                    <FormGroup>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <Multiselect
-                                                        options={this.state.facilitiesCombo}
-                                                        onChange={this.selectMultipleFacilities} />
-                                            </div>
-                                        </Col>
-                                    </FormGroup>
-                                </td>
-                                <td>
-                                    <div>
-                                        <button className="button" onClick={() => this.loadChart()}><FaCheck /> Display</button>
-                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -432,7 +479,7 @@ class HomePage extends React.Component {
                         </table>
                             {this.state.showChart && 
                                 <div className="chart-container">
-                                    {this.state.dashboards.map(dashData =>
+                                    {this.state.filteredDashboards.map(dashData =>
                                         <div className="chart-div">
                                             <div className="graph-title">{dashData.facility}</div>
                                             <div>

@@ -6,7 +6,8 @@ import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
-import { FaTrash, FaCloudUploadAlt, FaCheck, FaFileCsv, FaFolderOpen } from 'react-icons/fa';
+import { CSVLink} from "react-csv";
+import { FaTrash, FaCloudUploadAlt, FaCheck, FaFileCsv, FaFileImport } from 'react-icons/fa';
 import Multiselect from 'react-multiselect-checkboxes';
 //import TreeView from 'react-pretty-treeview';
 
@@ -19,7 +20,6 @@ export default class HRUploadPanel extends React.Component {
             progress: '',
             staffs: [],
             filteredStaffs:[],
-            
             staffToDelete: '',
 
             selectedFacilities: [],
@@ -33,8 +33,19 @@ export default class HRUploadPanel extends React.Component {
 
             facilityTypes: [],
 
+            importStatus:'done',
+
             showFilters:false,
+
+            showFiltersLeft:false,
+
+            csvData: [],
+
+            import_staff_from_file : false,
+            import_staff_from_iHRIS : false,
         };
+
+        this.csvLink = React.createRef();
 
         this.handleUploadHR = this.handleUploadHR.bind(this);
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
@@ -70,30 +81,25 @@ export default class HRUploadPanel extends React.Component {
         })
     }
 
-    launchToastr(msg) {
-        toastr.options = {
-            positionClass: 'toast-top-full-width',
-            hideDuration: 15,
-            timeOut: 6000
-        }
-        toastr.clear()
-        setTimeout(() => toastr.error(msg), 300)
-    }
-
     handleUploadHR(ev) {
 
         ev.preventDefault();
 
         const data = new FormData();
 
-        data.append('file', this.uploadHRInput.files[0]);
-
         if (this.uploadHRInput.files.length == 0) {
-            this.launchToastr("No file selected");
+            this.props.launchToastr("No file selected. Select a valid csv file please.", "ERROR");
             return;
         }
 
-        axios.post('/hris/uploadHR', data,
+        data.append('file', this.uploadHRInput.files[0]);
+
+        axios.post(`/hris/uploadHR/${localStorage.getItem('countryId')}`, data,
+            {
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            },
             {
                 onUploadProgress: progressEvent => {
                     var prog = (progressEvent.loaded / progressEvent.total) * 100;
@@ -102,20 +108,27 @@ export default class HRUploadPanel extends React.Component {
                 }
             })
             .then((result) => {
-                this.setState({ progress: result.data });
-                axios.get('/hris/workforce').then(res => {
-                    this.setState({
-                        staffs: res.data,
-                        filteredStaffs: res.data
-                    });
-                }).catch(err => console.log(err));
 
-            }).catch(err => {
-                if (err.response.status === 401) {
-                    this.props.history.push(`/login`);
-                } else {
-                    console.log(err);
+                if(result.status === 200){
+
+                    this.props.launchToastr("File imported successfully","SUCCESS");
+
+                    axios.get(`/hris/workforce/${localStorage.getItem('countryId')}`,{
+                        headers :{
+                            Authorization : 'Bearer '+localStorage.getItem('token')
+                        }
+                    }).then(res => {
+                        this.setState({
+                            staffs: res.data,
+                            filteredStaffs: res.data
+                         });
+                    }).catch(err => console.log(err));
+                }else{
+                    this.props.launchToastr(result.statusText,"ERROR");
                 }
+                
+            }).catch(err => {
+                this.launchToastr(err,"ERROR");
             });
     }
 
@@ -124,10 +137,21 @@ export default class HRUploadPanel extends React.Component {
         let selectedCadres = [];
 
         values.forEach(val => {
-            let code = val.value;
-            selectedCadres.push(code);
+
+            let codes = val.value.split("-");
+
+            let code = codes[1];
+
+            let name = val.label;
+
+            selectedCadres.push({
+                code:code,
+                name:name
+            });
         })
-        this.setState({ selectedCadres: selectedCadres });
+        this.setState({ 
+            selectedCadres: selectedCadres
+        });
     }
 
     selectMultipleFacilities(values) {
@@ -135,8 +159,17 @@ export default class HRUploadPanel extends React.Component {
         let selectedFacilities = [];
 
         values.forEach(val => {
-            let code = val.value
-            selectedFacilities.push(code);
+
+            let codes = val.value.split("-");
+
+            let code = codes[1];
+
+            let name = val.label;
+
+            selectedFacilities.push({
+                code:code,
+                name:name
+            });
         })
         this.setState({ selectedFacilities: selectedFacilities });
     }
@@ -144,7 +177,7 @@ export default class HRUploadPanel extends React.Component {
     handleStaffChange(obj) {
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.props.launchToastr("You don't have permission for this.","ERROR");
             return;
         }
 
@@ -185,7 +218,7 @@ export default class HRUploadPanel extends React.Component {
     async loadStaffFromiHRIS(){
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.props.launchToastr("You don't have permission for this.","ERRO");
             return;
         }
 
@@ -217,7 +250,7 @@ export default class HRUploadPanel extends React.Component {
     deleteStaff(id) {
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.props.launchToastr("You don't have permission for this.","ERROR");
             return;
         }
 
@@ -243,7 +276,10 @@ export default class HRUploadPanel extends React.Component {
                                                 Authorization : 'Bearer '+localStorage.getItem('token')
                                             }
                                         }).then(res => {
-                                            this.setState({ staffs: res.data });
+                                            this.setState({
+                                                staffs: res.data,
+                                                filteredStaffs: res.data
+                                             });
                                         }).catch(err => console.log(err));
 
                                     }).catch(err => {
@@ -349,6 +385,68 @@ export default class HRUploadPanel extends React.Component {
         }
     }
 
+    setImportStaffOption(event){
+
+        let value = event.target.value;
+
+        if(value === "iHRIS"){
+            this.setState({
+                import_staff_from_iHRIS : true,
+                import_staff_from_file :false
+            })
+        }else{
+            this.setState({
+                import_staff_from_file : true,
+                import_staff_from_iHRIS : false
+            })
+        }
+    }
+
+    generateCSV(){
+
+        let csvData = [];
+
+        if(!this.state.selectedFacilities.length > 0){
+            this.props.launchToastr("No facility selected. Please select some facilities.", "ERROR");
+            return;
+        }
+        if(!this.state.selectedCadres.length > 0){
+            this.props.launchToastr("No cadre selected. Please select some cadres ", "ERROR");
+            return;
+        }
+
+        let max = this.state.selectedFacilities.length;
+
+        let count = 1;
+
+        this.state.selectedFacilities.forEach(fa =>{
+
+            this.state.selectedCadres.forEach(cd =>{
+
+                csvData.push({
+                    facility_code:fa.code,
+                    facilicity_name:fa.name,
+                    cadre_code:cd.code,
+                    cadre_name:cd.name,
+                    staff_count:0
+                });
+            });
+            if(count == max){
+
+                this.setState({
+                    csvData:csvData
+                });
+
+                this.csvLink.current.link.click();
+            }
+            count++;
+        });
+        /*this.setState({
+            csvData:csvData
+        });
+        this.csvLink.current.link.click();*/
+    }
+
     render() {
         return (
             <div className="tab-main-container">
@@ -360,68 +458,140 @@ export default class HRUploadPanel extends React.Component {
                                     <FormGroup>
                                         <Col componentClass={ControlLabel} sm={20}>
                                             <div className="div-title">
-                                                <b>Load HR from iHRIS</b>
+                                                <b>Load # staffs</b>
                                             </div>
                                             <hr />
                                         </Col>
                                     </FormGroup>
 
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Select facility type</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <FormControl 
-                                                componentClass="select" 
-                                                onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
-                                                <option value="0" key="000">Filter by facility type</option>
-                                                {this.state.facilityTypes.map(ft =>
-                                                    <option key={ft.id}
-                                                        value={ft.code}>
-                                                        {ft.name_fr+'/'+ft.name_en}
-                                                    </option>
-                                                )}
-                                            </FormControl>
-                                        </Col>
-                                    </FormGroup>
-
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Facilities({(this.state.facilitiesCombo.length)})</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <Multiselect
-                                                    options={this.state.facilitiesCombo}
-                                                    onChange={this.selectMultipleFacilities} />
-                                            </div>
-
-                                        </Col>
-                                    </FormGroup>
-                                    <br/>
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Cadres({(this.state.cadresCombo.length)})</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <Multiselect
-                                                    options={this.state.cadresCombo}
-                                                    onChange={this.selectMultipleCadres} />
-                                            </div>
-                                        </Col>
-                                    </FormGroup>
+                                    <div onChange={this.setImportStaffOption.bind(this)}>
+                                        <table className="radio-table" cellspacing="10">
+                                            <tr>
+                                                <td><input type="radio" value="iHRIS" name="import_staff_option" /> Import from iHRIS</td>
+                                                <td><input type="radio" value="CSV" name="import_staff_option"/> Import from file</td>
+                                            </tr>            
+                                        </table>
+                                    </div>
                                     <hr/>
-                                    <Button bsStyle="warning" bsSize="small" onClick={() => this.loadStaffFromiHRIS()}>Upload from iHRIS</Button>
+                                    <a href="#" onClick={() => this.setState({showFiltersLeft : !this.state.showFiltersLeft})} >
+                                        Show/Hide filters
+                                    </a>
+                                    {this.state.showFiltersLeft &&
+                                    <div>
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Select facility type</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <FormControl 
+                                                    componentClass="select" 
+                                                    onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                                    <option value="0" key="000">Filter by facility type</option>
+                                                    {this.state.facilityTypes.map(ft =>
+                                                        <option key={ft.id}
+                                                            value={ft.code}>
+                                                            {ft.name_fr+'/'+ft.name_en}
+                                                        </option>
+                                                    )}
+                                                </FormControl>
+                                            </Col>
+                                        </FormGroup>
+
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Facilities({(this.state.facilitiesCombo.length)})</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <Multiselect
+                                                        options={this.state.facilitiesCombo}
+                                                        onChange={this.selectMultipleFacilities} />
+                                                </div>
+
+                                            </Col>
+                                        </FormGroup>
+                                        <br/>
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Cadres({(this.state.cadresCombo.length)})</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <Multiselect
+                                                        options={this.state.cadresCombo}
+                                                        onChange={this.selectMultipleCadres} />
+                                                </div>
+                                            </Col>
+                                        </FormGroup>
+                                        <hr />
+                                    </div>
+                                    }
+                                    <table>
+                                        {this.state.import_staff_from_iHRIS &&  
+                                        <tr>
+                                            <td>
+                                                {(this.state.importStatus == 'loading') && 
+                                                    <span className="loader-text"> Loading... </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <Button bsStyle="warning" bsSize="medium"  onClick={() => this.loadStaffFromiHRIS()}>
+                                                    <FaFileImport /> Import from iHRIS
+                                                </Button>
+                                            </td>
+                                            
+                                        </tr>
+                                        }
+                                        {this.state.import_staff_from_file && 
+                                        <tr>
+                                            <td></td>
+                                            <td>
+                                                <Button bsStyle="info" bsSize="medium" onClick={() => this.generateCSV()}>
+                                                    <FaFileCsv /> Generate template file
+                                                </Button>
+                                                <hr/>
+                                            </td>
+                                        </tr>
+                                        }
+                                    </table>
+                                    
+                                    {this.state.import_staff_from_file && 
+                                    <div>
+                                        <form onSubmit={this.handleUploadHR}>
+                                            <div class="upload-btn-wrapper">
+                                                <button class="btn">
+                                                    <FaCloudUploadAlt /> Load generated file...
+                                                </button>
+                                                <input ref={(ref) => { this.uploadHRInput= ref; }} type="file" />
+                                            </div>
+                                            <br />
+                                            <br />
+                                            <div>
+                                                <span>
+                                                    <button className="button">
+                                                        <FaCheck /> Upload this file
+                                                    </button><span> {this.state.progress}</span>
+                                                </span>
+                                            </div>
+                                        </form>
+                                        <div>
+                                            <CSVLink data={this.state.csvData} 
+                                                filename="staffs.csv"
+                                                className="hidden"
+                                                ref={this.csvLink}
+                                                target="_blank" /> 
+                                        </div>
+                                    </div>
+                                    }
                                 </div>
                             </div>
                             <br/><br/>
-
+        
                             <div className="calc-container-right">
                                 <div className="scrollable-container">
                                     <FormGroup>
                                         <div className="div-title">
-                                            <b>Workforce</b>
+                                            <b>Number of staffs</b>
                                         </div>
                                         <hr />                                      
                                     </FormGroup>

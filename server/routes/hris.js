@@ -87,7 +87,7 @@ let makeInsertSql = async (results) => {
     return sql;
 }
 
-router.post('/match_cadre', withAuth, function (req, res) {
+router.post('/match_cadre_ihris', withAuth, function (req, res) {
 
     let code = req.body.stdCode;
 
@@ -95,6 +95,24 @@ router.post('/match_cadre', withAuth, function (req, res) {
  
     db.query(`UPDATE country_cadre SET hris_code="${ihrisCode}" WHERE std_code="${code}"`, 
     function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
+
+router.post('/match_cadre_self/:countryId', withAuth, function (req, res) {
+
+    let cadres = req.body.cadres;
+
+    let countryId = req.params.countryId;
+
+    let sql = ``;
+
+    cadres.map(cd =>{
+        sql+=`UPDATE country_cadre SET hris_code="${cd.std_code}" WHERE std_code="${cd.std_code}" AND countryId=${countryId};`;
+    })
+
+    db.query(sql,function (error, results, fields) {
         if (error) throw error;
         res.json(results);
     });
@@ -470,47 +488,51 @@ router.get('/workforce/:cadre_code/:countryId',withAuth, (req, res) => {
         });
 });
 
-router.post('/uploadHR',withAuth, function (req, res) {
+router.post('/uploadHR/:countryId',withAuth, function (req, res) {
 
     if (!req.files) {
         return res.status(400).send('No files were uploaded');
     }
 
+    let upload_dir = process.env.FILE_UPLOAD_DIR;
+
+    let countryId = req.params.countryId;
+
+    let filename = `${countryId}_staffs.csv`;
+
+    let sql = "";
+
+    var obj = csv();
+
     //The name of the input field
     let file = req.files.file;
 
-    let filename = 'workforce.csv';
-
-    file.mv(`${__dirname}` + path.sep + 'uploads' + path.sep + 'ihris' + path.sep + `${filename}`, function (err) {
-        if (err) {
-            console.log("ERROR ", err);
+    file.mv(`${path.sep}${upload_dir}${path.sep}${filename}`, function (err) {
+        if (err)
             return res.status(500).send(err);
+        //res.status(200).send('File uploaded successfully');
+    //});
+
+    obj.from.path(`${path.sep}${upload_dir}${path.sep}${filename}`).to.array(function (data) {
+
+        for (var index = 1; index < data.length; index++) {
+
+            let facility_code = data[index][0];
+
+            let cadre_code = data[index][2];
+
+            let staff_count = parseInt(data[index][4]);
+
+            sql += `DELETE FROM staff WHERE facilityCode="${facility_code}" AND cadreCode="${cadre_code}";
+                    INSERT INTO staff (facilityCode,cadreCode,staffCount) VALUES("${facility_code}","${cadre_code}",${staff_count});`;
         }
-
-        var obj = csv();
-
-        let sql = ``;
-
-        obj.from.path(`${__dirname}` + path.sep + 'uploads' + path.sep + 'ihris' + path.sep + `${filename}`).to.array(function (data) {
-
-            for (var index = 1; index < data.length; index++) {//index starts by 2 to length-1 to avoid <table> header and footer
-
-                let facility_code = data[index][0];
-
-                let cadre_code = data[index][2];
-
-                let staff_count = data[index][4];
-
-                console.log(facility_code, cadre_code, staff_count);
-
-                sql += `INSERT INTO staff (facilityCode,cadreCode,staffCount) VALUES("
-                       ${facility_code}","${cadre_code}",${staff_count});`;
-            }
-            db.query(sql, function (error, results) {
-                if (error) throw error;
-                res.status(200).send('File uploaded successfully');
-            });
+        db.query(sql, function (error, results) {
+            if (error)
+                res.status(401).send(error);
+            res.status(200).send('success');
         });
+
+    });
 
     });
 });

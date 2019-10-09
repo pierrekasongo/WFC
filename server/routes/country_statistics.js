@@ -40,7 +40,8 @@ router.post('/generateStatTemplate',withAuth, function (req, res) {
     
     let count=0;
 
-    db.query(`SELECT * FROM country_treatment WHERE cadre_code="${cadre}" WHERE countryId=${countryId}`, function (error, results, fields) {
+    db.query(`SELECT * FROM country_treatment WHERE cadre_code="${cadre}" WHERE countryId=${countryId}`, 
+    function (error, results, fields) {
         if (error) throw error;
         results.forEach(rs =>{
 
@@ -94,12 +95,13 @@ router.get('/statistics/:facilityCode/:cadreCode',withAuth, (req, res) => {
 
     let cadreCode = req.params.cadreCode;
 
-    let sql = `SELECT act_st.id as id,act_st.activityCode as treatment, 
-                act_st.cadreCode AS cadre_code,act_st.caseCount as patients, 
+    let sql = `SELECT act_st.id as id,act_st.dhis2Code as treatment, 
+                act_st.cadreCode AS cadre_code,SUM(act_st.caseCount) as patients, 
                 act_st.year as year, ct_treat.name_std, ct_treat.name_customized 
                 FROM  activity_stats act_st, country_treatment_dhis2 tr_dhis, 
-                country_treatment ct_treat WHERE act_st.activityCode = tr_dhis.dhis2_code AND 
-                tr_dhis.treatment_code = ct_treat.std_code  AND act_st.facilityCode="${facilityCode}" AND act_st.cadreCode="${cadreCode}"`;
+                country_treatment ct_treat WHERE act_st.dhis2Code = tr_dhis.dhis2_code AND 
+                tr_dhis.treatment_code = ct_treat.std_code  AND act_st.facilityCode="${facilityCode}" 
+                AND act_st.cadreCode="${cadreCode}" GROUP BY act_st.treatmentCode`;
 
     db.query(sql, function (error, results, fields) {
         if (error) throw error;
@@ -120,5 +122,60 @@ router.patch('/editPatientsCount',withAuth, (req, res) => {
         res.json(results);
     });
 });
+
+router.post('/upload/:countryId',withAuth, function (req, res) {
+
+    if (!req.files)
+        return res.status(400).send('No file was uploaded');
+
+    let upload_dir = process.env.FILE_UPLOAD_DIR;
+    //The name of the input field
+    let file = req.files.file;
+
+    let countryId = req.params.countryId;
+
+    let filename =  `${countryId}_treatment_stats.csv`;
+
+    //Use the mv() method to place the file somewhere on the server
+    file.mv(`${path.sep}${upload_dir}${path.sep}${filename}`, function (err) {
+        if (err)
+            return res.status(500).send(err);
+        res.status(200).send('File uploaded successfully');
+        //return res.status(200).send('File uploaded successfully');
+    });
+
+    let sql = "";
+
+    var obj = csv();
+
+    obj.from.path(`${path.sep}${upload_dir}${path.sep}${filename}`).to.array(function (data) {
+
+        for (var index = 1; index < data.length; index++) {
+
+            let faCodes = data[index][0];
+
+            let facilityCode = faCodes.split("|");
+
+            let cadreCode = data[index][2];
+
+            let treatmentCode = data[index][4];
+
+            let period = data[index][6];
+
+            let value = parseInt(data[index][7]);
+
+            sql += `DELETE FROM activity_stats WHERE facilityCode ="${facilityCode[1]}" AND treatmentCode="${treatmentCode}"  
+                    AND cadreCode="${cadreCode}";`;
+            sql += `INSERT INTO activity_stats (facilityCode,treatmentCode,year,dhis2Code,cadreCode,caseCount) 
+                            VALUES("${facilityCode[1]}","${treatmentCode}","${period}","${treatmentCode}","${cadreCode}",${value});`;
+        }
+           
+        db.query(sql, function (error, results) {
+            if (error) throw error;
+            res.status(200);
+        });
+
+    });
+})
 
 module.exports = router;

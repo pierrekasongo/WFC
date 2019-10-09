@@ -38,6 +38,7 @@ class App extends React.Component {
           this.loginHandler = this.loginHandler.bind(this);
           this.logoutHandler = this.logoutHandler.bind(this);
     }
+    
     componentDidMount() {
         const token = localStorage.getItem('token');
         const expiryDate = localStorage.getItem('expiryDate');
@@ -75,6 +76,7 @@ class App extends React.Component {
         localStorage.removeItem('roleId');
         localStorage.removeItem('role');
         localStorage.removeItem('language');
+        localStorage.removeItem('defaultDashboard');
     };
 
     setAutoLogout(milliseconds) {
@@ -132,6 +134,7 @@ class App extends React.Component {
             localStorage.setItem('roleId',res.data.roleId);
             localStorage.setItem('role',res.data.role);
             localStorage.setItem('language',res.data.language);
+            localStorage.setItem('defaultDashboard',res.data.defaultDashboard);
 
             //Update last login
             data = {

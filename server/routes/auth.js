@@ -18,12 +18,12 @@ router.get('/users/:countryId/:role', withAuth,function(req, res){
 
     let role = req.params.role;
 
-    let sql=`SELECT users.id,login,users.name,email,r.name as role, last_login, ct.name_en as country,users.countryId  
+    let sql=`SELECT users.id,login,users.name,email,r.name as role, last_login, default_dashboard, ct.name_en as country,users.countryId  
             FROM users, user_roles r, country ct WHERE users.roleId=r.id AND users.countryId=ct.id AND countryId =${countryId};`;
 
     if(role == 'super_user'){
 
-        sql=`SELECT users.id,login,users.name,email,r.name as role, last_login, ct.name_en as country,users.countryId 
+        sql=`SELECT users.id,login,users.name,email,r.name as role, last_login, default_dashboard, ct.name_en as country,users.countryId 
             FROM users, user_roles r, country ct WHERE users.roleId=r.id AND users.countryId=ct.id`;
     }
     
@@ -36,7 +36,7 @@ router.get('/users/:countryId/:role', withAuth,function(req, res){
 let getUserByLogin = async login => {
 
     let sql = `SELECT u.id, u.name AS name, u.login, u.email, u.password, u.countryId, r.id AS roleId, r.name AS role, 
-                u.languageCode AS language FROM users u, user_roles r WHERE u.roleId=r.id AND 
+                default_dashboard,u.languageCode AS language FROM users u, user_roles r WHERE u.roleId=r.id AND 
                 login ="${login}";`
 
     let results = await new Promise((resolve, reject) => db.query(sql, function (error, results) {
@@ -89,6 +89,7 @@ router.post('/login', async function(req, res, next){
             username: user.name,
             email: user.email,
             countryId: user.countryId,
+            defaultDashboard: user.default_dashboard,
             roleId: user.roleId,
             role: user.role,
             language:user.language
@@ -102,7 +103,7 @@ router.get('/get_user/:userId',withAuth, function(req, res){
     let userId = req.params.userId;
     
     db.query(`SELECT u.id, u.name AS name, u.login, u.email, u.countryId, r.id AS roleId, 
-                r.name AS role, u.languageCode AS languageCode, u.last_login, l.name as language 
+                r.name AS role, u.languageCode AS languageCode, u.last_login,default_dashboard,l.name as language 
                 FROM users u, user_roles r, system_languages l WHERE u.id =${userId} AND 
                 u.roleId = r.id AND u.languageCode=l.code;`,function(error,results,fields){
 
@@ -196,6 +197,18 @@ router.post('/signup', withAuth,async function(req, res){
         });
 
     })
+});
+
+router.patch('/set_default_dashboard/:userId', withAuth, function(req, res){
+
+    let dashId = req.body.dashId;
+
+    let userId = req.params.userId;
+
+    db.query(`UPDATE users SET default_dashboard =${dashId} WHERE id=${userId}` ,function(error,results,fields){
+        if(error) throw error;
+       res.status(200).send("User created successfully!");
+    });
 });
 
 module.exports = router;

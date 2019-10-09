@@ -5,7 +5,7 @@ import axios from 'axios';
 import InlineEdit from 'react-edit-inline2';
 import Multiselect from 'react-multiselect-checkboxes';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { FaTrash, FaCheck, FaCheckSquare, FaArrowRight, FaFileCsv,FaFileImport } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaCheckSquare, FaArrowRight, FaFileCsv,FaFileImport,FaCloudUploadAlt } from 'react-icons/fa';
 import { CSVLink, CSVDownload } from "react-csv";
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
@@ -37,14 +37,20 @@ export default class StatisticsPage extends React.Component {
             statistics: [],
             filteredStats: [],
             state: 'done',
-
+            progress:'',
             facilitiesCombo: [],
+            csvData:[],
 
             cadresCombo: [],
             facilityTypes: [],
             selectedFacilities: [],
             selectedCadres: [],
-            csvData: []
+            
+            importStatus:'done',
+            import_patients_from_dhis2 : false,
+            import_patients_from_file :false,
+            showFilters:false,
+            showUploader:false
         };
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
         this.selectMultipleCadres = this.selectMultipleCadres.bind(this);
@@ -52,6 +58,7 @@ export default class StatisticsPage extends React.Component {
         this.csvLink=React.createRef();
 
         this.importStatisticsFromDhis2 = this.importStatisticsFromDhis2.bind(this);
+        this.handleUploadPatients= this.handleUploadPatients.bind(this);
 
         axios.get('/metadata/facilityTypes',{
             headers :{
@@ -112,7 +119,7 @@ export default class StatisticsPage extends React.Component {
     handlePatientsChange(obj) {
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.launchToastr("You don't have permission for this.","ERROR");
             return;
         }
 
@@ -151,14 +158,20 @@ export default class StatisticsPage extends React.Component {
         });
     }
 
-    launchToastr(msg) {
+    launchToastr(msg,type) {
         toastr.options = {
             positionClass: 'toast-top-full-width',
             hideDuration: 15,
             timeOut: 6000
         }
         toastr.clear()
-        setTimeout(() => toastr.error(msg), 300)
+        if(type === "ERROR"){
+            setTimeout(() => toastr.error(msg), 300);
+        }else if(type === "WARNING"){
+            setTimeout(() => toastr.warning(msg), 300);
+        }else{
+            setTimeout(() => toastr.success(msg), 300);
+        }
     }
 
     filterStatByFacility(facility) {
@@ -191,17 +204,20 @@ export default class StatisticsPage extends React.Component {
         let csvData = [];
         let value="";
 
+        if(this.state.selectedPeriod === '0'){
+            this.launchToastr("No period selected.", "ERROR");
+            return;
+        }
         if(!this.state.selectedFacilities.length > 0){
-            this.launchToastr("No facility selected.");
+            this.launchToastr("No facility selected.", "ERROR");
             return;
         }
-        if(this.state.selectedCadreLeft ==='' || this.state.selectedCadreLeft === "0"){
-            this.launchToastr("No cadre selected.");
-            return;
-        }if(this.state.selectedPeriod === ""){
-            this.launchToastr("No period selected.");
+        if(this.state.selectedCadreLeft === '0' || this.state.selectedCadreLeft === "0"){
+            this.launchToastr("No cadre selected.", "ERROR");
             return;
         }
+
+        let facilities = this.state.selectedFacilities;
 
         let data = {
             selectedCadre: this.state.selectedCadreLeft,
@@ -226,12 +242,12 @@ export default class StatisticsPage extends React.Component {
 
                     csvData.push({
                         facility_code:fa.code,
-                        facilicity:fa.name,
+                        facilicity_name:fa.name,
                         cadre_code:treat.cadre_code,
-                        cadre:treat.cadre_name,
+                        cadre_name:treat.cadre_name,
                         treatment_code:treat.code,
-                        treatment:tr_name,
-                        period:year,
+                        treatment_name:tr_name,
+                        period:this.state.selectedPeriod,
                         value:value
                     });
 
@@ -244,28 +260,26 @@ export default class StatisticsPage extends React.Component {
     
             this.csvLink.current.link.click();
 
-        }).catch(err => console.log(err));
-
-        
+        }).catch(err => console.log(err)); 
     }
 
     importStatisticsFromDhis2() {
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.launchToastr("You don't have permission for this.", "ERROR");
             return;
         }
 
         if (this.state.selectedPeriod.length == 0) {
-            this.launchToastr("Please, select a year first before calculating.");
+            this.launchToastr("Please, select a year first before calculating.", "ERROR");
             return;
         }
         if (typeof (this.state.selectedFacilities) == 'undefined') {
-            this.launchToastr("No facility selected.");
+            this.launchToastr("No facility selected.", "ERROR");
             return;
         }
         if (typeof (this.state.selectedCadreLeft) === '' || this.state.selectedCadreLeft === '0') {
-            this.launchToastr("No cadre selected.");
+            this.launchToastr("No cadre selected.", "ERROR");
             return;
         }
 
@@ -276,7 +290,7 @@ export default class StatisticsPage extends React.Component {
             countryId : localStorage.getItem('countryId')
         };
 
-        this.setState({ state: 'loading' });
+        this.setState({ importStatus: 'loading' });
 
         axios.post(`/dhis2/import_statistics_from_dhis2`, data,{
             headers :{
@@ -292,7 +306,7 @@ export default class StatisticsPage extends React.Component {
                 this.setState({
                     statistics: res.data,
                     filteredStats: res.data,
-                    state:'done'
+                    importStatus:'done'
                 })
 
             }).catch(err => console.log(err));
@@ -303,20 +317,20 @@ export default class StatisticsPage extends React.Component {
     useStatistics(){
 
         if(localStorage.getItem('role') === 'viewer'){
-            this.launchToastr("You don't have permission for this.");
+            this.launchToastr("You don't have permission for this.", "ERROR");
             return;
         }
 
         if (this.state.selectedPeriod.length == 0) {
-            this.launchToastr("Please, select a year before calculating.");
+            this.launchToastr("Please, select a year before calculating.", "ERROR");
             return;
         }
         if (typeof (this.state.selectedFacilities) == 'undefined') {
-            this.launchToastr("No facility selected.");
+            this.launchToastr("No facility selected.", "ERROR");
             return;
         }
         if (typeof (this.state.selectedCadres) == 'undefined') {
-            this.launchToastr("No cadre selected.");
+            this.launchToastr("No cadre selected.", "ERROR");
             return;
         }
 
@@ -413,13 +427,76 @@ export default class StatisticsPage extends React.Component {
         }
     }
 
+    setImportPatientOption(event){
+
+        let value = event.target.value;
+
+        if(value === "DHIS2"){
+            this.setState({
+                import_patients_from_dhis2 : true,
+                import_patients_from_file :false
+            })
+        }else{
+            this.setState({
+                import_patients_from_file : true,
+                import_patients_from_dhis2 : false
+            })
+        }
+    }
+
+    handleUploadPatients(ev) {
+
+        ev.preventDefault();
+
+        const data = new FormData();
+
+        if (this.uploadPatientsInput.files.length == 0) {
+            this.launchToastr("No file selected","ERROR");
+            return;
+        }
+
+        data.append('file', this.uploadPatientsInput.files[0]);
+
+        axios.post(`/countrystatistics/upload/${localStorage.getItem('countryId')}`, data,
+            {
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            },
+            {
+                onUploadProgress: progressEvent => {
+                    var prog = (progressEvent.loaded / progressEvent.total) * 100;
+                    var pg = (prog < 100) ? prog.toFixed(2) : prog.toFixed(0);
+                    this.setState({ progress: pg });
+                    //console.log(pg+"%");
+                }
+            })
+            .then((result) => {
+
+                this.setState({
+                    progress: result.data,
+
+                });
+
+                this.launchToastr("Data uploaded successfully.", "SUCCESS");
+
+                //Selecte all statistics
+            }).catch(err => {
+                if (err.response.status === 401) {
+                    this.props.history.push(`/login`);
+                } else {
+                    console.log(err);
+                }
+            });
+    }
+
     render() {
         return (
-            <Panel bsStyle="primary" header="Import data from iHRIS/DHIS2">
+            <Panel bsStyle="primary" header="Data import">
                 <Tabs>
                     <TabList>
-                        <Tab>Treatments statistics</Tab>
-                        <Tab>Staff</Tab>
+                        <Tab>Yearly statistics</Tab>
+                        <Tab># Staff</Tab>
                     </TabList>
                     <TabPanel>
                         <div className="calc-container">
@@ -428,92 +505,178 @@ export default class StatisticsPage extends React.Component {
                                     <div className="div-title">
                                         <b>Set import values</b>
                                     </div>
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Year</b>
-                                        </Col>
 
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <FormControl componentClass="select"
-                                                    onChange={e => this.setState({ selectedPeriod: e.target.value })}>
-                                                    <option key="000" value="000">Select year </option>
-                                                    {(this.state.years.map(yr =>
-                                                        <option key={yr.id} value={yr.year}>{yr.year}</option>
-                                                    ))}
-                                                </FormControl>
-                                            </div>
-                                        </Col>
-                                    </FormGroup>
-                                    <br/>
+                                    <div onChange={this.setImportPatientOption.bind(this)}>
+                                        <table className="radio-table" cellspacing="10">
+                                            <tr>
+                                                <td><input type="radio" value="DHIS2" name="import_patient_option" /> Import from DHIS2</td>
+                                                <td><input type="radio" value="CSV" name="import_patient_option"/> Import from file</td>
+                                            </tr>            
+                                        </table>
+                                    </div>
+                                    <hr/>
+                                    <a href="#" onClick={() => this.setState({showFilters : !this.state.showFilters})} >
+                                        Show/Hide filters
+                                    </a>
+                                    {this.state.showFilters &&
+                                    <div>
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Year</b>
+                                            </Col>
 
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Select facility type</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <FormControl
-                                                    componentClass="select"
-                                                    onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
-                                                    <option value="0" key="000">Filter by facility type</option>
-                                                    {this.state.facilityTypes.map(ft =>
-                                                        <option
-                                                            key={ft.id}
-                                                            value={ft.code}>
-                                                            {ft.name_fr+'/'+ft.name_en}
-                                                        </option>
-                                                    )}
-                                                </FormControl>
-                                            </div>
-                                        </Col>
-                                    </FormGroup>
-                                    <br/>
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Facilities({(this.state.facilitiesCombo.length)})</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <Multiselect
-                                                    options={this.state.facilitiesCombo}
-                                                    onChange={this.selectMultipleFacilities} />
-                                            </div>
-                                        </Col>
-                                    </FormGroup>
-                                    <br/>
-                                    <FormGroup>
-                                        <Col componentClass={ControlLabel} sm={10}>
-                                            <b>Cadres({(this.state.filteredCadresLeft.length)})</b>
-                                        </Col>
-                                        <Col sm={15}>
-                                            <div className="div-multiselect">
-                                                <FormControl
-                                                    componentClass="select"
-                                                    onChange={e => this.setState({selectedCadreLeft: e.target.value})}>
-                                                    <option key="000" value="0">Filter by cadre</option>
-                                                        {this.state.filteredCadresLeft.map(cd =>
-                                                            <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
-                                                    )}
-                                                </FormControl>
-                                            </div>
-                                            {/*<div className="div-multiselect">
-                                                <Multiselect
-                                                    options={this.state.cadresCombo}
-                                                    onChange={this.selectMultipleCadres} />
-                                            </div>*/}
-                                        </Col>
-                                    </FormGroup>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <FormControl componentClass="select"
+                                                        onChange={e => this.setState({ selectedPeriod: e.target.value })}>
+                                                        <option key="000" value="0">Select year </option>
+                                                        {(this.state.years.map(yr =>
+                                                            <option key={yr.id} value={yr.year}>{yr.year}</option>
+                                                        ))}
+                                                    </FormControl>
+                                                </div>
+                                            </Col>
+                                        </FormGroup>
+                                        <br/>
+
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Select facility type</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.filterCadreFacilitiesByFaType(e.target.value)}>
+                                                        <option value="0" key="000">Filter by facility type</option>
+                                                        {this.state.facilityTypes.map(ft =>
+                                                            <option
+                                                                key={ft.id}
+                                                                value={ft.code}>
+                                                                {ft.name_fr+'/'+ft.name_en}
+                                                            </option>
+                                                        )}
+                                                    </FormControl>
+                                                </div>
+                                            </Col>
+                                        </FormGroup>
+                                        <br/>
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Facilities({(this.state.facilitiesCombo.length)})</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <Multiselect
+                                                        options={this.state.facilitiesCombo}
+                                                        onChange={this.selectMultipleFacilities} />
+                                                </div>
+                                            </Col>
+                                        </FormGroup>
+                                        <br/>
+                                        <FormGroup>
+                                            <Col componentClass={ControlLabel} sm={10}>
+                                                <b>Cadres({(this.state.filteredCadresLeft.length)})</b>
+                                            </Col>
+                                            <Col sm={15}>
+                                                <div className="div-multiselect">
+                                                    <FormControl
+                                                        componentClass="select"
+                                                        onChange={e => this.setState({selectedCadreLeft: e.target.value})}>
+                                                        <option key="000" value="0">Filter by cadre</option>
+                                                            {this.state.filteredCadresLeft.map(cd =>
+                                                                <option key={cd.std_code} value={cd.std_code}>{cd.name}</option>
+                                                        )}
+                                                    </FormControl>
+                                                </div>
+                                                {/*<div className="div-multiselect">
+                                                    <Multiselect
+                                                        options={this.state.cadresCombo}
+                                                        onChange={this.selectMultipleCadres} />
+                                                </div>*/}
+                                            </Col>
+                                        </FormGroup>
+                                    </div>
+                                    }
                                     <hr />
-                                    <div style={{ textAlign: "right", padding: 10 }}>
-                                        <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>
-                                            <FaFileImport /> Import statistics from DHIS2
-                                        </Button>
+                                    <table>
+                                        {this.state.import_patients_from_dhis2 &&
+                                        <tr>
+                                            <td>
+                                                {(this.state.importStatus == 'loading') && 
+                                                    <span className="loader-text"> Loading... </span>
+                                                }
+                                            </td>
+                                           
+                                            <td>
+                                                    <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>
+                                                        <FaFileImport /> Import statistics from DHIS2
+                                                    </Button>
+                                                {/*<div className="div-btn-no-dhis2">
+                                                    <button className="button" onClick={this.importStatisticsFromDhis2}><FaFileImport /> Import statistics from DHIS2</button>
+                                                </div>*/}
+                                            </td>
+                                            
+                                        </tr>
+                                        }
+                                        {this.state.import_patients_from_file &&
+                                        <tr>
+                                            <td></td>
+                                            <td>
+                                                {/*<div className="div-btn-no-dhis2">
+                                                    <button className="button" onClick = {() => this.generateCSV()}><FaFileCsv /> Generate file template</button>
+                                                </div>*/}
+                                                <Button bsStyle="info" bsSize="medium" onClick={() => this.generateCSV()}>
+                                                    <FaFileCsv /> Generate template file
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                        }
+                                    </table>
+                                    <br/>
+                                    {this.state.import_patients_from_file && 
+                                    <div>
+                                        <form onSubmit={this.handleUploadPatients}>
+                                            {/*<div>
+                                                <input ref={(ref) => { this.uploadCadreInput = ref; }} type="file" />
+                                            </div>*/}
+                                            <div class="upload-btn-wrapper">
+                                                <button class="btn">
+                                                    <FaCloudUploadAlt /> Load generated file...
+                                                </button>
+                                                <input ref={(ref) => { this.uploadPatientsInput = ref; }} type="file" />
+                                            </div>
+                                            <br />
+                                            <br />
+                                            <div>
+                                                <span>
+                                                    <button className="button">
+                                                        <FaCheck /> Upload this file
+                                                    </button><span> {this.state.progress}</span>
+                                                </span>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    }
+                                    {/*<div style={{ textAlign: "right", padding: 10 }}>
+                                        <div className="import-stat">
+                                            <div>
+                                                <Button bsStyle="warning" bsSize="medium" onClick={this.importStatisticsFromDhis2}>
+                                                    <FaFileImport /> Import statistics from DHIS2
+                                                </Button>
+                                            </div>
+                                            {(this.state.importStatus == 'loading') && 
+                                                <div>
+                                                    <span className="loader-text"> Loading... </span>
+                                                </div>
+                                            }
+                                        </div>
+                                            
                                         <br/><br/>
                                         <Button bsStyle="info" bsSize="medium" onClick={() => this.generateCSV()}>
                                             <FaFileCsv /> Generate csv
                                         </Button>
-                                    </div>
+                                    </div>*/}
 
                                     <div>
                                         <CSVLink data={this.state.csvData} 
@@ -542,7 +705,8 @@ export default class StatisticsPage extends React.Component {
                     <TabPanel>
                         <HRUploadPanel 
                             cadres ={this.state.cadres}
-                            facilities={this.state.facilities} />
+                            facilities={this.state.facilities} 
+                            launchToastr={(msg,type) => this.launchToastr(msg,type)}/>
                     </TabPanel>
                 </Tabs>
             </Panel>

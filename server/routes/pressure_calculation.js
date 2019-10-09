@@ -24,8 +24,6 @@ router.post('/',withAuth, (req, res) => {
 
     let facilities = req.body.selectedFacilities;
 
-    let includeSalary = req.body.includeSalary;
-
     //Getting cadre ids 
     let cadreIds = [];
 
@@ -87,17 +85,17 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
     //let concernedTreatmentsQuery= `SELECT id, ratio FROM activities WHERE `;
     let treatmentsQuery = `SELECT ct_dhis.dhis2_code as id,ct_treat.ratio FROM country_treatment ct_treat,
                              country_treatment_dhis2 ct_dhis 
-                             WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND countryId=${countryId}`;
+                             WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND ct_treat.countryId=${countryId}`;
     //let treatmentsQuery = `SELECT id, ratio FROM activities WHERE id IN (SELECT activityId FROM activity_time WHERE cadreId IN(?) )`;
-    let patientCountQuery = `SELECT activityCode  AS id, SUM(caseCount) AS PatientCount FROM activity_stats
-                           WHERE year="${period}" AND facilityCode="${facilityCode}" GROUP BY activityCode,facilityCode`;
+    let patientCountQuery = `SELECT dhis2Code  AS id, SUM(caseCount) AS PatientCount FROM activity_stats
+                           WHERE year="${period}" AND facilityCode="${facilityCode}" GROUP BY dhis2Code,facilityCode`;
 
     //let timePerTreatmentQuery = `SELECT activityId, cadreId, minutesPerPatient AS TreatmentTime FROM 
                            //activity_time WHERE cadreId IN(?) GROUP BY activityId, cadreId`;
 
     let timePerTreatmentQuery = `SELECT ct_dhis.dhis2_code AS activityId, ct_treat.cadre_code AS cadreId, ct_treat.duration AS TreatmentTime 
                                      FROM  country_treatment ct_treat, country_treatment_dhis2 ct_dhis  
-                                     WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND countryId=${countryId}`;//Select only for selected cadres
+                                     WHERE ct_treat.std_code = ct_dhis.treatment_code AND cadre_code IN(?) AND ct_treat.countryId=${countryId}`;//Select only for selected cadres
     
     let facilityStaffCountQuery = `SELECT st.id, st.cadreCode, st.staffCount AS StaffCount FROM staff st 
                                         WHERE  facilityCode="${facilityCode}" AND cadreCode IN(?)`;
@@ -115,6 +113,9 @@ var process=function(facilityId,facilities,cadreIds,cadres,period,holidays, coun
                 ${supportActivityQuery};${individualActivityQuery}`, 
                 [cadreIds, cadreIds, cadreIds, cadreIds, cadreIds],
         function (error,results) {
+
+            if(error)
+                console.log(error);
 
             let treatmentsQueryResult = results[0];
 

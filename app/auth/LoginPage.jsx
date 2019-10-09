@@ -9,7 +9,6 @@ import Flag from "react-flags";
 import './login.css';
 import { Translation } from 'react-i18next';
 
-
 class LoginPage extends React.Component {
 
   constructor(props) {

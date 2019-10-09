@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Panel, Form, FormGroup, ControlLabel, Row, FormControl, Col, Checkbox, Button, Table } from 'react-bootstrap';
 import axios from 'axios';
-import { FaCheck, FaTrash } from 'react-icons/fa';
+import { FaCheck, FaTrash, FaCloudUploadAlt} from 'react-icons/fa';
 import toastr from 'toastr';
 import { confirmAlert } from 'react-confirm-alert';
 import 'toastr/build/toastr.min.css';
@@ -13,6 +13,7 @@ export default class FacilityImportPanel extends React.Component {
         super(props);
 
         this.state = {
+            progress:'',
             state: 'done',
             stateParents:'loading',
             stateFacilities:'done',
@@ -27,10 +28,13 @@ export default class FacilityImportPanel extends React.Component {
             facilities: [],
             filteredFacilities :[],
             cadres: [],
+            import_from_dhis2:false,
+            import_from_file:false
         }
         this.selectMultipleFacilities = this.selectMultipleFacilities.bind(this);
         this.deleteFacility = this.deleteFacility.bind(this);
         this.insertFacilities = this.insertFacilities.bind(this);
+        this.handleUploadFacility = this.handleUploadFacility.bind(this);
 
         axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
             headers :{
@@ -148,6 +152,7 @@ export default class FacilityImportPanel extends React.Component {
                                             })
                                             this.setState({
                                                 facilities: res.data,
+                                                filteredFacilities : res.data,
                                                 facilitiesMap: facilitiesMap
                                             });
                                         }).catch(err => console.log(err));
@@ -329,6 +334,77 @@ export default class FacilityImportPanel extends React.Component {
         }
     }
 
+    setImportOption(event){
+
+        let value = event.target.value;
+
+        if(value === "DHIS2"){
+            this.setState({
+                import_from_dhis2 : true,
+                import_from_file :false
+            })
+        }else{
+            this.setState({
+                import_from_file : true,
+                import_from_dhis2 : false
+            })
+        }
+    }
+
+    handleUploadFacility(ev) {
+
+        ev.preventDefault();
+
+        const data = new FormData();
+
+        if (this.uploadFacilityInput.files.length == 0) {
+            this.launchToastr("No file selected");
+            return;
+        }
+
+        data.append('file', this.uploadFacilityInput.files[0]);
+
+        let type =`FAC`;
+
+        axios.post(`/dhis2/upload/${type}/${localStorage.getItem('countryId')}`, data,
+            {
+                headers :{
+                    Authorization : 'Bearer '+localStorage.getItem('token')
+                }
+            },
+            {
+                onUploadProgress: progressEvent => {
+                    var prog = (progressEvent.loaded / progressEvent.total) * 100;
+                    var pg = (prog < 100) ? prog.toFixed(2) : prog.toFixed(0);
+                    this.setState({ progress: pg });
+                    //console.log(pg+"%");
+                }
+            })
+            .then((result) => {
+
+                this.setState({ progress: result.data });
+
+                axios.get(`/dhis2/facilities/${localStorage.getItem('countryId')}`,{
+                    headers :{
+                        Authorization : 'Bearer '+localStorage.getItem('token')
+                    }
+                }).then(res => {
+                    this.setState({
+                        facilities: res.data,
+                        filteredFacilities: res.data,
+                        import_from_file: false
+                    });
+                }).catch(err => console.log(err));
+
+            }).catch(err => {
+                if (err.response.status === 401) {
+                    this.props.history.push(`/login`);
+                } else {
+                    console.log(err);
+                }
+            });
+    }
+
     render() {
         return (
             <div className="tab-main-container">
@@ -337,101 +413,154 @@ export default class FacilityImportPanel extends React.Component {
                             <FormGroup>
                                 <Col componentClass={ControlLabel} sm={20}>
                                     <div className="div-title">
-                                        <b>Import facilities from DHIS2</b>
+                                        <b>Import facilities</b>
                                     </div>
                                     <hr />
                                 </Col>
                             </FormGroup>
-                            <div class="alert alert-warning" role="alert">
-                                Select facilities from below and click the button to import.
-                            </div>
 
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={10}>
-                                    <b>Filter by parent ({this.state.bulkFacilitiesParent.length})</b>
-                                </Col>
-                                <table>
+                            <div onChange={this.setImportOption.bind(this)}>
+                                <table className="radio-table" cellspacing="10">
                                     <tr>
-                                        <td>
-                                            <Col sm={15}>
-                                                <FormControl componentClass="select"
-                                                    onChange={e => this.filterFacilityByParent(e.target.value)}>
-                                                    <option key="000" value="0">Filter by parent</option>
-                                                    {(this.state.bulkFacilitiesParent.map(p =>
-                                                        <option key={p} value={p}>{p}</option>
-                                                    ))}
-                                                </FormControl>
-                                            </Col>
-                                        </td>
-                                        <td>
-                                            {this.state.stateParents === 'loading' &&
-                                                <span className="loader-text">Loading...</span>
-                                            }
-                                        </td>
-                                    </tr>
+                                        <td><input type="radio" value="DHIS2" name="import_option" /> Import from DHIS2</td>
+                                        <td><input type="radio" value="CSV" name="import_option"/> Import from file</td>
+                                    </tr>            
                                 </table>
-                                
-                            </FormGroup>
-                            <br/>
-                            <FormGroup>
-                                <Col componentClass={ControlLabel} sm={10}>
-                                    <b>Choose facilities from DHIS2 ({this.state.facilitiesCombo.length})</b>
-                                </Col>
-                                <table className="tbl-multiselect">
-                                    <tr>
-                                        <td>
-                                            <div className="div-multiselect">
-                                                <Multiselect
-                                                    options={this.state.facilitiesCombo}
-                                                    onChange={this.selectMultipleFacilities} />
-                                            </div>
-                                        </td>                                        
-                                        <td>
-                                            {this.state.stateFacilities === 'loading' &&
-                                                <span className="loader-text">Loading...</span>
-                                            }
-                                        </td>
-                                        {this.state.showButtons &&
-                                            <td>
-                                                <button className="button" onClick={() => this.insertFacilities()}><FaCheck /> Import</button>
-                                            </td>
-                                        }
-                                    </tr>
-                                </table>
-                                <hr />
-                            </FormGroup>
+                            </div>
+                            {this.state.import_from_dhis2 &&
                             <div>
-                                <table>
-                                    <tr>
-                                        <td><b>Filter by facility type</b></td>
-                                        <td>
-                                            <FormGroup>
+                                <div class="alert alert-warning" role="alert">
+                                    Select facilities from below and click the button to import.
+                                </div>
+                            
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={10}>
+                                        <b>Filter by parent ({this.state.bulkFacilitiesParent.length})</b>
+                                    </Col>
+                                    <table>
+                                        <tr>
+                                            <td>
                                                 <Col sm={15}>
-                                                    <FormControl
-                                                        componentClass="select"
-                                                        onChange={e => this.filterByType(e.target.value)}>
-                                                        <option value="0" key="000">Filter by facility type</option>
-                                                        {this.state.facilityTypes.map(ft =>
-                                                            <option
-                                                                key={ft.id}
-                                                                value={ft.code}>
-                                                                {ft.name_fr+'/'+ft.name_en}
-                                                            </option>
-                                                        )}
+                                                    <FormControl componentClass="select"
+                                                        onChange={e => this.filterFacilityByParent(e.target.value)}>
+                                                        <option key="000" value="0">Filter by parent</option>
+                                                        {(this.state.bulkFacilitiesParent.map(p =>
+                                                            <option key={p} value={p}>{p}</option>
+                                                        ))}
                                                     </FormControl>
                                                 </Col>
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-                                </table>
+                                            </td>
+                                            <td>
+                                                {this.state.stateParents === 'loading' &&
+                                                    <span className="loader-text">Loading...</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                </FormGroup>
+                             
+                                <br/>
+                                
+                                <FormGroup>
+                                    <Col componentClass={ControlLabel} sm={10}>
+                                        <b>Choose facilities from DHIS2 ({this.state.facilitiesCombo.length})</b>
+                                    </Col>
+                                    <table className="tbl-multiselect">
+                                        <tr>
+                                            <td>
+                                                <div className="div-multiselect">
+                                                    <Multiselect
+                                                        options={this.state.facilitiesCombo}
+                                                        onChange={this.selectMultipleFacilities} />
+                                                </div>
+                                            </td>                                        
+                                            <td>
+                                                {this.state.stateFacilities === 'loading' &&
+                                                    <span className="loader-text">Loading...</span>
+                                                }
+                                            </td>
+                                            {this.state.showButtons &&
+                                                <td>
+                                                    <button className="button" onClick={() => this.insertFacilities()}><FaCheck /> Import</button>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </table>
+                                    <hr />
+                                </FormGroup>
+                                                       
+                                <div>
+                                    <table>
+                                        <tr>
+                                            <td><b>Filter by facility type</b></td>
+                                            <td>
+                                                <FormGroup>
+                                                    <Col sm={15}>
+                                                        <FormControl
+                                                            componentClass="select"
+                                                            onChange={e => this.filterByType(e.target.value)}>
+                                                            <option value="0" key="000">Filter by facility type</option>
+                                                            {this.state.facilityTypes.map(ft =>
+                                                                <option
+                                                                    key={ft.id}
+                                                                    value={ft.code}>
+                                                                    {ft.name_fr+'/'+ft.name_en}
+                                                                </option>
+                                                            )}
+                                                        </FormControl>
+                                                    </Col>
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
                             </div>
+                            }
                             <br/>
-                            {this.state.state == 'loading' &&
+                            {this.state.state == 'loading' && 
                                 <div style={{ marginTop: 120, marginBottom: 65 }}>
                                     <div className="loader"></div>
                                 </div>
                             }
-                            {this.state.state == 'done' &&
+                            {this.state.import_from_file && 
+                             <div>
+                                 <Form horizontal>
+                                    <div>
+                                        <div className="div-title">
+                                            Import from csv file
+                                        </div>
+                                        <div class="alert alert-warning" role="alert">
+                                            Make sure it's a csv file with following headers and order. <br />
+                                            <b>"Parent code","Parent name", "Facility code", "Facility name"</b>
+                                        </div>
+                                        <form onSubmit={this.handleUploadFacility}>
+                                            {/*<div>
+                                                <input ref={(ref) => { this.uploadCadreInput = ref; }} type="file" />
+                                            </div>*/}
+                                            <div class="upload-btn-wrapper">
+                                                <button class="btn">
+                                                    <FaCloudUploadAlt /> Choose a file...
+                                                </button>
+                                                <input ref={(ref) => { this.uploadFacilityInput = ref; }} type="file" />
+                                            </div>
+                                            <br />
+                                            <br />
+                                            <div>
+                                                <span>
+                                                    <button className="button">
+                                                        <FaCheck /> Upload file
+                                                    </button><span> {this.state.progress}</span>
+                                                </span>
+                                            </div>
+                                        </form>
+
+                                    </div>
+                                </Form >
+                             </div>
+                            }
+                            <br/>
+                            {this.state.state == 'done' && 
                                 <table className="table-list" cellSpacing="10">
                                     <thead>
                                         <th>Parent</th>

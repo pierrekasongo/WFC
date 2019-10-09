@@ -8,8 +8,8 @@
   flex-direction: row;
 }
 .child-left{
-  border-top: 4px solid #5cb85c;
-  border-right: 4px solid #5cb85c;
+  border-top: 4px solid #0a790a;
+  border-right: 4px solid #0a790a;
   width: 60%;
   padding: 10px;
 }
@@ -21,8 +21,8 @@
 .child-right{
   padding: 20px;
   width: 40%;
-  border-top: 4px solid #5cb85c;
-  /*background-color: #4db34d;*/
+  border-top: 4px solid  #0a790a;;
+  background-color:  #e0ffe0;
 }
 .child-right h3{
   color:rgb(243, 170, 67);

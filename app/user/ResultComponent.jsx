@@ -1,11 +1,11 @@
 import * as React from 'react';
 import Collapsible from 'react-collapsible';
-import { Button, Table, FormGroup } from 'react-bootstrap';
+import { Button, Table, FormGroup,Checkbox } from 'react-bootstrap';
 import axios from 'axios';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css';
 import { CSVLink, CSVDownload } from "react-csv";
-import {FaFileCsv,FaFilePdf} from 'react-icons/fa';
+import {FaFileCsv,FaFilePdf,FaChartBar} from 'react-icons/fa';
 import PdfComponent from './PdfComponent';
 
 
@@ -20,7 +20,8 @@ export default class ResultComponent extends React.Component {
             results: props.results,
             getPDF:false,
             getCSV:false,
-            data:this.fetchData(props.results,props.cadreDict)
+            data:this.fetchData(props.results,props.cadreDict),
+            dashboardData:new Map()
         };
 
         this.csvLink=React.createRef();
@@ -105,22 +106,27 @@ export default class ResultComponent extends React.Component {
         setTimeout(() => toastr.error(msg), 300)
     }
 
-    addToFavorite(facilityId, cadreId, current,needed){
+    saveForDashboard(event,facilityId,cadreId, currentWorkers,neededWorkers,currentSalary,neededSalary){
 
-        let data = {
-            facilityCode :facilityId,
-            cadreCode : cadreId,
-            current : current,
-            needed : needed
-        };
+        let key=`${facilityId}-${cadreId}`;
 
-        axios.post(`/dashboard/insert_favorite`,data,{
-            headers :{
-                Authorization : 'Bearer '+localStorage.getItem('token')
+        if(event.target.checked){
+
+            let value=`${currentWorkers}|${neededWorkers}|${currentSalary}|${neededSalary}`;
+
+            if(this.state.dashboardData.has(key)){
+
+                this.state.dashboardData.delete(key);
+
             }
-        }).then(res => {
-            this.launchToastr('Results successfully added to dashboard.');
-        }).catch(err => console.log(err));
+            this.state.dashboardData.set(key,value);
+
+        }else{
+            if(this.state.dashboardData.has(key)){
+
+                this.state.dashboardData.delete(key);
+            }
+        }
     }
     render() {
         return (
@@ -133,8 +139,13 @@ export default class ResultComponent extends React.Component {
                             <td><a href="#" onClick={() => this.clicked()}><FaFileCsv />Export to csv</a></td>
                         </tr>
                     </table>
-                    
+                    <div>
+                        <Button bsStyle="warning" bsSize="medium" onClick={() => this.props.saveAsFavorite(this.state.dashboardData)}>
+                            <FaChartBar /> Add selected to favorite
+                        </Button>
+                    </div>
                 </div>
+                <hr/>
                 <br/>
                 <div>
                     <CSVLink data={this.state.data} 
@@ -159,6 +170,7 @@ export default class ResultComponent extends React.Component {
                                 <table className="table-list">
                                     <thead>
                                         <tr>
+                                            <th><a href="#">#</a></th>
                                             <th>Cadre</th>
                                             <th>A. Current Workers</th>
                                             <th>B. Workers Needed </th>
@@ -171,6 +183,19 @@ export default class ResultComponent extends React.Component {
                                     <tbody>
                                         {Object.keys(this.state.results[id].workersNeeded).map(cadreId =>
                                             <tr key={cadreId}>
+                                                <td>
+                                                    <Checkbox
+                                                            key={cadreId+'checked'}
+                                                            onChange={(e) => this.saveForDashboard(e,
+                                                                this.state.results[id].facilityId,//FacilityId
+                                                                cadreId,//CadreId
+                                                                this.state.results[id].currentWorkers[cadreId],//Current workers
+                                                                Number(this.state.results[id].workersNeeded[cadreId]).toFixed(1),//Needed workers
+                                                                (this.state.results[id].currentWorkers[cadreId])*(this.state.cadreDict[cadreId].average_salary),//Current salary
+                                                                (Number(this.state.results[id].workersNeeded[cadreId]).toFixed(1))*(this.state.cadreDict[cadreId].average_salary)//Needed salary
+                                                        )}
+                                                    /> 
+                                                </td>
                                                 <td>
                                                     <h4 key={cadreId + 'cadre'}>{this.state.cadreDict[cadreId].name}</h4>
                                                 </td>
@@ -202,16 +227,6 @@ export default class ResultComponent extends React.Component {
                                                 </td>
                                                 <td>
                                                     <h4 key={cadreId + 'needed_salary'} style={{color:"red"}}><b>{(Number(this.state.results[id].workersNeeded[cadreId]).toFixed(1))*(this.state.cadreDict[cadreId].average_salary)}</b></h4>
-                                                </td>
-                                                <td>
-                                                    <div className="div-add-new-link">
-                                                        <a href="#" className="add-new-link" onClick={() => this.addToFavorite(this.state.results[id].facilityId,
-                                                            cadreId,
-                                                            this.state.results[id].currentWorkers[cadreId],
-                                                            Math.round(this.state.results[id].workersNeeded[cadreId]))}>
-                                                            Add to dashboard
-                                                        </a>
-                                                    </div>
                                                 </td>
                                             </tr>
                                         )}

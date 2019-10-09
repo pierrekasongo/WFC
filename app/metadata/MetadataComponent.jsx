@@ -329,7 +329,7 @@ export default class MetadataComponent extends React.Component {
     render() {
         return (
             <div>
-            <Panel bsStyle="primary" header="">
+            <Panel bsStyle="primary" header="Metadata">
                 <Tabs>
                     <TabList>
                         <Tab>

@@ -268,17 +268,20 @@ router.get('/dhis2_codes/:treatmentCode',withAuth, function (req, res) {
         });
 });
 
-router.post('/match_dhis2_codes', withAuth,function (req, res) {
+router.post('/match_dhis2_codes_with_dhis2/:countryId', withAuth,function (req, res) {
 
     let treatmentCode = req.body.treatmentCode;
 
     let selectedDhis2Treatments = req.body.selectedDhis2Treatments;
 
+    let countryId = req.params.countryId;
+
     let sql = ``;
 
     selectedDhis2Treatments.map(dhis2 => {
-        sql += `INSERT INTO country_treatment_dhis2(treatment_code,dhis2_code,dhis2_name) 
-                VALUES("${treatmentCode}","${dhis2.code}","${dhis2.name}");`;
+        sql += `DELETE FROM country_treatment_dhis2 WHERE treatment_code="${treatmentCode}" AND countryId=${countryId};
+                INSERT INTO country_treatment_dhis2(treatment_code,dhis2_code,countryId,dhis2_name,matched_with) 
+                VALUES("${treatmentCode}",${countryId},"${dhis2.code}","${dhis2.name}","DHIS2");`;
     });
  
     db.query(sql, function (error, results, fields) {
@@ -287,6 +290,24 @@ router.post('/match_dhis2_codes', withAuth,function (req, res) {
     });
 });
 
+router.post('/match_dhis2_codes_with_self/:countryId', withAuth,function (req, res) {
+
+    let treatments = req.body.treatments;
+
+    let countryId = req.params.countryId;
+
+    let sql = ``;
+
+    treatments.map(tr => {
+        sql += `DELETE FROM country_treatment_dhis2 WHERE treatment_code="${tr.code}" AND countryId=${countryId};
+                INSERT INTO country_treatment_dhis2(treatment_code,countryId,dhis2_code,matched_with) 
+                VALUES("${tr.code}",${countryId},"${tr.code}","SELF");`;
+    });
+    db.query(sql, function (error, results, fields) {
+        if (error) throw error;
+        res.json(results);
+    });
+});
 router.get('/treatments/:cadreCode/:countryId',withAuth, function (req, res) {
 
     let cadreCode = req.params.cadreCode;

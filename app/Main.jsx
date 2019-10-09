@@ -10,6 +10,7 @@ import StatisticsPage from './admin/StatisticsPage';
 import StartPage from './admin/StartPage';
 import CadreTimePage from './user/CadreTimePage';
 import MetadataPage from './metadata/MetadataComponent';
+
 import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const Main = () => {
@@ -23,7 +24,7 @@ const Main = () => {
             <Route path='/account' exact component={AccountPage}/>
             <Route path='/statistics' exact component={StatisticsPage} />
             <Route path='/start' exact component={StartPage} />
-            <Route path='/home'exact component={HomePage} />
+            <Route path='/home' exact component={HomePage} />
             <Route path='/cadre-time' exact component={CadreTimePage} />
             <Route path='/metadata' exact component={MetadataPage} />
             <Route path='/' exact component={HomePage} />
