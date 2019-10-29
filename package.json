@@ -33,7 +33,7 @@
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
     "csv": "^0.3.7",
-    "csv-parse": "^2.5.0",
+    "csv-parse": "^4.4.6",
     "csv-react-table": "^1.0.14",
     "csv-stringify": "^3.1.1",
     "csv-write-stream": "^2.0.0",
