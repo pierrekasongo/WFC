@@ -41,7 +41,7 @@
     "d2": "^30.0.0",
     "download-csv": "^1.1.1",
     "express": "^4.16.2",
-    "express-fileupload": "^0.4.0",
+    "express-fileupload": "^1.1.9",
     "fhir.js": "0.0.20",
     "i18n-nodejs": "^3.0.0",
     "i18next": "^17.0.6",
