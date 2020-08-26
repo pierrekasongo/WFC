@@ -7,9 +7,17 @@ import 'rc-steps/assets/iconfont.css';
 import Steps, { Step } from 'rc-steps';
 
 
+<<<<<<< HEAD
 import TemplatePage from '../template/TemplatePage';
 import StatisticsPage from '../admin/StatisticsPage';
 import CaluclationPage from '../user/CalculationPage';
+=======
+import ImportPage from '../import/ImportPage';
+import CadreTimePage from '../user/CadreTimePage';
+import StatisticsPage from '../admin/StatisticsPage';
+import CalculationPage from '../user/CalculationPanel';
+import MatchingPage from '../admin/MatchingPage';
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 const generate_template_desc ='Generate service and HR data template.';
 
@@ -84,8 +92,13 @@ export default class StartPage extends React.Component {
                             {(this.state.currentStep == 1) && 
                                 <StatisticsPage />
                             }
+<<<<<<< HEAD
                             {(this.state.currentStep == 2) && 
                                 <CaluclationPage />
+=======
+                            {(this.state.currentStep == 4) && 
+                                <CalculationPage />
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
                             }
                         </div>
                     </div>                        

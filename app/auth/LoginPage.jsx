@@ -3,7 +3,11 @@ import { Button, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import * as axios from 'axios';
 import Cookies from 'js-cookie';
 import {FaCheck} from 'react-icons/fa';
-import  { Redirect,withRouter } from 'react-router-dom'
+import  { Redirect,withRouter } from 'react-router-dom';
+import Flag from "react-flags";
+
+import './login.css';
+import { Translation } from 'react-i18next';
 
 class LoginPage extends React.Component {
 
@@ -14,77 +18,107 @@ class LoginPage extends React.Component {
     this.state = {
       login: "",
       password: "",
-      isError: false,
-      isRefreshed: false,
     }
-    this.onSubmit = this.onSubmit.bind(this);
   }
-
-  componentWillMount() {
-    Cookies.remove('user');
-    Cookies.remove('token');
-  }
-
   validateForm() {
     return this.state.login.length > 0 && this.state.password.length > 0;
   }
-  onSubmit(event) {
 
-    event.preventDefault();
-
-    let login = this.state.login;
-
-    let password = this.state.password;
-
-    let data = {
-
-      login: login,
-
-      password: password
-    }
-    axios.post(`/auth/login`, data).then(res => {
-
-      if (res.data == "OK") {
-
-        Cookies.set('user', login, { expires: 1 });
-
-        this.props.history.push(`/home`);
-        //return <Redirect to='/home'  />
-      } else {
-        this.setState({
-          isError: true
-        });
-      }
-
-    }).catch(err => console.log(err));
-  }
+  errorHandler(){
+    this.setState({ error: null });
+  };
 
   render() {
-    return (
-      <div className="Login">
-        {/*<form onSubmit={this.handleSubmit}>*/}
 
-        <form onSubmit={this.onSubmit}>
-          <h3>Login</h3>
-          {
-            this.state.isError &&
-            <p className="error">Login ou mot de passe incorrect</p>
-          }
-          <FormControl type="text" placeholder="login" value={this.state.login}
-            onChange={e => this.setState({ login: e.target.value })} />
-          <br />
-          <FormControl type="password" placeholder="password" value={this.state.password}
-            onChange={e => this.setState({ password: e.target.value })} />
-          <br />
-          {/*<button>Login</button>*/}
-          <div>
-            <span>
-              <button className="button" disabled={!this.validateForm()}><FaCheck />Login</button>
-            </span>
-          </div>
-        </form>
+    return (
+ 
+      <div className="login-container">
+        <div className="login">
+            {/*<form onSubmit={this.handleSubmit}>*/}
+            <div className="child-left">
+              <span className="title">Workforce Pressure Calculator</span>
+              <hr/>
+              {/*<p>What is Workforce Pressure Calculator...</p>*/}
+              <div>
+                <img src="/img/workforce.jpg" alt=""/>
+              </div>
+            </div>
+
+            <div className="child-right">
+              <form onSubmit={e =>
+                this.props.onLogin(e, {
+                  login: this.state.login,
+                  password: this.state.password
+                })
+                }>
+              <h3><b>Login</b></h3>
+              {
+                  this.props.loginError.length > 0 &&
+                  <span className="error">{this.props.loginError}</span>
+              }
+              <FormControl type="text" placeholder="login" value={this.state.login}
+                onChange={e => this.setState({ login: e.target.value })} />
+              <br />
+              <h3><b>Password</b></h3>
+              {
+                  this.props.passwordError.length > 0 &&
+                  <span className="error">{this.props.passwordError}</span>
+              }
+              <FormControl type="password" placeholder="password" value={this.state.password}
+                onChange={e => this.setState({ password: e.target.value })} />
+              <br />
+              {/*<button>Login</button>*/}
+              {this.props.loading === 'loading'  &&
+                  <div style={{ marginTop: 5, marginBottom: 5 }}>
+                        <div className="loader"></div>
+                  </div>
+              }
+              <div>
+                <table>
+                  <tr>
+                    <td><button className="button" disabled={!this.validateForm()}><FaCheck /> Login</button></td>
+                    <td>
+                      <a href="#"> Forgot password?</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </form>
+            </div>   
+        </div>
+        {/*<div className="languages-div">
+              <div>
+                <a href="#">
+                  <Flag
+                      basePath="/img/flags"
+                      name="FR"
+                      format="png"
+                      alt="Français"
+                      pngSize={32}
+                      shiny={true}
+                      alt="Français"
+                    />
+                </a>
+                
+              </div>
+              <div>
+                <a href="#">
+                  <Flag
+                    basePath="/img/flags"
+                    name="US"
+                    format="png"
+                    pngSize={32}
+                    shiny={true}
+                    alt="English"
+                  />
+                </a>
+                
+              </div>
+        </div>*/}       
       </div>
+
     );
   }
 }
-export default withRouter(LoginPage)
+//export default LoginPage//withRouter(LoginPage)
+export default LoginPage;

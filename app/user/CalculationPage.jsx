@@ -21,6 +21,7 @@ export default class CalculationPanel extends React.Component {
         super(props);
 
         this.state = {
+            facilityTypes:[],
             facilitiesCombo: [],
             cadresCombo: [],
             cadres: [],
@@ -75,7 +76,11 @@ export default class CalculationPanel extends React.Component {
             this.setState({ config: config });
         }).catch(err => console.log(err));
 
-        axios.get('/configuration/getYears').then(res => {
+        axios.get('/configuration/getYears',{
+            headers :{
+                Authorization : 'Bearer '+localStorage.getItem('token')
+            }
+        }).then(res => {
             let years = res.data;
             this.setState({
                 years: years
@@ -98,7 +103,7 @@ export default class CalculationPanel extends React.Component {
                 let sick_leave = cadre.sick_leave;
                 let other_leave = cadre.other_leave;
 
-                cadreInputs[cadre.code] = {
+                cadreInputs[cadre.std_code] = {
                     days: days,
                     hours: hours,
                     adminPercentage: admin,
@@ -106,17 +111,18 @@ export default class CalculationPanel extends React.Component {
                     sickLeave: sick_leave,
                     otherLeave: other_leave
                 }
-                cadreDict[cadre.code] = cadre.name;
+                cadreDict[cadre.std_code] = {
+                   name: cadre.name,
+                   average_salary: cadre.average_salary
+                }
 
-                //let id = cadre.code + '|' + cadre.Hours + '|' + cadre.AdminTask
-
-                cadresCombo.push({ label: cadre.name, value: cadre.code });
+                //cadresCombo.push({ label: cadre.name, value: cadre.std_code });
             });
             this.setState({
                 cadres: cadres,
                 cadreDict: cadreDict,
                 cadreInputs: cadreInputs,
-                cadresCombo: cadresCombo,
+                //cadresCombo: cadresCombo,
             });
 
         }).catch(err => console.log(err));
@@ -140,15 +146,15 @@ export default class CalculationPanel extends React.Component {
                     }
                     facilityDict[fa.id] = fa.name;
 
-                    let id = fa.id + '|' + fa.code;
+                    /*let id = fa.id + '|' + fa.code;
 
-                    facilitiesCombo.push({ label: fa.name, value: id });
+                    facilitiesCombo.push({ label: fa.name, value: id });*/
                 });
                 this.setState({
                     facilities: facilities,
                     facilityDict: facilityDict,
                     facilityInputs: facilityInputs,
-                    facilitiesCombo: facilitiesCombo
+                    //facilitiesCombo: facilitiesCombo
                 });
             })
             .catch(err => console.log(err));
@@ -278,7 +284,8 @@ export default class CalculationPanel extends React.Component {
                     cadres: {},
                     holidays: this.state.config.value,
                     selectedFacilities: {},
-                    selectedPeriod: this.state.selectedPeriod
+                    selectedPeriod: this.state.selectedPeriod,
+                    countryId : localStorage.getItem('countryId'),
                 };
 
                 datas.selectedCadres = this.state.selectedCadres;
@@ -293,6 +300,8 @@ export default class CalculationPanel extends React.Component {
                         this.state.results.push({
 
                             facility: values[id].facility,
+
+                            facilityId: values[id].facilityId,
 
                             currentWorkers: values[id].currentWorkers,
 

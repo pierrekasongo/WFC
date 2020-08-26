@@ -1,4 +1,5 @@
 -- phpMyAdmin SQL Dump
+<<<<<<< HEAD
 -- version 5.0.2
 -- https://www.phpmyadmin.net/
 --
@@ -6,6 +7,15 @@
 -- Generation Time: Jul 21, 2020 at 01:53 PM
 -- Server version: 10.4.13-MariaDB
 -- PHP Version: 7.2.31
+=======
+-- version 4.0.10deb1ubuntu0.1
+-- http://www.phpmyadmin.net
+--
+-- Client: localhost
+-- Généré le: Jeu 08 Août 2019 à 13:14
+-- Version du serveur: 5.5.61-0ubuntu0.14.04.1
+-- Version de PHP: 5.5.9-1ubuntu4.26
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +28,11 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
+<<<<<<< HEAD
 -- Database: `workforce_pressure`
+=======
+-- Base de données: `workforce_pressure`
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 --
 
 -- --------------------------------------------------------
@@ -33,8 +47,14 @@ CREATE TABLE `activities` (
   `activityName` varchar(250) NOT NULL,
   `imported` tinyint(1) NOT NULL,
   `code` varchar(50) NOT NULL,
+<<<<<<< HEAD
   `ratio` int(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `ratio` int(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=24980 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `activities`
@@ -3635,14 +3655,21 @@ CREATE TABLE `activity_stats` (
   `year` varchar(20) NOT NULL,
   `activityCode` varchar(50) NOT NULL,
   `cadreCode` varchar(25) NOT NULL,
+<<<<<<< HEAD
   `caseCount` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `caseCount` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=28437 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `activity_stats`
 --
 
 INSERT INTO `activity_stats` (`id`, `facilityCode`, `year`, `activityCode`, `cadreCode`, `caseCount`) VALUES
+<<<<<<< HEAD
 (9, 'djEJoDxWda6', '2017', '157a54fc-a76a-475b-8684-a8bf376654d4', 'wmiff88', 35),
 (10, 'djEJoDxWda6', '2017', '19453745-8586-481f-aca2-04896dc7317e', 'wmiff88', 16),
 (11, 'djEJoDxWda6', '2017', '29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 'wmiff88', 71),
@@ -3654,6 +3681,30 @@ INSERT INTO `activity_stats` (`id`, `facilityCode`, `year`, `activityCode`, `cad
 (17, 'djEJoDxWda6', '2017', 'f68b386d-a559-46c9-8796-d5edc2d8a610', 'wmiff88', 673),
 (18, 'djEJoDxWda6', '2017', '296af4b9-cc56-46ac-a8ab-be2f583ea57a', 'wmiff88', 5415),
 (19, 'djEJoDxWda6', '2017', '5d789a41-a11b-4f0c-b4e0-0c19351c2a06', 'wmiff88', 60);
+=======
+(28415, 'TsbCLPX5EAd', '2018', 'xNBZLT2hLX1', 'wmiff88', 0),
+(28416, 'TsbCLPX5EAd', '2018', 'y7mwmx7gC4T', 'wmiff88', 244),
+(28417, 'TsbCLPX5EAd', '2018', 'oYNPwBWMZHb', 'wmiff88', 0),
+(28418, 'TsbCLPX5EAd', '2018', 'WLKkhmCvwYq', 'wmiff88', 0),
+(28419, 'TsbCLPX5EAd', '2018', 'qa8KuGslrTP', 'wmiff88', 0),
+(28420, 'TsbCLPX5EAd', '2018', 'SonWzRu3CT8', 'wmiff88', 3),
+(28421, 'TsbCLPX5EAd', '2018', 'Bj05inmMmIC', 'wmiff88', 15),
+(28422, 'TsbCLPX5EAd', '2018', 'nW2v0jlASnr', 'wmiff88', 0),
+(28423, 'TsbCLPX5EAd', '2018', 'fNYX8voJOwq', 'wmiff88', 0),
+(28424, 'TsbCLPX5EAd', '2018', 'GtP760fsasc', 'wmiff88', 3),
+(28425, 'TsbCLPX5EAd', '2018', 'JG1eooEWrDs', 'wmiff88', 1),
+(28426, 'djEJoDxWda6', '2018', 'xNBZLT2hLX1', 'wmiff88', 10800),
+(28427, 'djEJoDxWda6', '2018', 'y7mwmx7gC4T', 'wmiff88', 733),
+(28428, 'djEJoDxWda6', '2018', 'oYNPwBWMZHb', 'wmiff88', 0),
+(28429, 'djEJoDxWda6', '2018', 'WLKkhmCvwYq', 'wmiff88', 0),
+(28430, 'djEJoDxWda6', '2018', 'qa8KuGslrTP', 'wmiff88', 0),
+(28431, 'djEJoDxWda6', '2018', 'SonWzRu3CT8', 'wmiff88', 0),
+(28432, 'djEJoDxWda6', '2018', 'Bj05inmMmIC', 'wmiff88', 4),
+(28433, 'djEJoDxWda6', '2018', 'nW2v0jlASnr', 'wmiff88', 0),
+(28434, 'djEJoDxWda6', '2018', 'fNYX8voJOwq', 'wmiff88', 2342),
+(28435, 'djEJoDxWda6', '2018', 'GtP760fsasc', 'wmiff88', 3),
+(28436, 'djEJoDxWda6', '2018', 'JG1eooEWrDs', 'wmiff88', 1);
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -3683,6 +3734,7 @@ INSERT INTO `activity_time` (`id`, `countryId`, `activityId`, `cadreId`, `minute
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Table structure for table `archive`
 --
 
@@ -3691,6 +3743,42 @@ CREATE TABLE `archive` (
   `cadreId` int(11) NOT NULL,
   `needed` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+-- Structure de la table `cadre`
+--
+
+CREATE TABLE IF NOT EXISTS `cadre` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `countryId` int(11) NOT NULL,
+  `cadreName` varchar(200) NOT NULL,
+  `hoursPerWeek` int(11) NOT NULL,
+  `adminTask` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=18 ;
+
+--
+-- Contenu de la table `cadre`
+--
+
+INSERT INTO `cadre` (`id`, `countryId`, `cadreName`, `hoursPerWeek`, `adminTask`) VALUES
+(1, 52, 'ACCOUCHEUSE', 2, 10),
+(2, 52, 'ADMINISTRATEUR GESTIONNAIRE', 0, 0),
+(3, 52, 'ADMINISTRATIF', 0, 0),
+(4, 52, 'ASSISTANT EN PHARMACIE', 0, 0),
+(5, 52, 'AUTRES PROFESSIONNELS DE SANTE', 0, 0),
+(6, 52, 'CHIRURGIEN DENTISTE', 0, 0),
+(7, 52, 'INFIRMIER', 40, 15),
+(8, 52, 'KINÉSITHERAPEUTE', 0, 0),
+(9, 52, 'MÉDECIN', 0, 0),
+(10, 52, 'MÉDECINE  PHYSIQUE', 40, 0),
+(11, 52, 'NUTRITIONNISTE', 0, 0),
+(12, 52, 'PHARMACIEN', 0, 0),
+(13, 52, 'SAGE FEMME', 0, 0),
+(14, 52, 'TECHNICIEN D''ASSAINISSEMENT', 0, 0),
+(15, 52, 'TECHNICIEN DE LABORATOIRE', 0, 0),
+(16, 52, 'TECHNICIEN DE RADIOLOGIE', 0, 0),
+(17, 52, 'TECHNICIENS ODONTOLOGISTES', 0, 0);
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -3702,15 +3790,30 @@ CREATE TABLE `config` (
   `id` int(11) NOT NULL,
   `country_id` int(11) NOT NULL,
   `parameter` varchar(50) NOT NULL,
+<<<<<<< HEAD
   `value` varchar(150) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `value` varchar(150) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=13 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `config`
 --
 
 INSERT INTO `config` (`id`, `country_id`, `parameter`, `value`) VALUES
+<<<<<<< HEAD
 (8, 52, 'COUNTRY_PUBLIC_HOLIDAYS', '9');
+=======
+(1, 52, 'URL_DHIS2', 'http://vps428218.ovh.net:8080'),
+(2, 52, 'URL_iHRIS', 'http://localhost/ihris-api/'),
+(5, 52, 'DHIS2_USER', 'Pierre'),
+(6, 52, 'DHIS_PWD', 'Capuccino@8891'),
+(8, 52, 'COUNTRY_PUBLIC_HOLIDAYS', '9'),
+(12, 52, 'DHIS2_SQLVIEW', 'CQLhmLahJYQ');
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -3984,6 +4087,7 @@ INSERT INTO `country` (`id`, `code`, `name_fr`, `name_en`, `holidays`) VALUES
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Table structure for table `country_treatment`
 --
 
@@ -3997,11 +4101,58 @@ CREATE TABLE `country_treatment` (
   `duration` int(11) NOT NULL,
   `ratio` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+-- Structure de la table `country_cadre`
+--
+
+CREATE TABLE IF NOT EXISTS `country_cadre` (
+  `std_code` varchar(50) NOT NULL,
+  `facility_type_code` varchar(100) NOT NULL,
+  `hris_code` varchar(25) NOT NULL,
+  `work_days` float NOT NULL,
+  `work_hours` float NOT NULL,
+  `annual_leave` float NOT NULL,
+  `sick_leave` float NOT NULL,
+  `other_leave` float NOT NULL,
+  `admin_task` float NOT NULL,
+  `country_id` int(11) NOT NULL,
+  PRIMARY KEY (`std_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Contenu de la table `country_cadre`
+--
+
+INSERT INTO `country_cadre` (`std_code`, `facility_type_code`, `hris_code`, `work_days`, `work_hours`, `annual_leave`, `sick_leave`, `other_leave`, `admin_task`, `country_id`) VALUES
+('2908Jjkdh', '8738778a-9aea-431e-bbfa-bb99e87da320', 'cadre|1', 5, 8, 0, 0, 0, 10, 52),
+('osnk9032i', '8738778a-9aea-431e-bbfa-bb99e87da320', 'cadre|4', 5, 8, 0, 0, 0, 10, 52),
+('wmiff88', '8738778a-9aea-431e-bbfa-bb99e87da320', 'cadre|2', 5.5, 8, 30, 2, 6.2, 10, 52);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `country_treatment`
+--
+
+CREATE TABLE IF NOT EXISTS `country_treatment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `std_code` varchar(50) NOT NULL,
+  `countryId` int(11) NOT NULL,
+  `cadre_code` varchar(50) NOT NULL,
+  `name_std` varchar(255) NOT NULL,
+  `name_customized` varchar(150) NOT NULL,
+  `treatment_type` enum('STD','CUST') NOT NULL,
+  `duration` int(11) NOT NULL,
+  `ratio` int(11) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=23 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `country_treatment`
 --
 
+<<<<<<< HEAD
 INSERT INTO `country_treatment` (`id`, `code`, `countryId`, `cadre_code`, `name`, `treatment_type`, `duration`, `ratio`) VALUES
 (1, '157a54fc-a76a-475b-8684-a8bf376654d4', 52, 'wmiff88', 'Accompagnement des patients référés/Transfert', 'SERVICE', 360, 1),
 (2, '19453745-8586-481f-aca2-04896dc7317e', 52, 'wmiff88', 'Section césarienne/Caesarean section', 'SERVICE', 330, 1),
@@ -4014,6 +4165,20 @@ INSERT INTO `country_treatment` (`id`, `code`, `countryId`, `cadre_code`, `name`
 (9, 'c832ef65-ae15-48d6-8a13-6d4816493a9c', 52, 'wmiff88', 'Audit de décès/Death: Last office', 'SERVICE', 42, 1),
 (10, 'e32ebd3d-8158-4379-b2c1-096e7d6f9991', 52, 'wmiff88', 'Admission de patient/Admit a patient', 'SERVICE', 52, 1),
 (11, 'f68b386d-a559-46c9-8796-d5edc2d8a610', 52, 'wmiff88', 'Opération majeure/Major operation', 'SERVICE', 330, 1);
+=======
+INSERT INTO `country_treatment` (`id`, `std_code`, `countryId`, `cadre_code`, `name_std`, `name_customized`, `treatment_type`, `duration`, `ratio`) VALUES
+(12, '157a54fc-a76a-475b-8684-a8bf376654d4', 52, 'wmiff88', 'Transfert', '', 'STD', 360, 1),
+(13, '19453745-8586-481f-aca2-04896dc7317e', 52, 'wmiff88', 'Caesarean section', '', 'STD', 165, 1),
+(14, '296af4b9-cc56-46ac-a8ab-be2f583ea57a', 52, 'wmiff88', 'consultation', '', 'STD', 30, 1),
+(15, '29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 52, 'wmiff88', 'Minor operation and male circumcisions', '', 'STD', 25, 1),
+(16, '471ac1e9-608a-4b96-9ac9-a5906a2c70e5', 52, 'wmiff88', 'Routine nursing care (high dependent patients)', '', 'STD', 351, 1),
+(17, '5956a3fe-a109-472a-91e5-d910f2ab6632', 52, 'wmiff88', 'Routine nursing care (self care patients)', '', 'STD', 95, 1),
+(18, '5d789a41-a11b-4f0c-b4e0-0c19351c2a06', 52, 'wmiff88', 'Emergency', '', 'STD', 60, 1),
+(19, 'ae1700ff-67c1-47cd-a3db-13dfe27c9a55', 52, 'wmiff88', 'Discharge a patient', '', 'STD', 24, 1),
+(20, 'c832ef65-ae15-48d6-8a13-6d4816493a9c', 52, 'wmiff88', 'Death: Last office', '', 'STD', 42, 1),
+(21, 'e32ebd3d-8158-4379-b2c1-096e7d6f9991', 52, 'wmiff88', 'Admit a patient', '', 'STD', 52, 1),
+(22, 'f68b386d-a559-46c9-8796-d5edc2d8a610', 52, 'wmiff88', 'Major operation', '', 'STD', 165, 1);
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -4025,20 +4190,107 @@ CREATE TABLE `country_treatment_dhis2` (
   `id` int(11) NOT NULL,
   `treatment_code` varchar(150) NOT NULL,
   `dhis2_code` varchar(150) NOT NULL,
+<<<<<<< HEAD
   `dhis2_dataset` varchar(50) NOT NULL,
   `dhis2_name` varchar(150) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `dhis2_name` varchar(150) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=28 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `country_treatment_dhis2`
 --
 
-INSERT INTO `country_treatment_dhis2` (`id`, `treatment_code`, `dhis2_code`, `dhis2_dataset`, `dhis2_name`) VALUES
-(5, '29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 'HpOj9VHOvVt', '', 'Abstinence'),
-(6, '29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 'T5eTqtEeqGG', '', 'AMF et Cas Contacts conseillés'),
-(7, '157a54fc-a76a-475b-8684-a8bf376654d4', 'wmSFP6I7Crl', '', 'ABC+3TC+EFV'),
-(9, '19453745-8586-481f-aca2-04896dc7317e', 'nP77dfk7XKK', '', 'AMF et Cas Contacts ayant retiré les résultats'),
-(10, '296af4b9-cc56-46ac-a8ab-be2f583ea57a', 'RcVqkBim8W5', 'NrjKIBdpmNV', 'Cons_NC conseillés');
+INSERT INTO `country_treatment_dhis2` (`id`, `treatment_code`, `dhis2_code`, `dhis2_name`) VALUES
+(17, '157a54fc-a76a-475b-8684-a8bf376654d4', 'fNYX8voJOwq', 'HTS_Nombre de personnes conseillées et testées volontairement au VIH et ayant retiré leurs résultats (CDV Intégré)'),
+(18, '19453745-8586-481f-aca2-04896dc7317e', 'xNBZLT2hLX1', 'HTS_Cas IST conseillés et testés au VIH et ayant retiré leur résultat'),
+(19, '296af4b9-cc56-46ac-a8ab-be2f583ea57a', 'qa8KuGslrTP', 'HTS_Malades(enfants de moins de 5 ans) reçus en Pédiatrie testés au VIH ayant retiré leurs résultats'),
+(20, '29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 'Bj05inmMmIC', 'HTS_Malades reçus en hospitalisation ou Observation (Pédiatrie, MI, Chirurgie, gynécologie et autres) testés au VIH ayant retiré leurs résultats'),
+(21, '471ac1e9-608a-4b96-9ac9-a5906a2c70e5', 'SonWzRu3CT8', 'HTS_Nombre des cas contacts dont le status VIH a été documenté (y compris les cas contacts connus positifs)'),
+(22, '5956a3fe-a109-472a-91e5-d910f2ab6632', 'GtP760fsasc', 'HTS_Nombre des cas source à qui les services de testing de leurs contacts ont été proposés'),
+(23, '5d789a41-a11b-4f0c-b4e0-0c19351c2a06', 'nW2v0jlASnr', 'HTS_Parmi les cas contacts avec status VIH documenté, combien sont des Parents biologiques des enfants VIH positifs de moins de 15 ans'),
+(24, 'ae1700ff-67c1-47cd-a3db-13dfe27c9a55', 'JG1eooEWrDs', 'HTS_Parmi les cas contacts avec status VIH documenté, combien sont des Partenaires sexuels'),
+(25, 'c832ef65-ae15-48d6-8a13-6d4816493a9c', 'y7mwmx7gC4T', 'Nombre des PVVIH ayant fait l’objet d’un screening TB'),
+(26, 'e32ebd3d-8158-4379-b2c1-096e7d6f9991', 'WLKkhmCvwYq', 'ART_Nombre des nouveaux cas TB ou de rechute identifiés VIH+  aucours du mois  au CSDT et qui sont sous ARV'),
+(27, 'f68b386d-a559-46c9-8796-d5edc2d8a610', 'oYNPwBWMZHb', 'ART_Nombre des nouveaux cas TB ou de rechute identifiés VIH+ non liés au TARV au cours des 6 derniers mois récupérés et mis sous ARV au cours du mois ');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `country_treatment_individual`
+--
+
+CREATE TABLE IF NOT EXISTS `country_treatment_individual` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(150) NOT NULL,
+  `countryId` int(11) NOT NULL,
+  `cadre_code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `duration` int(11) NOT NULL,
+  `nb_staff` int(11) NOT NULL,
+  `time_unit` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=34 ;
+
+--
+-- Contenu de la table `country_treatment_individual`
+--
+
+INSERT INTO `country_treatment_individual` (`id`, `code`, `countryId`, `cadre_code`, `name`, `duration`, `nb_staff`, `time_unit`) VALUES
+(33, '7002a139-37ee-4f4f-9c22-4ed1bcf33642', 52, 'wmiff88', 'Monthly meeting', 120, 1, 3);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `country_treatment_support`
+--
+
+CREATE TABLE IF NOT EXISTS `country_treatment_support` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(150) NOT NULL,
+  `countryId` int(11) NOT NULL,
+  `cadre_code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `duration` int(11) NOT NULL,
+  `time_unit` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=35 ;
+
+--
+-- Contenu de la table `country_treatment_support`
+--
+
+INSERT INTO `country_treatment_support` (`id`, `code`, `countryId`, `cadre_code`, `name`, `duration`, `time_unit`) VALUES
+(33, '4a02ebe7-71dc-49aa-b4ef-778741d597c0', 52, 'wmiff88', 'Training students', 60, 1),
+(34, '8a0c3762-3c12-439e-b173-0e6f0891de9f', 52, 'wmiff88', 'Reporting data', 30, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `dashboard`
+--
+
+CREATE TABLE IF NOT EXISTS `dashboard` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cadreCode` varchar(25) NOT NULL,
+  `facilityCode` varchar(25) NOT NULL,
+  `current` float NOT NULL,
+  `needed` float NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Contenu de la table `dashboard`
+--
+
+INSERT INTO `dashboard` (`id`, `cadreCode`, `facilityCode`, `current`, `needed`) VALUES
+(1, 'wmiff88', 'djEJoDxWda6', 38, 16),
+(2, '2908Jjkdh', 'djEJoDxWda6', 4, 0),
+(3, '2908Jjkdh', 'TsbCLPX5EAd', 10, 0),
+(4, 'wmiff88', 'TsbCLPX5EAd', 102, 0);
 
 -- --------------------------------------------------------
 
@@ -21766,6 +22018,7 @@ INSERT INTO `facilities` (`id`, `countryId`, `regionCode`, `regionName`, `distri
 -- Table structure for table `facility`
 --
 
+<<<<<<< HEAD
 CREATE TABLE `facility` (
   `id` int(11) NOT NULL,
   `countryCode` int(11) NOT NULL,
@@ -21775,15 +22028,35 @@ CREATE TABLE `facility` (
   `code` varchar(25) NOT NULL,
   `name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+CREATE TABLE IF NOT EXISTS `facility` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `countryId` int(11) NOT NULL,
+  `code` varchar(25) NOT NULL,
+  `ihrisCode` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `parentCode` varchar(50) NOT NULL,
+  `parentName` varchar(100) NOT NULL,
+  `facilityType` varchar(150) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14249 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `facility`
 --
 
+<<<<<<< HEAD
 INSERT INTO `facility` (`id`, `countryCode`, `facilityType`, `region`, `district`, `code`, `name`) VALUES
 (14246, 52, 8738778, 'Nord-Ubangi', 'Karawa', 'djEJoDxWda6', 'HGR Karawa'),
 (14247, 52, 8738778, 'Nord-Ubangi', 'Karawa', 'TsbCLPX5EAd', 'CS Karawa Cité'),
 (14248, 52, 8738778, 'Nord-Ubangi', 'Karawa', 'ot1gXRKpxiX', 'CS Loko');
+=======
+INSERT INTO `facility` (`id`, `countryId`, `code`, `ihrisCode`, `name`, `parentCode`, `parentName`, `facilityType`) VALUES
+(14246, 52, 'djEJoDxWda6', 'facility|999900789', 'Abbé Delbeke Centre de Santé', '', 'Lubumbashi', '8738778a-9aea-431e-bbfa-bb99e87da320'),
+(14247, 52, 'TsbCLPX5EAd', 'facility|999900148', 'Accueil Centre de Santé', '', 'Kenya', '8738778a-9aea-431e-bbfa-bb99e87da320'),
+(14248, 52, 'ot1gXRKpxiX', 'facility|4093', 'Adventiste Centre Hôspitalier', '', 'Lubumbashi', '8738778a-9aea-431e-bbfa-bb99e87da320');
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -21833,8 +22106,14 @@ CREATE TABLE `staff` (
   `id` int(11) NOT NULL,
   `facilityCode` varchar(25) NOT NULL,
   `cadreCode` varchar(25) NOT NULL,
+<<<<<<< HEAD
   `staffCount` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `staffCount` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `staff`
@@ -21842,7 +22121,9 @@ CREATE TABLE `staff` (
 
 INSERT INTO `staff` (`id`, `facilityCode`, `cadreCode`, `staffCount`) VALUES
 (1, 'djEJoDxWda6', 'wmiff88', 38),
-(11, 'djEJoDxWda6', '2908Jjkdh', 4);
+(11, 'djEJoDxWda6', '2908Jjkdh', 4),
+(12, 'TsbCLPX5EAd', '2908Jjkdh', 10),
+(13, 'TsbCLPX5EAd', 'wmiff88', 102);
 
 -- --------------------------------------------------------
 
@@ -21852,9 +22133,15 @@ INSERT INTO `staff` (`id`, `facilityCode`, `cadreCode`, `staffCount`) VALUES
 
 CREATE TABLE `std_cadre` (
   `code` varchar(50) NOT NULL,
+<<<<<<< HEAD
   `countryId` int(11) NOT NULL,
   `facility_type_id` varchar(100) NOT NULL,
   `name` varchar(100) NOT NULL,
+=======
+  `facility_type_code` varchar(100) NOT NULL,
+  `name_fr` varchar(100) NOT NULL,
+  `name_en` varchar(100) NOT NULL,
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
   `work_days` float NOT NULL,
   `work_hours` float NOT NULL,
   `annual_leave` float NOT NULL,
@@ -21867,11 +22154,19 @@ CREATE TABLE `std_cadre` (
 -- Dumping data for table `std_cadre`
 --
 
+<<<<<<< HEAD
 INSERT INTO `std_cadre` (`code`, `countryId`, `facility_type_id`, `name`, `work_days`, `work_hours`, `annual_leave`, `sick_leave`, `other_leave`, `admin_task`) VALUES
 ('1012hurh', 52, '8738778', 'Lab tech', 5, 8, 0, 0, 0, 10),
 ('2908Jjkdh', 52, '8738778', 'Medical Doctor', 5, 8, 0, 0, 0, 10),
 ('osnk9032i', 52, '8738778', 'Wise wife', 5, 8, 0, 0, 0, 10),
 ('wmiff88', 52, '8738778', 'Nurse', 5.5, 8, 30, 2, 6.2, 10);
+=======
+INSERT INTO `std_cadre` (`code`, `facility_type_code`, `name_fr`, `name_en`, `work_days`, `work_hours`, `annual_leave`, `sick_leave`, `other_leave`, `admin_task`) VALUES
+('1012hurh', '8738778a-9aea-431e-bbfa-bb99e87da320', 'Tech-labo', 'Lab tech', 5, 8, 0, 0, 0, 10),
+('2908Jjkdh', '8738778a-9aea-431e-bbfa-bb99e87da320', 'Médecin', 'Medical Doctor', 5, 8, 0, 0, 0, 10),
+('osnk9032i', '8738778a-9aea-431e-bbfa-bb99e87da320', 'Sage-femme', 'Wise wife', 5, 8, 0, 0, 0, 10),
+('wmiff88', '8738778a-9aea-431e-bbfa-bb99e87da320', 'Infirmier', 'Nurse', 5, 8, 0, 0, 0, 10);
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -21879,20 +22174,36 @@ INSERT INTO `std_cadre` (`code`, `countryId`, `facility_type_id`, `name`, `work_
 -- Table structure for table `std_facility_type`
 --
 
+<<<<<<< HEAD
 CREATE TABLE `std_facility_type` (
   `id` int(11) NOT NULL,
   `code` varchar(100) NOT NULL,
   `countryId` int(11) NOT NULL,
   `name` varchar(25) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+CREATE TABLE IF NOT EXISTS `std_facility_type` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(100) NOT NULL,
+  `name_fr` varchar(25) NOT NULL,
+  `name_en` varchar(25) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `std_facility_type`
 --
 
+<<<<<<< HEAD
 INSERT INTO `std_facility_type` (`id`, `code`, `countryId`, `name`) VALUES
 (1, '8738778', 52, 'Hôpital général'),
 (2, '8738779', 52, 'Centre de santé');
+=======
+INSERT INTO `std_facility_type` (`id`, `code`, `name_fr`, `name_en`) VALUES
+(1, '8738778a-9aea-431e-bbfa-bb99e87da320', 'Hôpital général', 'Central hospital'),
+(2, 'b2a5c8e0-5c2e-4691-a945-d031325d6b55', 'Centre de santé', 'Health center');
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -21904,16 +22215,25 @@ CREATE TABLE `std_treatment` (
   `id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `cadre_code` varchar(50) NOT NULL,
+<<<<<<< HEAD
   `countryId` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
   `treatment_type` enum('SERVICE','ADDITIONAL','INDIVIDUAL') NOT NULL DEFAULT 'SERVICE',
   `duration` int(11) NOT NULL
+=======
+  `name_fr` varchar(100) NOT NULL,
+  `name_en` varchar(100) NOT NULL,
+  `treatment_type` enum('SERVICE','ADDITIONAL','INDIVIDUAL') NOT NULL,
+  `duration` int(11) NOT NULL,
+  PRIMARY KEY (`code`)
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `std_treatment`
 --
 
+<<<<<<< HEAD
 INSERT INTO `std_treatment` (`id`, `code`, `cadre_code`, `countryId`, `name`, `treatment_type`, `duration`) VALUES
 (1, '157a54fc-a76a-475b-8684-a8bf376654d4', 'wmiff88', 52, 'Transfert', 'SERVICE', 360),
 (2, '19453745-8586-481f-aca2-04896dc7317e', 'wmiff88', 52, 'Caesarean section', 'SERVICE', 330),
@@ -21926,6 +22246,63 @@ INSERT INTO `std_treatment` (`id`, `code`, `cadre_code`, `countryId`, `name`, `t
 (9, 'c832ef65-ae15-48d6-8a13-6d4816493a9c', 'wmiff88', 52, 'Death: Last office', 'SERVICE', 42),
 (10, 'e32ebd3d-8158-4379-b2c1-096e7d6f9991', 'wmiff88', 52, 'Admit a patient', 'SERVICE', 52),
 (11, 'f68b386d-a559-46c9-8796-d5edc2d8a610', 'wmiff88', 52, 'Major operation', 'SERVICE', 165);
+=======
+INSERT INTO `std_treatment` (`code`, `cadre_code`, `name_fr`, `name_en`, `treatment_type`, `duration`) VALUES
+('157a54fc-a76a-475b-8684-a8bf376654d4', 'wmiff88', 'Accompagnement des patients référés', 'Transfert', 'SERVICE', 360),
+('19453745-8586-481f-aca2-04896dc7317e', 'wmiff88', 'Section césarienne', 'Caesarean section', 'SERVICE', 165),
+('296af4b9-cc56-46ac-a8ab-be2f583ea57a', 'wmiff88', 'Consultations ambulatoires ', 'consultation', 'SERVICE', 30),
+('29c9494c-3743-49a0-a5ad-3f6cf4d245fc', 'wmiff88', 'Chirurgie mineur et Circoncision', 'Minor operation and male circumcisions', 'SERVICE', 25),
+('471ac1e9-608a-4b96-9ac9-a5906a2c70e5', 'wmiff88', 'Patients hautement dépendant', 'Routine nursing care (high dependent patients)', 'SERVICE', 351),
+('5956a3fe-a109-472a-91e5-d910f2ab6632', 'wmiff88', 'Patients autonomes', 'Routine nursing care (self care patients)', 'SERVICE', 95),
+('5d789a41-a11b-4f0c-b4e0-0c19351c2a06', 'wmiff88', 'Consultations aux urgences', 'Emergency', 'SERVICE', 60),
+('ae1700ff-67c1-47cd-a3db-13dfe27c9a55', 'wmiff88', 'Sortants autorises/guéris', 'Discharge a patient', 'SERVICE', 24),
+('c832ef65-ae15-48d6-8a13-6d4816493a9c', 'wmiff88', 'Audit de décès', 'Death: Last office', 'SERVICE', 42),
+('e32ebd3d-8158-4379-b2c1-096e7d6f9991', 'wmiff88', 'Admission de patient', 'Admit a patient', 'SERVICE', 52),
+('f68b386d-a559-46c9-8796-d5edc2d8a610', 'wmiff88', 'Opération majeure', 'Major operation', 'SERVICE', 165);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `system_languages`
+--
+
+CREATE TABLE IF NOT EXISTS `system_languages` (
+  `name` varchar(50) NOT NULL,
+  `code` varchar(8) NOT NULL,
+  PRIMARY KEY (`code`),
+  KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Contenu de la table `system_languages`
+--
+
+INSERT INTO `system_languages` (`name`, `code`) VALUES
+('English', 'en'),
+('Français', 'fr');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `time_unit`
+--
+
+CREATE TABLE IF NOT EXISTS `time_unit` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+
+--
+-- Contenu de la table `time_unit`
+--
+
+INSERT INTO `time_unit` (`id`, `name`) VALUES
+(1, 'min/day'),
+(2, 'min/week'),
+(3, 'min/month'),
+(5, 'min/year');
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 -- --------------------------------------------------------
 
@@ -21940,16 +22317,25 @@ CREATE TABLE `users` (
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `countryId` int(11) NOT NULL,
+  `languageCode` varchar(5) NOT NULL DEFAULT 'US',
   `roleId` int(11) NOT NULL,
+<<<<<<< HEAD
   `last_login` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+  `last_login` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `login` (`login`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `login`, `name`, `email`, `password`, `countryId`, `roleId`, `last_login`) VALUES
-(1, 'pierre', 'pierre kasongo', 'pierrekasongo88@gmail.com', '12345', 52, 1, '0000-00-00 00:00:00');
+INSERT INTO `users` (`id`, `login`, `name`, `email`, `password`, `countryId`, `languageCode`, `roleId`, `last_login`) VALUES
+(1, 'pierre', 'pierre kasongo', 'pierrekasongo88@gmail.com', '$2a$10$qXmroueIs3yqANBsEReKS.eCFgM6LZ8Qx/HS2cx3lNNQQ9xgj5AC2', 52, 'fr', 1, '2019-08-08 10:30:58'),
+(2, 'lor', 'peter kas', 'peter@gmail.com', '$2a$10$nSAKDrYLnBdZov4Lqwz1KeqX2bGz9mVWjAUMXV1ALR6MvE6dk9.4i', 1, 'en', 2, '2019-07-02 14:23:11');
 
 -- --------------------------------------------------------
 
@@ -21957,10 +22343,18 @@ INSERT INTO `users` (`id`, `login`, `name`, `email`, `password`, `countryId`, `r
 -- Table structure for table `user_roles`
 --
 
+<<<<<<< HEAD
 CREATE TABLE `user_roles` (
   `id` int(11) NOT NULL,
   `name` varchar(25) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+=======
+CREATE TABLE IF NOT EXISTS `user_roles` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(25) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 --
 -- Dumping data for table `user_roles`
@@ -21968,7 +22362,8 @@ CREATE TABLE `user_roles` (
 
 INSERT INTO `user_roles` (`id`, `name`) VALUES
 (1, 'super_user'),
-(2, 'admin');
+(2, 'admin'),
+(3, 'viewer');
 
 -- --------------------------------------------------------
 

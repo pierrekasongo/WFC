@@ -8,7 +8,7 @@ const fs = require('fs');
 const csv = require('csv');
 const mime=require('mime');
 
-const withAuth=require('./middleware');
+const withAuth=require('../middleware/is-auth');
 
 let router = express.Router();
 
@@ -16,7 +16,7 @@ let countryId = 52;
 
 router.use(fileUpload(/*limits: { fileSize: 50 * 1024 * 1024 },*/));
 
-router.get('/cadres'/*,withAuth,*/, function(req, res){
+router.get('/cadres',withAuth, function(req, res){
     
     db.query(`SELECT * FROM  std_cadre;`,function(error,results,fields){
         if(error) throw error;
@@ -34,7 +34,7 @@ router.get('/getCadre/:cadreCode',withAuth, function(req,res){
     });
 })
 
-router.get('/countries'/*,withAuth,*/, function(req, res){
+router.get('/countries',withAuth, function(req, res){
     
     db.query(`SELECT * FROM  country;`,function(error,results,fields){
         if(error) throw error;
@@ -42,7 +42,7 @@ router.get('/countries'/*,withAuth,*/, function(req, res){
     });
 });
 
-router.get('/treatments'/*,withAuth,*/, function(req, res){
+router.get('/treatments',withAuth, function(req, res){
     
     db.query(`SELECT t.code AS code,t.cadre_code AS cadre_code,c.name AS cadre,
             t.name AS name,t.name AS name, ft.name AS facility_type,  
@@ -53,7 +53,7 @@ router.get('/treatments'/*,withAuth,*/, function(req, res){
     });
 });
 
-router.get('/getTreatment/:code'/*,withAuth*/, function(req,res){
+router.get('/getTreatment/:code',withAuth, function(req,res){
 
     let code=req.params.code;
 
@@ -187,8 +187,6 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
     let code = req.body.code;
 
-    let facility_type=req.body.facility_type;
-
     let cadre_code=req.body.cadre_code;
 
     let name = req.body.name;
@@ -204,7 +202,7 @@ router.post('/insertTreatment',withAuth, (req, res) => {
 
 });
 
-router.patch('/editCadre', (req, res) => {
+router.patch('/editCadre',withAuth, (req, res) => {
 
     let code = req.body.code;
 
@@ -228,7 +226,7 @@ router.patch('/editCadre', (req, res) => {
 
 });
 
-router.patch('/editCountry', (req, res) => {
+router.patch('/editCountry',withAuth, (req, res) => {
 
     let id=req.body.id;
 
@@ -254,7 +252,7 @@ router.patch('/editCountry', (req, res) => {
 
 });
 
-router.patch('/editTreatment', (req, res) => {
+router.patch('/editTreatment',withAuth,(req, res) => {
 
     let code = req.body.code;
 
@@ -322,7 +320,7 @@ router.post('/uploadCadres',withAuth, function (req, res) {
                              ${other_leave},${adminTask},${countryId}) 
                             ON DUPLICATE KEY UPDATE name="${name}",work_days=${days},
                             work_hours=${hours},annual_leave=${annual_leave},
-                            sick_leave=${sick_leave},other_leave=${other_leave},admin_task=${admin_task};`;
+                            sick_leave=${sick_leave},other_leave=${other_leave};`;
                 }
 
                 db.query(sql, function (error, results) {

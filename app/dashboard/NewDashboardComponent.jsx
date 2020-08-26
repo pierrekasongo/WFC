@@ -1,7 +1,19 @@
 import * as React from 'react';
+<<<<<<< HEAD
 
 import 'toastr/build/toastr.min.css';
 import {FaCheck,FaTrash} from 'react-icons/fa';
+=======
+import Collapsible from 'react-collapsible';
+import { Button, Table, FormGroup,Col, Panel } from 'react-bootstrap';
+import axios from 'axios';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
+import Multiselect from 'react-multiselect-checkboxes';
+import {FaCheck,FaTrash} from 'react-icons/fa';
+import InlineEdit from 'react-edit-inline2';
+import { confirmAlert } from 'react-confirm-alert';
+>>>>>>> 21323bf0a0848ae5f6b76536d41ae1cd45aed2ed
 
 export default class NewDashboardComponent extends React.Component {
 

@@ -21,11 +21,12 @@ const config = {
         rules: [
 
             { test: /\.jsx?$/, loader: ["babel-loader"] },
-            {
+            { test: /\.css$/, loader: "style-loader!css-loader" },
+            /*{
                 test: /\.css$/,
                 include: /node_modules/,
                 loaders: ['style-loader', 'css-loader',],
-            },
+            },*/
             {
                 test: /\.scss$/,
                 use: [
@@ -33,12 +34,9 @@ const config = {
                     "css-loader", // translates CSS into CommonJS
                     "sass-loader" // compiles Sass to CSS, using Node Sass by default
                 ]
-            }
-            
+            }           
         ]
-    },
-    
-    
+    }, 
 };
 module.exports = {
   plugins: [
